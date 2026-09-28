@@ -94,6 +94,12 @@ details.card .body{padding-bottom:14px;display:flex;flex-direction:column;gap:10
 .derivs{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-family:var(--mono);font-size:12.5px}
 .derivs dt{color:var(--muted)}
 .derivs dd{margin:0;word-break:break-word}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 11px;font-size:13.5px}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.tabinfo{background:var(--soft);border-radius:8px;padding:9px 11px;font-size:13.5px;display:flex;flex-direction:column;gap:3px}
+.tabinfo strong{font-size:14.5px}
+.tabactions{display:flex;flex-wrap:wrap;gap:8px}
 ol.stops{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
 ol.stops button{width:100%;text-align:left;display:grid;grid-template-columns:12px 1fr auto;align-items:center;gap:8px;border:1px solid transparent;background:var(--bg);border-radius:7px;padding:6px 8px}
 ol.stops button:hover,ol.stops button.cur{border-color:var(--accent)}
@@ -150,6 +156,8 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
   <header class="top">
     <div class="brand"><h1>Funciones a bordo</h1><span class="fx" id="fxTitle">f(x) = x³ − 3x</span></div>
     <div class="xrbtns">
+      <button class="btn" id="btnTTS" type="button" aria-pressed="true">Narración: sí</button>
+      <button class="btn" id="btnHelp" type="button">Ayuda</button>
       <button class="btn primary" id="btnVR" type="button">Entrar en VR</button>
       <button class="btn" id="btnAR" type="button">Realidad mixta</button>
     </div>
@@ -174,6 +182,13 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
           <button type="button" data-color="mono" aria-pressed="true">Monotonía</button>
           <button type="button" data-color="conc" aria-pressed="false">Concavidad</button>
           <button type="button" data-color="none" aria-pressed="false">Sin color</button>
+        </div>
+        <div class="seg" role="group" aria-label="Mover y acercar la función">
+          <button type="button" data-move="in" aria-label="Acercar">+</button>
+          <button type="button" data-move="out" aria-label="Alejar">−</button>
+          <button type="button" data-move="up" aria-label="Subir la función">↑</button>
+          <button type="button" data-move="down" aria-label="Bajar la función">↓</button>
+          <button type="button" data-move="reset">Centrar</button>
         </div>
       </div>
       <div id="legend"></div>
@@ -218,20 +233,15 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
       <details class="card" open>
         <summary>Elementos característicos</summary>
         <div class="body">
-          <p class="small">Toque un elemento para llevar el vagón hasta él.</p>
+          <div class="tabs" role="tablist" id="tabBar" aria-label="Elementos característicos"></div>
+          <div class="tabinfo" id="tabInfo" aria-live="polite"></div>
+          <div class="tabactions">
+            <button class="btn primary" id="bRideTour" type="button">Subir y recorrer</button>
+            <button class="btn" id="bSpeakTab" type="button">Escuchar explicación</button>
+          </div>
+          <p class="small">Toque un elemento para llevar el vagón hasta él. Subir y recorrer monta la cámara sobre la curva y visita, en orden, los elementos de la pestaña con narración.</p>
           <ol class="stops" id="stopList"></ol>
-          <div class="facts" id="facts"></div>
-        </div>
-      </details>
-
-      <details class="card" open>
-        <summary>Intervalos</summary>
-        <div class="body">
-          <div class="lbl">Monotonía</div>
-          <table class="iv" id="monoTbl"></table>
-          <div class="lbl">Concavidad</div>
-          <table class="iv" id="concTbl"></table>
-          <p class="small">Intervalos abiertos, calculados dentro de la ventana [x mín, x máx].</p>
+          <div class="facts" id="tabExtra"></div>
         </div>
       </details>
 
@@ -249,6 +259,7 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
             <input id="tnX" value="1.5" style="width:84px;font-family:var(--mono);padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg)" aria-label="Valor de x cero">
           </div>
           <div class="eqbox" id="tnBox"></div>
+          <div><button class="btn" id="bSpeakTn" type="button">Escuchar pendientes</button></div>
           <p class="small">Los ejes usan la misma escala en x e y, de modo que la normal se ve perpendicular a la tangente.</p>
         </div>
       </details>
@@ -272,16 +283,20 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
           <p class="note" id="xrStatus"></p>
           <p class="small">Abra esta página en el navegador del Quest y pulse Entrar en VR o Realidad mixta. En VR puede alternar entre montar la curva a escala de montaña rusa y verla como maqueta sobre la mesa.</p>
           <dl class="ctl">
-            <dt>Stick (cualquiera)</dt><dd>Avanzar o retroceder sobre la curva</dd>
-            <dt>Gatillo derecho</dt><dd>Siguiente punto característico</dd>
-            <dt>Gatillo izquierdo</dt><dd>Punto anterior</dd>
-            <dt>A</dt><dd>Iniciar o pausar el recorrido guiado</dd>
+            <dt>Apuntar y gatillo</dt><dd>Elegir una pestaña o un botón del tablero</dd>
+            <dt>Stick derecho</dt><dd>Avanzar o retroceder sobre la curva</dd>
+            <dt>Stick izquierdo</dt><dd>Acercar o alejar la función (zoom)</dd>
+            <dt>Grip y mover la mano</dt><dd>Agarrar la función y subirla, bajarla o desplazarla</dd>
+            <dt>Ambos grips</dt><dd>Estirar o encoger la función con las dos manos</dd>
+            <dt>Gatillos fuera del tablero</dt><dd>Siguiente punto (derecho) o anterior (izquierdo)</dd>
+            <dt>A</dt><dd>Subir y recorrer, o pausar</dd>
             <dt>B</dt><dd>Ninguna recta, tangente, tangente y normal</dd>
             <dt>X</dt><dd>Montar la curva o ver maqueta</dd>
-            <dt>Y</dt><dd>Color por monotonía, concavidad o sin color</dd>
-            <dt>Grip derecho</dt><dd>Mostrar u ocultar el tablero</dd>
-            <dt>Clic stick izq.</dt><dd>Siguiente función de ejemplo</dd>
+            <dt>Y</dt><dd>Mostrar u ocultar el tablero</dd>
+            <dt>Clic stick derecho</dt><dd>Escuchar la ayuda de controles</dd>
+            <dt>Clic stick izquierdo</dt><dd>Siguiente función de ejemplo</dd>
           </dl>
+          <p class="small" id="ttsStatus"></p>
           <p class="small">La función se escribe fuera de la inmersión. Salga con el botón Meta, cambie f(x) y vuelva a entrar.</p>
         </div>
       </details>
@@ -380,7 +395,7 @@ function buildF(src){
     try{ t1 = pretty(M.simplify(d1n)); }catch(e){ t1 = pretty(d1n); }
     try{ t2 = pretty(M.simplify(d2n)); }catch(e){ t2 = pretty(d2n); }
   }
-  return {src, pre, txt:pretty(node), f, f1, f2, symbolic, t1, t2};
+  return {src, pre, node, txt:pretty(node), f, f1, f2, symbolic, t1, t2};
 }
 
 /* ---- reconocimiento de valores exactos ---- */
@@ -641,7 +656,7 @@ function analyze(F,a,b){
     if(Math.abs(c.y)<1e-9*(1+R)) { c.y=0; addUnique(zeros,c.x); }
   }
   for(const z of zeros) z.y=0;
-  for(const p of infl){ p.y=f(p.x); p.vertical=isVert(p.x); p.noTangent=!p.vertical && isCorner(p.x); }
+  for(const p of infl){ p.y=f(p.x); p.vertical=isVert(p.x); p.noTangent=!p.vertical && isCorner(p.x); p.up=f2(p.x-dlt)>0; }
   // descartar inflexiones que coinciden con esquinas (f'' no cambia en un tramo suave)
   const inflF=infl.filter(p=>isFinite(p.y));
   zeros.sort((p,q)=>p.x-q.x); crit.sort((p,q)=>p.x-q.x); inflF.sort((p,q)=>p.x-q.x);
@@ -705,7 +720,7 @@ function analyze(F,a,b){
   const raw=[];
   zeros.forEach(z=>raw.push({x:z.x,y:0,kind:'cero'}));
   crit.forEach(c=>raw.push({x:c.x,y:c.y,kind:c.kind,corner:c.corner,vertical:c.vertical}));
-  inflF.forEach(p=>raw.push({x:p.x,y:p.y,kind:'infl',vertical:p.vertical,noTangent:p.noTangent}));
+  inflF.forEach(p=>raw.push({x:p.x,y:p.y,kind:'infl',vertical:p.vertical,noTangent:p.noTangent,up:p.up}));
   breaks.forEach(b=>raw.push({x:b.x,y:(b.L.type==='fin'?b.L.v:(b.R.type==='fin'?b.R.v:NaN)),kind:'disc',br:b}));
   raw.sort((p,q)=>p.x-q.x);
   const stops=[];
@@ -715,40 +730,85 @@ function analyze(F,a,b){
     stops.push({x:r.x,y:r.y,items:[r]});
   }
   const order={disc:0,max:1,min:1,silla:2,infl:3,cero:4};
-  for(const s of stops){ s.items.sort((p,q)=>order[p.kind]-order[q.kind]); s.kind=s.items[0].kind; describeStop(s,f); }
+  for(const s of stops){ s.items.sort((p,q)=>order[p.kind]-order[q.kind]); s.kind=s.items[0].kind; describeStop(s,F); }
 
   return {a,b,W,R,xs,ys,segs,breaks,zeros,crit,infl:inflF,mono,conc,domTxt,dom,absMax:mx,absMin:mn,infPos,infNeg,stops};
 }
 
+/* ---- lectura en voz alta ---- */
+function sayNum(v){
+  if(v===Infinity) return 'más infinito'; if(v===-Infinity) return 'menos infinito'; if(!isFinite(v)) return 'un valor no definido';
+  const n=niceVal(v); let t = n ? n.t : dec(v,2);
+  t=t.replace(/ × 10\^/,' por diez elevado a ').replace(/−/g,'menos ').replace(/-/g,'menos ').replace(/√/g,'raíz de ').replace(/π/g,' pi').replace(/\//g,' sobre ').replace(/\./g,',').replace(/(\d)e\b/g,'$1 e');
+  return t.replace(/\s+/g,' ').trim();
+}
+function sayLim(r){ if(!r) return 'un valor desconocido'; if(r.type==='fin') return sayNum(r.v); if(r.type==='inf') return r.sign>0?'más infinito':'menos infinito'; if(r.type==='osc') return 'ningún valor, porque oscila'; return 'ningún valor'; }
+function sayExpr(n){
+  if(!n) return '';
+  if(n.isParenthesisNode) return sayExpr(n.content);
+  if(n.isConstantNode) return sayNum(Number(n.value));
+  if(n.isSymbolNode) return n.name==='pi'?'pi':n.name;
+  if(n.isOperatorNode){
+    const A=n.args;
+    if(A.length===1) return (n.op==='-'?'menos ':'')+sayExpr(A[0]);
+    const L=sayExpr(A[0]), R=sayExpr(A[1]);
+    switch(n.op){
+      case '+': return L+' más '+R;
+      case '-': return L+' menos '+R;
+      case '*': return n.implicit? L+' '+R : L+' por '+R;
+      case '/': { const un=x=>{ while(x&&x.isParenthesisNode) x=x.content; return x; }; const cmp=x=>{ x=un(x); return x&&x.isOperatorNode&&x.args.length===2&&(x.op==='+'||x.op==='-'); };
+        return (cmp(A[0])||cmp(A[1])) ? 'el cociente entre '+L+' y '+R : L+' dividido por '+R; }
+      case '^': { const e=A[1].isConstantNode?Number(A[1].value):null; if(e===2) return L+' al cuadrado'; if(e===3) return L+' al cubo'; return L+' elevado a '+R; }
+    }
+    return L+' '+n.op+' '+R;
+  }
+  if(n.isFunctionNode){
+    const nm={sin:'seno',cos:'coseno',tan:'tangente',log:'logaritmo natural',log10:'logaritmo en base diez',sqrt:'raíz cuadrada',cbrt:'raíz cúbica',abs:'valor absoluto',exp:'exponencial',asin:'arcoseno',acos:'arcocoseno',atan:'arcotangente',floor:'parte entera',sinh:'seno hiperbólico',cosh:'coseno hiperbólico',tanh:'tangente hiperbólica'}[n.fn.name]||n.fn.name;
+    if(n.fn.name==='log' && n.args.length===2) return 'logaritmo en base '+sayExpr(n.args[1])+' de '+sayExpr(n.args[0]);
+    return nm+' de '+n.args.map(sayExpr).join(' y ');
+  }
+  return n.toString();
+}
+
 const KIND_NAME={cero:'Cero',max:'Máximo local',min:'Mínimo local',silla:'Punto crítico sin extremo',infl:'Punto de inflexión',disc:'Discontinuidad'};
-function describeStop(s,f){
-  const names=[], lines=[];
+function describeStop(s,F){
+  const names=[], lines=[], say=[];
   const pt='('+fmtS(s.x)+', '+(isFinite(s.y)?fmtS(s.y):'?')+')';
+  const X=sayNum(s.x), Y=isFinite(s.y)?sayNum(s.y):'';
   for(const it of s.items){
     if(it.kind==='cero'){
       names.push('Cero');
       const dbl=s.items.some(o=>o.kind==='max'||o.kind==='min');
       const edge=s.items.some(o=>o.kind==='disc');
-      if(edge){ lines.push('f('+fmtS(s.x)+') = 0.'); continue; }
+      if(edge){ lines.push('f('+fmtS(s.x)+') = 0.'); say.push('La función vale cero en x igual a '+X+'.'); continue; }
       lines.push(dbl? 'f('+fmtS(s.x)+') = 0 y la curva toca el eje x sin cruzarlo.' : 'f('+fmtS(s.x)+') = 0. La curva cruza el eje x.');
+      say.push(dbl? 'Cero en x igual a '+X+'. La curva toca el eje x sin cruzarlo.' : 'Cero en x igual a '+X+'. La curva cruza el eje x.');
     } else if(it.kind==='max'||it.kind==='min'){
+      const mx=it.kind==='max';
       names.push(KIND_NAME[it.kind]);
-      lines.push(it.kind==='max' ? 'f′ pasa de positiva a negativa.' : 'f′ pasa de negativa a positiva.');
+      lines.push(mx ? 'f′ pasa de positiva a negativa.' : 'f′ pasa de negativa a positiva.');
       lines.push(it.corner ? (it.vertical?'f′ no existe aquí (punto de retroceso, tangente vertical).':'f′ no existe aquí (punto anguloso, las derivadas laterales difieren).') : 'f′('+fmtS(s.x)+') = 0, tangente horizontal.');
+      say.push((mx?'Máximo':'Mínimo')+' local en x igual a '+X+', donde la función vale '+Y+'. La derivada pasa de '+(mx?'positiva a negativa':'negativa a positiva')+'.'
+        +(it.corner?(it.vertical?' Aquí la derivada no existe y la tangente es vertical.':' Aquí la derivada no existe, porque es un punto anguloso.'):' La tangente es horizontal.'));
     } else if(it.kind==='silla'){
       names.push(KIND_NAME.silla);
       lines.push('f′('+fmtS(s.x)+') = 0 pero f′ no cambia de signo. No hay extremo.');
+      say.push('Punto crítico en x igual a '+X+'. La derivada se anula, pero no cambia de signo, así que no hay extremo.');
     } else if(it.kind==='infl'){
-      if(it.noTangent){ names.push('Cambio de concavidad'); lines.push('La concavidad cambia, pero no hay recta tangente. No se considera punto de inflexión.'); }
-      else { names.push(KIND_NAME.infl); lines.push('f″ cambia de signo y la concavidad se invierte'+(it.vertical?'. La tangente es vertical.':'.')); }
+      if(it.noTangent){ names.push('Cambio de concavidad'); lines.push('La concavidad cambia, pero no hay recta tangente. No se considera punto de inflexión.');
+        say.push('En x igual a '+X+' cambia la concavidad, pero no hay recta tangente, por lo que no es un punto de inflexión.'); }
+      else { names.push(KIND_NAME.infl); lines.push('f″ cambia de signo y la concavidad se invierte'+(it.vertical?'. La tangente es vertical.':'.'));
+        say.push('Punto de inflexión en x igual a '+X+'. La curva pasa de '+(it.up?'cóncava hacia arriba a cóncava hacia abajo':'cóncava hacia abajo a cóncava hacia arriba')+'.'+(it.vertical?' La tangente es vertical.':'')); }
     } else if(it.kind==='disc'){
       const b=it.br;
       const lt='lím x→'+fmtS(b.x)+'⁻ f(x) = '+limTxt(b.L), rt='lím x→'+fmtS(b.x)+'⁺ f(x) = '+limTxt(b.R);
-      if(b.kind==='asintota'){ names.push('Asíntota vertical x = '+fmtS(b.x)); }
-      else if(b.kind==='evitable'){ names.push('Discontinuidad evitable'); lines.push(isFinite(b.fc)?'f('+fmtS(b.x)+') = '+fmtS(b.fc)+' no coincide con el límite.':'f('+fmtS(b.x)+') no está definida, pero el límite existe.'); }
-      else if(b.kind==='salto'){ names.push('Discontinuidad de salto'); lines.push('Los límites laterales existen y son distintos.'); }
-      else if(b.kind==='borde'){ names.push('Frontera del dominio'); }
-      else { names.push('Discontinuidad esencial'); }
+      const sides=(b.L.type!=='none'?' Por la izquierda, f tiende a '+sayLim(b.L)+'.':'')+(b.R.type!=='none'?' Por la derecha, f tiende a '+sayLim(b.R)+'.':'');
+      if(b.kind==='asintota'){ names.push('Asíntota vertical x = '+fmtS(b.x)); say.push('Asíntota vertical en x igual a '+X+'.'+sides); }
+      else if(b.kind==='evitable'){ names.push('Discontinuidad evitable'); lines.push(isFinite(b.fc)?'f('+fmtS(b.x)+') = '+fmtS(b.fc)+' no coincide con el límite.':'f('+fmtS(b.x)+') no está definida, pero el límite existe.');
+        say.push('Discontinuidad evitable en x igual a '+X+'. El límite existe y vale '+sayLim(b.L)+', pero '+(isFinite(b.fc)?'el valor de la función es distinto.':'la función no está definida allí.')); }
+      else if(b.kind==='salto'){ names.push('Discontinuidad de salto'); lines.push('Los límites laterales existen y son distintos.'); say.push('Discontinuidad de salto en x igual a '+X+'.'+sides); }
+      else if(b.kind==='borde'){ names.push('Frontera del dominio'); say.push('Frontera del dominio en x igual a '+X+'.'+sides); }
+      else { names.push('Discontinuidad esencial'); say.push('Discontinuidad esencial en x igual a '+X+'. Los límites laterales no existen.'); }
       if(b.L.type!=='none') lines.push(lt);
       if(b.R.type!=='none') lines.push(rt);
     }
@@ -756,6 +816,7 @@ function describeStop(s,f){
   s.title=[...new Set(names)].join(' · ');
   s.pt = s.kind==='disc' ? 'x = '+fmtS(s.x) : pt;
   s.lines=lines;
+  s.say=say.join(' ');
 }
 /*ANALYSIS-END*/
 
@@ -782,7 +843,8 @@ const CSSCOL={cero:'var(--c-cero)',max:'var(--c-max)',min:'var(--c-min)',silla:'
 const hex=c=>'#'+c.toString(16).padStart(6,'0');
 
 const st={F:null,A:null,a:-3,b:3,ymin:-3,ymax:3,color:'mono',tn:2,tnFollow:true,tnX:1.5,view:'orbit',xrMode:'ride',
-  playing:false,speed:1,piece:0,s:0,pauseUntil:0,msgTitle:'',msgLines:[],limit:null,xrKind:null,hudVisible:true};
+  playing:false,speed:1,piece:0,s:0,pauseUntil:0,msgTitle:'',msgLines:[],limit:null,xrKind:null,hudVisible:true,
+  tab:'todo',tour:[],zoom:1,zoomRide:1,offset:new THREE.Vector3(),seat:0,waitSpeech:false};
 
 /* ================= escena ================= */
 const stage=document.getElementById('stage');
@@ -811,16 +873,23 @@ const fade=new THREE.Mesh(new THREE.SphereGeometry(0.2,16,12),new THREE.MeshBasi
 fade.renderOrder=9999; camera.add(fade);
 let fadeAnim=null;
 
-// tablero para VR
-const hudCanvas=document.createElement('canvas'); hudCanvas.width=1024; hudCanvas.height=620;
+// tablero interactivo para VR
+const PW=1200, PH=880;
+const hudCanvas=document.createElement('canvas'); hudCanvas.width=PW; hudCanvas.height=PH;
 const hudTex=new THREE.CanvasTexture(hudCanvas); hudTex.encoding=THREE.sRGBEncoding;
-const hudMesh=new THREE.Mesh(new THREE.PlaneGeometry(0.62,0.62*620/1024),new THREE.MeshBasicMaterial({map:hudTex,transparent:true,depthTest:false,depthWrite:false}));
+const hudMesh=new THREE.Mesh(new THREE.PlaneGeometry(0.74,0.74*PH/PW),new THREE.MeshBasicMaterial({map:hudTex,transparent:true,depthTest:false,depthWrite:false}));
 hudMesh.renderOrder=500; hudMesh.visible=false; rig.add(hudMesh);
+hudMesh.position.set(-0.8,1.15,-0.6); hudMesh.rotation.set(-0.12,0.92,0,'YXZ');
 
-// controladores
+// controladores con rayo y cursor
 const ctrls=[0,1].map(i=>{ const c=renderer.xr.getController(i);
-  const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,-0.35)]);
-  c.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:0x4cc2c9})));
+  const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,-1)]);
+  const line=new THREE.Line(g,new THREE.LineBasicMaterial({color:0x4cc2c9,transparent:true,opacity:0.8}));
+  line.scale.z=1.2; c.add(line); c.userData.line=line;
+  const dot=new THREE.Mesh(new THREE.SphereGeometry(0.008,10,8),new THREE.MeshBasicMaterial({color:0xffffff,depthTest:false}));
+  dot.renderOrder=600; dot.visible=false; rig.add(dot); c.userData.dot=dot;
+  c.addEventListener('connected',e=>{ c.userData.src=e.data; });
+  c.addEventListener('disconnected',()=>{ c.userData.src=null; c.userData.dot.visible=false; });
   rig.add(c); return c; });
 
 function disposeTree(o){ o.traverse(n=>{ if(n.geometry) n.geometry.dispose(); if(n.material){ const ms=Array.isArray(n.material)?n.material:[n.material]; ms.forEach(m=>{ if(m.map) m.map.dispose(); m.dispose(); }); } }); }
@@ -971,13 +1040,14 @@ function buildGraph(){
 
   // asíntotas verticales y discontinuidades
   const inWin=(x,y)=>x>=a-1e-9&&x<=b+1e-9&&y>=y0&&y<=y1;
+  const AG=new THREE.Group(); graph.add(AG); G.asyGroup=AG;
   for(const br of A.breaks){
     if(br.kind==='asintota'){
-      graph.add(dashed([new THREE.Vector3(br.x,y0,0),new THREE.Vector3(br.x,y1,0)],COL.disc,u*1.4));
-      const l=makeLabel('x = '+fmtS(br.x),hex(COL.disc),u*3,{center:[0,1]}); l.position.set(br.x+u*1.2,y1-u,u); graph.add(l);
+      AG.add(dashed([new THREE.Vector3(br.x,y0,0),new THREE.Vector3(br.x,y1,0)],COL.disc,u*1.4));
+      const l=makeLabel('x = '+fmtS(br.x),hex(COL.disc),u*3,{center:[0,1]}); l.position.set(br.x+u*1.2,y1-u,u); AG.add(l);
     }
     const ring=(y,filled)=>{ if(!inWin(br.x,y)) return; const m=filled? new THREE.Mesh(new THREE.SphereGeometry(u*1.3,16,12),new THREE.MeshStandardMaterial({color:COL.disc,emissive:COL.disc,emissiveIntensity:0.3}))
-        : new THREE.Mesh(new THREE.TorusGeometry(u*1.3,u*0.35,10,28),new THREE.MeshStandardMaterial({color:COL.disc,emissive:COL.disc,emissiveIntensity:0.4})); m.position.set(br.x,y,0); graph.add(m); };
+        : new THREE.Mesh(new THREE.TorusGeometry(u*1.3,u*0.35,10,28),new THREE.MeshStandardMaterial({color:COL.disc,emissive:COL.disc,emissiveIntensity:0.4})); m.position.set(br.x,y,0); AG.add(m); };
     if(br.kind==='evitable'||br.kind==='salto'||br.kind==='borde'){
       if(br.L.type==='fin') ring(br.L.v, isFinite(br.fc)&&Math.abs(br.fc-br.L.v)<1e-6*(1+Math.abs(br.fc)));
       if(br.R.type==='fin' && !(br.L.type==='fin'&&Math.abs(br.L.v-br.R.v)<1e-9)) ring(br.R.v, isFinite(br.fc)&&Math.abs(br.fc-br.R.v)<1e-6*(1+Math.abs(br.fc)));
@@ -995,25 +1065,26 @@ function buildGraph(){
     G.asy.push({m,n});
     const cl=clipLine(0,n,1,m,a,b,y0,y1); if(!cl) return;
     const p=new THREE.Vector3(cl[0],n+m*cl[0],0), q=new THREE.Vector3(cl[1],n+m*cl[1],0);
-    graph.add(dashed([p,q],0xbfa2f0,u*1.4));
+    AG.add(dashed([p,q],0xbfa2f0,u*1.4));
     const at = side>0? q : p;
-    const l=makeLabel(txt,'#cdb6f5',u*3,{center:[side>0?1:0,0]}); l.position.set(at.x,at.y+u,u); graph.add(l);
+    const l=makeLabel(txt,'#cdb6f5',u*3,{center:[side>0?1:0,0]}); l.position.set(at.x,at.y+u,u); AG.add(l);
   };
   addAsy(A.infPos,1); addAsy(A.infNeg,-1);
 
   // marcadores de puntos característicos
-  G.markers=[];
+  G.markers=[]; G.markerGroups=[];
   A.stops.forEach((s,i)=>{
-    if(s.kind==='disc' || !isFinite(s.y) || !inWin(s.x,s.y)) { G.markers.push(null); return; }
+    if(s.kind==='disc' || !isFinite(s.y) || !inWin(s.x,s.y)) { G.markers.push(null); G.markerGroups.push(null); return; }
     const col=COL[s.kind];
+    const grp=new THREE.Group(); graph.add(grp);
     const mk=new THREE.Mesh(new THREE.SphereGeometry(u*1.55,20,14),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.35,roughness:0.35}));
-    mk.position.set(s.x,s.y,0); graph.add(mk);
+    mk.position.set(s.x,s.y,0); grp.add(mk);
     const short={cero:'cero',max:'máx',min:'mín',silla:'f′ = 0',infl:'inflexión'};
     const names=[...new Set(s.items.map(it=>it.noTangent?'cambio de concavidad':short[it.kind]))].join(' · ');
     const above = s.kind!=='min';
     const l=makeLabel(names+'  '+s.pt,hex(col),u*2.5,{center:[0.5,above?0:1]});
-    l.position.set(s.x,s.y+(above?u*2.4:-u*2.4),u*1.5); graph.add(l);
-    G.markers.push(mk);
+    l.position.set(s.x,s.y+(above?u*2.4:-u*2.4),u*1.5); grp.add(l);
+    G.markers.push(mk); G.markerGroups.push(grp);
   });
 
   // vagón
@@ -1045,31 +1116,225 @@ function buildLimitVisual(){
 }
 
 /* ---- colocación en el mundo ---- */
-function placeGraph(){
+function isRide(){ return renderer.xr.isPresenting && st.xrMode==='ride' && st.xrKind!=='ar'; }
+function placeGraph(resetCam){
+  if(resetCam===undefined) resetCam=true;
   const W=st.b-st.a, H=st.ymax-st.ymin, xc=(st.a+st.b)/2, yc=(st.ymin+st.ymax)/2;
-  let S, pos;
   const inXR=renderer.xr.isPresenting;
-  if(inXR && st.xrMode==='ride' && st.xrKind!=='ar'){
-    S=14/W; pos=new THREE.Vector3(-xc*S,1.2-yc*S,-2);
-    floor.visible=false;
-  } else {
-    S=Math.min(1.25/W,0.95/H); pos=new THREE.Vector3(-xc*S,1.3-yc*S,-0.95);
-    floor.visible = inXR && st.xrKind!=='ar';
-  }
-  graph.scale.setScalar(S); graph.position.copy(pos); G.S=S;
+  let S, c;
+  if(isRide()){ S=14/W*st.zoomRide; c=new THREE.Vector3(0,1.2,-2); floor.visible=false; }
+  else { S=Math.min(1.25/W,0.95/H)*st.zoom; c=new THREE.Vector3(0,1.3,-0.95).add(st.offset); floor.visible = inXR && st.xrKind!=='ar'; }
+  graph.scale.setScalar(S); graph.position.set(c.x-xc*S, c.y-yc*S, c.z); G.S=S;
   graph.updateMatrixWorld(true);
-  if(!inXR){
-    const c=new THREE.Vector3(0,1.3,-0.95);
-    controls.target.copy(c);
+  if(!inXR && resetCam){
+    controls.target.set(0,1.3,-0.95);
     if(st.view==='orbit'){ camera.position.set(0.1,1.38,0.38); controls.update(); }
   }
+}
+function zoomBy(f){
+  if(isRide()) st.zoomRide=Math.min(4,Math.max(0.25,st.zoomRide*f));
+  else st.zoom=Math.min(6,Math.max(0.2,st.zoom*f));
+  placeGraph(false);
+}
+function moveBy(dy){
+  if(isRide()) st.seat-=dy; else st.offset.y+=dy;
+  placeGraph(false);
+}
+function resetView(){ st.zoom=1; st.zoomRide=1; st.offset.set(0,0,0); st.seat=0; placeGraph(!renderer.xr.isPresenting); snapCam=true; }
+
+/* ================= narración ================= */
+const TTS={ok:('speechSynthesis' in window) && typeof SpeechSynthesisUtterance!=='undefined', on:true, voice:null, unlocked:false};
+function pickVoice(){
+  if(!TTS.ok) return;
+  let vs=[]; try{ vs=speechSynthesis.getVoices()||[]; }catch(e){}
+  const norm=l=>(l||'').replace('_','-').toLowerCase();
+  let v=null;
+  for(const p of ['es-cl','es-419','es-us','es-mx','es-ar','es-es']){ v=vs.find(x=>norm(x.lang)===p); if(v) break; }
+  if(!v) v=vs.find(x=>norm(x.lang).startsWith('es'));
+  TTS.voice=v||null; TTS.nVoices=vs.length; updateTTSStatus();
+}
+function updateTTSStatus(){
+  const el=document.getElementById('ttsStatus'); if(!el) return;
+  if(!TTS.ok) el.textContent='Este navegador no ofrece síntesis de voz, así que la narración no sonará. Los textos siguen apareciendo en pantalla.';
+  else if(TTS.nVoices && !TTS.voice) el.textContent='No se encontró una voz en español en este dispositivo. La narración usará la voz disponible.';
+  else el.textContent=TTS.voice?('Voz de narración: '+TTS.voice.name+'.'):'';
+}
+if(TTS.ok){ pickVoice(); try{ speechSynthesis.onvoiceschanged=pickVoice; }catch(e){} }
+function speak(text,interrupt){
+  if(interrupt===undefined) interrupt=true;
+  if(!TTS.ok||!TTS.on||!text) return;
+  try{
+    if(interrupt) speechSynthesis.cancel();
+    const parts=String(text).match(/[^.!?]+[.!?]*/g)||[text];
+    parts.forEach(p=>{ const t=p.trim(); if(!t) return; const u=new SpeechSynthesisUtterance(t); u.lang=TTS.voice?TTS.voice.lang:'es-ES'; if(TTS.voice) u.voice=TTS.voice; u.rate=1.0; speechSynthesis.speak(u); });
+    TTS.last=performance.now();
+  }catch(e){}
+}
+function isSpeaking(){ if(!TTS.ok||!TTS.on) return false; try{ return speechSynthesis.speaking||speechSynthesis.pending; }catch(e){ return false; } }
+function setTTS(on){
+  TTS.on=on; if(!on && TTS.ok){ try{ speechSynthesis.cancel(); }catch(e){} }
+  const b=document.getElementById('btnTTS'); b.setAttribute('aria-pressed',on); b.textContent='Narración: '+(on?'sí':'no');
+  vrDirty=true;
+}
+function sayList(arr){ if(!arr.length) return ''; if(arr.length===1) return arr[0]; return arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1]; }
+const HELP_VR='Controles en realidad virtual. El stick derecho avanza o retrocede sobre la curva. El stick izquierdo acerca o aleja la función. Mantenga apretado el botón de agarre, al costado del mando, y mueva la mano para subir, bajar o desplazar la función. Con los dos agarres a la vez puede estirarla o encogerla. Apunte al tablero y pulse el gatillo para elegir una pestaña o un botón. Fuera del tablero, el gatillo derecho salta al punto siguiente y el izquierdo al anterior. El botón A inicia o pausa el recorrido. El botón B muestra la tangente y la normal. El botón X cambia entre montar la curva y verla como maqueta. El botón Y muestra u oculta el tablero. El clic del stick derecho repite esta ayuda.';
+const HELP_2D='Arrastre sobre el gráfico para girarlo y use la rueda o los botones más y menos para acercarlo. Las flechas hacia arriba y hacia abajo mueven la función. Elija una pestaña para estudiar ceros, extremos, monotonía, concavidad o asíntotas, y pulse Subir y recorrer para que el vagón visite esos elementos mientras la narración los explica.';
+
+/* ================= pestañas ================= */
+const TABS=[
+  {id:'todo',name:'Todo',color:'mono'},
+  {id:'ceros',name:'Ceros',color:'none'},
+  {id:'extremos',name:'Extremos',color:'mono'},
+  {id:'mono',name:'Monotonía',color:'mono'},
+  {id:'conc',name:'Concavidad',color:'conc'},
+  {id:'asint',name:'Asíntotas',color:'none'}
+];
+const hasK=(s,ks)=>s.items.some(i=>ks.includes(i.kind));
+function stopInTab(s,tab){
+  switch(tab){
+    case 'todo': return true;
+    case 'ceros': return hasK(s,['cero']);
+    case 'extremos': case 'mono': return hasK(s,['max','min','silla']);
+    case 'conc': return hasK(s,['infl']);
+    case 'asint': return hasK(s,['disc']);
+  }
+  return false;
+}
+function tabName(id){ return (TABS.find(t=>t.id===id)||TABS[0]).name; }
+function ivTxt(p,q){ return '('+fmtS(p)+', '+fmtS(q)+')'; }
+function buildTour(){
+  const A=st.A, tab=st.tab, W=st.b-st.a, items=[];
+  A.stops.forEach(s=>{ if(stopInTab(s,tab)) items.push({x:s.x, kind:s.kind, title:s.title, pt:s.pt, lines:s.lines, say:s.say, stop:s}); });
+  const addIv=(list,names,sayFn,lineFn)=>{
+    list.forEach(o=>{
+      const w=o.q-o.p; if(w<1e-6*W) return;
+      const x=o.p+Math.min(w*0.5,Math.max(w*0.06,W*0.012));
+      items.push({x, kind:o.kind, title:names[o.kind], pt:ivTxt(o.p,o.q), lines:[lineFn(o)], say:sayFn(o), iv:o});
+    });
+  };
+  if(tab==='mono') addIv(A.mono,{crec:'Intervalo creciente',decr:'Intervalo decreciente',const:'Intervalo constante'},
+    o=>'Ahora la función es '+({crec:'creciente',decr:'decreciente',const:'constante'}[o.kind])+', desde x igual a '+sayNum(o.p)+' hasta x igual a '+sayNum(o.q)+'. En este tramo la derivada es '+({crec:'positiva',decr:'negativa',const:'cero'}[o.kind])+'.',
+    o=>'f′(x) '+({crec:'> 0',decr:'< 0',const:'= 0'}[o.kind])+' en '+ivTxt(o.p,o.q)+'.');
+  if(tab==='conc') addIv(A.conc,{up:'Cóncava hacia arriba',down:'Cóncava hacia abajo',lin:'Tramo lineal'},
+    o=>'Ahora la curva es '+({up:'cóncava hacia arriba',down:'cóncava hacia abajo',lin:'recta'}[o.kind])+', desde x igual a '+sayNum(o.p)+' hasta x igual a '+sayNum(o.q)+'. La segunda derivada es '+({up:'positiva',down:'negativa',lin:'cero'}[o.kind])+'.',
+    o=>'f″(x) '+({up:'> 0',down:'< 0',lin:'= 0'}[o.kind])+' en '+ivTxt(o.p,o.q)+'.');
+  items.sort((p,q)=>p.x-q.x);
+  items.forEach(it=>{ it.reach=stopReach(it); });
+  st.tour=items;
+}
+function infSay(r,sgn){
+  const s=sgn>0?'más infinito':'menos infinito';
+  let t='Cuando x tiende a '+s+', f tiende a '+sayLim(r.L)+'.';
+  if(r.L.type==='fin') t+=' Hay una asíntota horizontal, y igual a '+sayNum(r.L.v)+'.';
+  else if(r.oblique) t+=' Hay una asíntota oblicua, y igual a '+sayLin(r.oblique.m,r.oblique.n)+'.';
+  return t;
+}
+function sayLin(m,n){
+  let t = Math.abs(m-1)<1e-12 ? 'x' : Math.abs(m+1)<1e-12 ? 'menos x' : sayNum(m)+' x';
+  if(Math.abs(n)>1e-12) t += (n<0?' menos ':' más ')+sayNum(Math.abs(n));
+  return t;
+}
+function infLine(r,sgn){ const s=sgn>0?'+∞':MINUS+'∞'; let t='x → '+s+'   f(x) → '+limTxt(r.L);
+  if(r.L.type==='fin') t+='   asíntota horizontal y = '+fmtS(r.L.v);
+  else if(r.oblique) t+='   asíntota oblicua y = '+linEq(r.oblique.m,r.oblique.n);
+  return t; }
+function extTxt(o,word){ return o.none ? 'No tiene '+word+' absoluto en la ventana (f no está acotada cerca de x = '+fmtS(o.x)+').'
+    : (o.attained ? word.charAt(0).toUpperCase()+word.slice(1)+' absoluto '+fmtS(o.v)+' en x = '+fmtS(o.x)+(Math.abs(o.x-st.a)<1e-9||Math.abs(o.x-st.b)<1e-9?' (extremo de la ventana)':'')+'.'
+      : (word==='máximo'?'Supremo ':'Ínfimo ')+fmtS(o.v)+' cerca de x = '+fmtS(o.x)+', no alcanzado.'); }
+function extSay(o,word){ return o.none ? 'No hay '+word+' absoluto en la ventana, porque la función no está acotada cerca de x igual a '+sayNum(o.x)+'.'
+    : (o.attained ? 'El '+word+' absoluto en la ventana es '+sayNum(o.v)+', en x igual a '+sayNum(o.x)+'.' : 'La función se acerca a '+sayNum(o.v)+' cerca de x igual a '+sayNum(o.x)+', sin alcanzarlo.'); }
+function tabInfo(tab){
+  const A=st.A, F=st.F;
+  const ivs=(list,k)=>list.filter(o=>o.kind===k);
+  const ivSay=l=>sayList(l.map(o=>'entre '+sayNum(o.p)+' y '+sayNum(o.q)));
+  const ivShow=l=>l.map(o=>ivTxt(o.p,o.q)).join(' ∪ ');
+  switch(tab){
+    case 'todo': {
+      const n=A.stops.length;
+      return {title:'Vista general', lines:[n+' puntos característicos en la ventana ['+fmtS(st.a)+', '+fmtS(st.b)+'].','Dominio en la ventana '+A.domTxt+'.'],
+        say:'Función f de x igual a '+sayExpr(F.node)+'. En la ventana de x igual a '+sayNum(st.a)+' hasta '+sayNum(st.b)+' hay '+n+' puntos característicos. Use las pestañas para estudiar ceros, extremos, monotonía, concavidad y asíntotas.'};
+    }
+    case 'ceros': {
+      const z=A.zeros.map(o=>o.x);
+      return {title:'Ceros', lines: z.length? ['f(x) = 0 en x = '+z.map(v=>fmtS(v)).join(', ')+'.','Son los puntos donde la curva corta o toca el eje x.'] : ['No hay ceros en la ventana.'],
+        say: z.length? 'Ceros. La función se anula en '+(z.length===1?'un punto':z.length+' puntos')+': x igual a '+sayList(z.map(sayNum))+'. Allí la curva corta o toca el eje x.' : 'Ceros. La función no se anula en esta ventana.'};
+    }
+    case 'extremos': {
+      const mx=A.crit.filter(c=>c.kind==='max'), mn=A.crit.filter(c=>c.kind==='min');
+      const lines=[];
+      if(mx.length) lines.push('Máximos locales en x = '+mx.map(c=>fmtS(c.x)).join(', ')+'.');
+      if(mn.length) lines.push('Mínimos locales en x = '+mn.map(c=>fmtS(c.x)).join(', ')+'.');
+      if(!mx.length&&!mn.length) lines.push('No hay extremos locales en la ventana.');
+      lines.push(extTxt(A.absMax,'máximo')); lines.push(extTxt(A.absMin,'mínimo'));
+      let say='Extremos. ';
+      if(mx.length) say+='Hay '+(mx.length===1?'un máximo local':mx.length+' máximos locales')+', en x igual a '+sayList(mx.map(c=>sayNum(c.x)))+'. ';
+      if(mn.length) say+='Hay '+(mn.length===1?'un mínimo local':mn.length+' mínimos locales')+', en x igual a '+sayList(mn.map(c=>sayNum(c.x)))+'. ';
+      if(!mx.length&&!mn.length) say+='No hay extremos locales en la ventana. ';
+      say+=extSay(A.absMax,'máximo')+' '+extSay(A.absMin,'mínimo');
+      return {title:'Extremos', lines, say};
+    }
+    case 'mono': {
+      const c=ivs(A.mono,'crec'), d=ivs(A.mono,'decr');
+      const lines=[]; if(c.length) lines.push('Creciente en '+ivShow(c)+'.'); if(d.length) lines.push('Decreciente en '+ivShow(d)+'.');
+      lines.push('Verde indica creciente y naranja decreciente.');
+      let say='Monotonía. La curva se colorea en verde donde la función crece y en naranja donde decrece. ';
+      if(c.length) say+='La función es creciente '+ivSay(c)+'. ';
+      if(d.length) say+='Es decreciente '+ivSay(d)+'. ';
+      return {title:'Monotonía', lines, say};
+    }
+    case 'conc': {
+      const u=ivs(A.conc,'up'), d=ivs(A.conc,'down');
+      const inf=A.infl.filter(p=>!p.noTangent);
+      const lines=[]; if(u.length) lines.push('Cóncava hacia arriba en '+ivShow(u)+'.'); if(d.length) lines.push('Cóncava hacia abajo en '+ivShow(d)+'.');
+      lines.push(inf.length?'Inflexiones en x = '+inf.map(p=>fmtS(p.x)).join(', ')+'.':'Sin puntos de inflexión en la ventana.');
+      lines.push('Azul indica cóncava hacia arriba y magenta cóncava hacia abajo.');
+      let say='Concavidad. La curva se colorea en azul donde es cóncava hacia arriba y en magenta donde es cóncava hacia abajo. ';
+      if(u.length) say+='Es cóncava hacia arriba '+ivSay(u)+'. ';
+      if(d.length) say+='Es cóncava hacia abajo '+ivSay(d)+'. ';
+      say+= inf.length ? 'Tiene '+(inf.length===1?'un punto de inflexión':inf.length+' puntos de inflexión')+', en x igual a '+sayList(inf.map(p=>sayNum(p.x)))+'.' : 'No tiene puntos de inflexión en la ventana.';
+      return {title:'Concavidad', lines, say};
+    }
+    case 'asint': {
+      const va=A.breaks.filter(b=>b.kind==='asintota'), other=A.breaks.filter(b=>b.kind!=='asintota');
+      const lines=[];
+      lines.push(va.length?'Asíntotas verticales x = '+va.map(b=>fmtS(b.x)).join(', ')+'.':'Sin asíntotas verticales en la ventana.');
+      if(other.length) lines.push('Otras discontinuidades o bordes en x = '+other.map(b=>fmtS(b.x)).join(', ')+'.');
+      lines.push(infLine(A.infNeg,-1)); lines.push(infLine(A.infPos,1));
+      let say='Asíntotas y límites. ';
+      say+= va.length ? 'Hay '+(va.length===1?'una asíntota vertical':va.length+' asíntotas verticales')+', en x igual a '+sayList(va.map(b=>sayNum(b.x)))+'. ' : 'No hay asíntotas verticales en la ventana. ';
+      if(other.length) say+='También hay '+(other.length===1?'una discontinuidad o borde del dominio':other.length+' discontinuidades o bordes del dominio')+'. ';
+      say+=infSay(A.infNeg,-1)+' '+infSay(A.infPos,1);
+      return {title:'Asíntotas y límites', lines, say};
+    }
+  }
+  return {title:'',lines:[],say:''};
+}
+function applyTabVisibility(){
+  const tab=st.tab;
+  if(G.markerGroups) G.markerGroups.forEach((g,i)=>{ if(g) g.visible=stopInTab(st.A.stops[i],tab); });
+  if(G.asyGroup) G.asyGroup.visible=(tab==='todo'||tab==='asint');
+}
+function setTab(id,opts){
+  opts=opts||{};
+  st.tab=id;
+  const T=TABS.find(t=>t.id===id)||TABS[0];
+  setColor(T.color);
+  applyTabVisibility();
+  buildTour();
+  curTourIdx=-1;
+  renderTab();
+  const info=tabInfo(id);
+  setMsg(info.title,info.lines);
+  if(opts.speak) speak(info.say);
+  vrDirty=true;
 }
 
 /* ================= recorrido ================= */
 function curPos(){ const pc=pieces[st.piece]; if(!pc) return null; return posAt(pc,st.s); }
 function curX(){ const p=curPos(); return p?p.x:st.a; }
-function setMsg(title,lines){ st.msgTitle=title||''; st.msgLines=lines||[]; hudDirty=true; }
+function setMsg(title,lines){ st.msgTitle=title||''; st.msgLines=lines||[]; hudDirty=true; vrDirty=true; }
 function stopReach(s){
+  if(s.kind==='disc') return null;
   for(let k=0;k<pieces.length;k++){ const pc=pieces[k]; if(s.x>=pc.X[0]-1e-9 && s.x<=pc.X[pc.X.length-1]+1e-9) return {piece:k,s:sAtX(pc,s.x)}; }
   return null;
 }
@@ -1081,48 +1346,62 @@ function nearestReach(x){
 function moveTo(r,withFade){
   if(!r) return;
   const doIt=()=>{ st.piece=r.piece; st.s=r.s; snapCam=true; };
-  if(withFade && renderer.xr.isPresenting && st.xrMode==='ride' && st.xrKind!=='ar'){ fadeAnim={t:0,dur:0.45,mid:doIt,done:false}; }
+  if(withFade && isRide()){ fadeAnim={t:0,dur:0.45,mid:doIt,done:false}; }
   else doIt();
 }
-function announceStop(s){ setMsg(s.title+'  '+s.pt, s.lines); markStop(s); }
-let curStopIdx=-1;
-function markStop(s){ curStopIdx=st.A.stops.indexOf(s); document.querySelectorAll('#stopList button').forEach((b,i)=>b.classList.toggle('cur',i===curStopIdx)); }
-function jumpToStop(i){
-  const s=st.A.stops[i]; if(!s) return;
+let curTourIdx=-1, curStopIdx=-1;
+function announce(it,talk){
+  setMsg(it.title+'  '+it.pt, it.lines);
+  curTourIdx=st.tour.indexOf(it);
+  curStopIdx=it.stop?st.A.stops.indexOf(it.stop):-1;
+  document.querySelectorAll('#stopList button').forEach((b,i)=>b.classList.toggle('cur',i===curTourIdx));
+  if(talk!==false) speak(it.say);
+}
+function jumpToTour(i){
+  const it=st.tour[i]; if(!it) return;
   st.playing=false; updatePlayBtn();
-  let r=stopReach(s);
-  if(!r){ r=nearestReach(s.x - (s.kind==='disc'?1e-3*(st.b-st.a):0)); }
-  moveTo(r,true); announceStop(s);
+  let r=it.reach;
+  if(!r) r=nearestReach(it.x - (it.kind==='disc'?1e-3*(st.b-st.a):0));
+  moveTo(r,true); announce(it);
 }
 function stepStop(dir){
-  const x=curX(), eps=1e-5*(st.b-st.a), S=st.A.stops;
-  if(dir>0){ const i=S.findIndex(s=>s.x>x+eps); if(i>=0) jumpToStop(i); else setMsg('Último punto','No hay más puntos característicos hacia la derecha en la ventana.'.split('|')); }
-  else { let i=-1; S.forEach((s,k)=>{ if(s.x<x-eps) i=k; }); if(i>=0) jumpToStop(i); else setMsg('Primer punto',['No hay puntos característicos a la izquierda en la ventana.']); }
+  const x=curX(), eps=1e-5*(st.b-st.a), T=st.tour;
+  if(dir>0){ const i=T.findIndex(s=>s.x>x+eps); if(i>=0) jumpToTour(i); else { setMsg('Último elemento',['No hay más elementos de esta pestaña hacia la derecha.']); speak('No hay más elementos hacia la derecha.'); } }
+  else { let i=-1; T.forEach((s,k)=>{ if(s.x<x-eps) i=k; }); if(i>=0) jumpToTour(i); else { setMsg('Primer elemento',['No hay elementos de esta pestaña a la izquierda.']); speak('No hay elementos hacia la izquierda.'); } }
 }
 function speedUnits(){ return (st.b-st.a)/9*st.speed; }
+function holdFor(ms){ st.pauseUntil=performance.now()+ms; st.waitSpeech=true; }
 function advance(dt,dir,manual){
   const pc=pieces[st.piece]; if(!pc) return;
   const prevS=st.s; let ns=st.s+dir*speedUnits()*dt;
-  // paradas en el tramo
   const lo=Math.min(prevS,ns), hi=Math.max(prevS,ns);
-  if(!manual){
-    for(const s of st.A.stops){ const r=stopReach(s); if(!r||r.piece!==st.piece) continue; if(r.s>lo+1e-12 && r.s<=hi){ st.s=r.s; announceStop(s); st.pauseUntil=performance.now()+2600; return; } }
-  } else {
-    for(const s of st.A.stops){ const r=stopReach(s); if(!r||r.piece!==st.piece) continue; if(r.s>lo && r.s<=hi) announceStop(s); }
+  for(const it of st.tour){
+    const r=it.reach; if(!r||r.piece!==st.piece) continue;
+    if(r.s>lo+1e-12 && r.s<=hi){
+      if(!manual){ st.s=r.s; announce(it); holdFor(1800); return; }
+      announce(it);
+    }
   }
   if(ns>pc.L){
     const nx=st.piece+1;
     if(nx<pieces.length){
       const x1=pc.X[pc.X.length-1], x2=pieces[nx].X[0];
-      const brs=st.A.stops.filter(s=>s.kind==='disc'&&s.x>=x1-1e-9&&s.x<=x2+1e-9);
-      if(brs.length) announceStop(brs[0]); else setMsg('La curva sale de la ventana',['Continúa por arriba o por abajo del rango y visible. El vagón salta al siguiente tramo visible.']);
+      const brs=st.tour.filter(s=>s.kind==='disc'&&s.x>=x1-1e-9&&s.x<=x2+1e-9);
+      if(brs.length) announce(brs[0]); else setMsg('La curva sale de la ventana',['Continúa fuera del rango visible en y. El vagón salta al siguiente tramo visible.']);
       st.s=pc.L;
-      if(!manual) st.pauseUntil=performance.now()+2000;
       pendingJump={piece:nx,s:0};
       if(manual){ moveTo(pendingJump,true); pendingJump=null; }
+      else holdFor(brs.length?1800:900);
       return;
     }
-    st.s=pc.L; if(!manual){ st.playing=false; updatePlayBtn(); setMsg('Fin del recorrido',['El vagón llegó al borde derecho de la ventana.']); }
+    st.s=pc.L;
+    if(!manual){
+      st.playing=false; updatePlayBtn();
+      let extra='';
+      if(st.tab==='asint'||st.tab==='todo') extra=' '+infSay(st.A.infNeg,-1)+' '+infSay(st.A.infPos,1);
+      setMsg('Fin del recorrido',['El vagón llegó al borde derecho de la ventana.']);
+      speak('Fin del recorrido de '+tabName(st.tab)+'.'+extra, false);
+    }
     return;
   }
   if(ns<0){
@@ -1133,9 +1412,20 @@ function advance(dt,dir,manual){
   st.s=ns;
 }
 let pendingJump=null, snapCam=true;
+function rideTour(){
+  if(renderer.xr.isPresenting){ if(st.xrKind!=='ar'){ st.xrMode='ride'; placeGraph(); } }
+  else setView('board');
+  pendingJump=null;
+  moveTo({piece:0,s:0},true);
+  st.playing=true; updatePlayBtn();
+  const n=st.tour.length;
+  speak('Subimos a la curva. Recorrido de '+tabName(st.tab)+', con '+n+(n===1?' parada':' paradas')+'.');
+  holdFor(1500);
+  vrDirty=true;
+}
 
 /* ================= HUD ================= */
-let hudDirty=true, hudT=0;
+let hudDirty=true, hudT=0, vrDirty=true, vrT=0;
 function tangentInfo(){
   const F=st.F; const x0 = st.tnFollow? curX() : st.tnX;
   const y0=F.f(x0), m=F.f1(x0);
@@ -1160,6 +1450,14 @@ function tnEquations(t){
   else { const mn=-1/m; nor='y = '+linEq(mn,t.y0-mn*t.x0); }
   return {tan,nor,m};
 }
+function tnSay(){
+  const t=tangentInfo(); if(!t.ok) return 'En este punto la función no está definida.';
+  if(t.vertical) return 'La tangente es vertical, x igual a '+sayNum(t.x0)+'. La normal es horizontal, y igual a '+sayNum(t.y0)+'.';
+  const m=t.m;
+  let s='La recta tangente en x igual a '+sayNum(t.x0)+' tiene pendiente '+sayNum(m)+'.';
+  s+= Math.abs(m)<1e-12 ? ' Es horizontal, y la normal es vertical.' : ' La normal tiene pendiente '+sayNum(-1/m)+'.';
+  return s;
+}
 function shiftTxt(v,varName){ if(Math.abs(v)<1e-12) return varName; return varName+(v<0?' + ':' '+MINUS+' ')+fmtS(Math.abs(v),3); }
 function pointSlope(t){ const L=shiftTxt(t.y0,'y'), R=shiftTxt(t.x0,'x'); const m=fmtS(t.m,3); return L+' = '+(Math.abs(t.x0)<1e-12? m+'x' : m+'('+R+')'); }
 function stateAt(x){
@@ -1179,40 +1477,101 @@ function updateHUD(){
   document.getElementById('hState').innerHTML=stateAt(x).map(([t,c])=>'<span class="pill" style="color:'+c+'">'+t+'</span>').join('');
   const t=tangentInfo(), e=tnEquations(t);
   document.getElementById('hEq').innerHTML = st.tn>0 ? '<span style="color:'+hex(COL.tan)+'">tangente '+e.tan+'</span>'+(st.tn>1&&e.nor?'<br><span style="color:'+hex(COL.nor)+'">normal '+e.nor+'</span>':'') : '';
-  document.getElementById('hMsg').innerHTML = st.msgTitle? '<strong>'+esc(st.msgTitle)+'</strong>'+st.msgLines.map(esc).join('<br>') : '<span style="color:var(--stage-muted)">Pulse Recorrer o toque un elemento de la lista.</span>';
-  // tabla de tangente del panel
+  document.getElementById('hMsg').innerHTML = st.msgTitle? '<strong>'+esc(st.msgTitle)+'</strong>'+st.msgLines.map(esc).join('<br>') : '<span style="color:var(--stage-muted)">Elija una pestaña y pulse Subir y recorrer.</span>';
   const x0t=fmtS(t.x0);
   document.getElementById('tnBox').innerHTML = t.ok ?
     '<div>x₀ = '+x0t+'   f(x₀) = '+fmtS(t.y0,3)+'   f′(x₀) = '+(t.vertical?'no existe':fmtS(t.m,3))+'</div>'+
     '<div class="t">Tangente  '+e.tan+'</div>'+(t.vertical||Math.abs(t.m)<1e-12?'':'<div class="t">          '+pointSlope(t)+'</div>')+
     '<div class="n">Normal    '+e.nor+'</div>' : '<div>'+esc(e.tan)+'</div>';
   const sl=document.getElementById('xslider'); if(document.activeElement!==sl) sl.value=Math.round((x-st.a)/(st.b-st.a)*1000);
-  if(renderer.xr.isPresenting) drawHudCanvas(x,y,d1,d2,e);
 }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function drawHudCanvas(x,y,d1,d2,e){
-  const c=hudCanvas, g=c.getContext('2d'); const W=c.width,H=c.height;
+function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r); g.lineTo(x+w,y+h-r); g.quadraticCurveTo(x+w,y+h,x+w-r,y+h); g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r); g.lineTo(x,y+r); g.quadraticCurveTo(x,y,x+r,y); g.closePath(); }
+function wrap(g,text,maxW){
+  const words=String(text).split(' '), out=[]; let line='';
+  for(const w of words){ const t=line?line+' '+w:w; if(g.measureText(t).width>maxW && line){ out.push(line); line=w; } else line=t; }
+  if(line) out.push(line); return out;
+}
+
+/* ---- tablero VR con botones ---- */
+const vrUI={buttons:[],hover:null};
+function vrLayout(){
+  const B=[], pad=24, gap=12;
+  const tw=(PW-2*pad-2*gap)/3, th=62;
+  TABS.forEach((t,i)=>{ B.push({id:'tab:'+t.id, label:t.name, x:pad+(i%3)*(tw+gap), y:20+Math.floor(i/3)*(th+gap), w:tw, h:th, tab:t.id}); });
+  const acts=[
+    {id:'ride', label: st.playing?'Pausar':'Subir y recorrer'},
+    {id:'mode', label: st.xrKind==='ar'?'Centrar vista':(st.xrMode==='ride'?'Ver maqueta':'Montar curva')},
+    {id:'rectas', label: ['Rectas: no','Tangente','Tang. y normal'][st.tn]},
+    {id:'voz', label: 'Voz: '+(TTS.on?'sí':'no')},
+    {id:'ayuda', label: 'Ayuda'}
+  ];
+  const bw=(PW-2*pad-4*gap)/5, bh=78, by=PH-bh-20;
+  acts.forEach((a,i)=>B.push(Object.assign(a,{x:pad+i*(bw+gap), y:by, w:bw, h:bh})));
+  const zb=[{id:'zin',label:'+'},{id:'zout',label:MINUS},{id:'up',label:'↑'},{id:'down',label:'↓'},{id:'reset',label:'Centrar'}];
+  const zw=[70,70,70,70,150]; let zx=PW-pad-zw.reduce((a,b)=>a+b,0)-gap*4;
+  zb.forEach((z,i)=>{ B.push(Object.assign(z,{x:zx, y:by-78, w:zw[i], h:62})); zx+=zw[i]+gap; });
+  vrUI.buttons=B;
+}
+function drawVRPanel(){
+  vrLayout();
+  const g=hudCanvas.getContext('2d'); const W=PW,H=PH;
   g.clearRect(0,0,W,H);
-  g.fillStyle='rgba(9,20,25,0.92)'; roundRect(g,0,0,W,H,28); g.fill();
-  g.strokeStyle='rgba(148,168,174,0.35)'; g.lineWidth=3; roundRect(g,1.5,1.5,W-3,H-3,27); g.stroke();
-  g.fillStyle='#94a8ae'; g.font='700 30px "Atkinson Hyperlegible", sans-serif'; g.fillText('f(x) = '+st.F.txt,32,52);
-  g.font='600 36px "JetBrains Mono", monospace'; g.fillStyle='#e3ecec';
-  const rows=[['x',fmtS(x,3)],['f(x)',fmtS(y,3)],['f′(x)',fmtS(d1,3)],['f″(x)',fmtS(d2,3)]];
-  rows.forEach((r,i)=>{ const cx=32+(i%2)*480, cy=112+Math.floor(i/2)*52; g.fillStyle='#94a8ae'; g.fillText(r[0],cx,cy); g.fillStyle='#e3ecec'; g.fillText(r[1],cx+130,cy); });
-  let px=32; g.font='700 28px "Atkinson Hyperlegible", sans-serif';
-  stateAt(x).forEach(([t,col])=>{ const w=g.measureText(t).width+32; g.strokeStyle=col; g.lineWidth=3; roundRect(g,px,196,w,44,22); g.stroke(); g.fillStyle=col; g.fillText(t,px+16,228); px+=w+12; });
-  let yy=290;
-  g.font='600 27px "JetBrains Mono", monospace';
-  if(st.tn>0){ g.fillStyle=hex(COL.tan); g.fillText('tangente  '+e.tan,32,yy); yy+=40; }
-  if(st.tn>1&&e.nor){ g.fillStyle=hex(COL.nor); g.fillText('normal    '+e.nor,32,yy); yy+=40; }
-  yy+=12;
-  if(st.msgTitle){ g.fillStyle='#e3ecec'; g.font='700 31px "Atkinson Hyperlegible", sans-serif'; g.fillText(st.msgTitle,32,yy); yy+=40;
-    g.font='400 27px "Atkinson Hyperlegible", sans-serif'; g.fillStyle='#c9d6d8'; st.msgLines.slice(0,4).forEach(l=>{ g.fillText(l,32,yy); yy+=36; }); }
-  g.font='400 22px "Atkinson Hyperlegible", sans-serif'; g.fillStyle='#7f959b';
-  g.fillText('Stick avanzar · Gatillos saltar · A recorrer · B rectas · X modo · Y color',32,H-24);
+  g.fillStyle='rgba(9,20,25,0.94)'; roundRect(g,0,0,W,H,30); g.fill();
+  g.strokeStyle='rgba(148,168,174,0.4)'; g.lineWidth=3; roundRect(g,1.5,1.5,W-3,H-3,29); g.stroke();
+  const drawBtn=(b,active)=>{
+    const hov=vrUI.hover===b.id;
+    g.fillStyle= active ? '#0d7480' : (hov ? '#24444d' : '#162c33');
+    roundRect(g,b.x,b.y,b.w,b.h,14); g.fill();
+    g.strokeStyle= hov ? '#9fe3e8' : 'rgba(148,168,174,0.45)'; g.lineWidth= hov?4:2; roundRect(g,b.x,b.y,b.w,b.h,14); g.stroke();
+    g.fillStyle='#eef5f5'; g.font='700 '+(b.label.length>14?28:32)+'px "Atkinson Hyperlegible", sans-serif'; g.textAlign='center'; g.textBaseline='middle';
+    g.fillText(b.label,b.x+b.w/2,b.y+b.h/2+2); g.textAlign='left'; g.textBaseline='alphabetic';
+  };
+  vrUI.buttons.forEach(b=>drawBtn(b, (b.tab&&b.tab===st.tab) || (b.id==='ride'&&st.playing)));
+  const F=st.F, x=curX(), y=F.f(x), d1=F.f1(x), d2=F.f2(x);
+  let yy=200;
+  g.fillStyle='#94a8ae'; g.font='700 30px "Atkinson Hyperlegible", sans-serif'; g.fillText('f(x) = '+F.txt,28,yy); yy+=48;
+  g.font='600 32px "JetBrains Mono", monospace';
+  [['x',fmtS(x,3)],['f(x)',fmtS(y,3)],['f′(x)',fmtS(d1,3)],['f″(x)',fmtS(d2,3)]].forEach((r,i)=>{ const cx=28+i*290; g.fillStyle='#94a8ae'; g.fillText(r[0],cx,yy); g.fillStyle='#e3ecec'; g.fillText(r[1],cx+g.measureText(r[0]).width+14,yy); });
+  yy+=26;
+  let px=28; g.font='700 27px "Atkinson Hyperlegible", sans-serif';
+  stateAt(x).forEach(([t,col])=>{ const w=g.measureText(t).width+30; g.strokeStyle=col; g.lineWidth=3; roundRect(g,px,yy,w,42,21); g.stroke(); g.fillStyle=col; g.fillText(t,px+15,yy+30); px+=w+12; });
+  if(st.tn>0){ const e=tnEquations(tangentInfo()); g.font='600 25px "JetBrains Mono", monospace'; g.fillStyle=hex(COL.tan); g.fillText('tangente '+e.tan,px+8,yy+22); if(st.tn>1&&e.nor){ g.fillStyle=hex(COL.nor); g.fillText('normal '+e.nor,px+8,yy+48); } }
+  yy+=92;
+  const maxY=PH-78-20-78-14;
+  if(st.msgTitle){
+    g.fillStyle='#ffffff'; g.font='700 34px "Atkinson Hyperlegible", sans-serif';
+    wrap(g,st.msgTitle,W-56).slice(0,2).forEach(l=>{ if(yy<maxY){ g.fillText(l,28,yy); yy+=42; } });
+    g.fillStyle='#c9d6d8'; g.font='400 29px "Atkinson Hyperlegible", sans-serif';
+    for(const para of st.msgLines){ for(const l of wrap(g,para,W-56)){ if(yy<maxY){ g.fillText(l,28,yy); yy+=37; } } }
+  }
   hudTex.needsUpdate=true;
 }
-function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r); g.lineTo(x+w,y+h-r); g.quadraticCurveTo(x+w,y+h,x+w-r,y+h); g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r); g.lineTo(x,y+r); g.quadraticCurveTo(x,y,x+r,y); g.closePath(); }
+function vrAction(id){
+  if(id.startsWith('tab:')){ setTab(id.slice(4),{speak:true}); return; }
+  switch(id){
+    case 'ride': if(st.playing){ st.playing=false; updatePlayBtn(); speak('Recorrido en pausa.'); } else rideTour(); break;
+    case 'mode': if(st.xrKind==='ar'){ resetView(); } else toggleMode(); break;
+    case 'rectas': cycleRectas(); break;
+    case 'voz': setTTS(!TTS.on); if(TTS.on) speak('Narración activada.'); break;
+    case 'ayuda': setMsg('Ayuda',[HELP_VR]); speak(HELP_VR); break;
+    case 'zin': zoomBy(1.25); break;
+    case 'zout': zoomBy(0.8); break;
+    case 'up': moveBy(0.1); break;
+    case 'down': moveBy(-0.1); break;
+    case 'reset': resetView(); speak('Vista centrada.'); break;
+  }
+  vrDirty=true;
+}
+function toggleMode(){
+  st.xrMode = st.xrMode==='ride'?'maqueta':'ride'; placeGraph(); snapCam=true;
+  const t= st.xrMode==='ride' ? ['Modo montar','Está sentado sobre la curva. Use el stick derecho para avanzar.'] : ['Modo maqueta','La función está frente a usted a escala de mesa. Puede agarrarla y moverla.'];
+  setMsg(t[0],[t[1]]); speak(t[0]+'. '+t[1]);
+}
+function cycleRectas(){
+  st.tn=(st.tn+1)%3; const r=document.querySelector('input[name="tn"][value="'+st.tn+'"]'); if(r) r.checked=true; hudDirty=true; vrDirty=true;
+  speak(st.tn===0?'Rectas ocultas.':(st.tn===1?'Se muestra la recta tangente. ':'Se muestran la tangente y la normal. ')+(st.tn>0?tnSay():''));
+}
 
 /* ================= panel lateral ================= */
 function updateLegend(){
@@ -1221,33 +1580,41 @@ function updateLegend(){
   el.hidden=!L.length;
   el.innerHTML=L.map(([t,c])=>'<span><i style="background:'+hex(c)+'"></i>'+t+'</span>').join('');
 }
-function ivTxt(p,q){ return '('+fmtS(p)+', '+fmtS(q)+')'; }
+function renderTabBar(){
+  const bar=document.getElementById('tabBar');
+  bar.innerHTML=TABS.map(t=>'<button type="button" role="tab" data-tab="'+t.id+'" aria-selected="'+(t.id===st.tab)+'">'+t.name+'</button>').join('');
+  bar.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab,{speak:true})));
+}
 function renderPanel(){
-  const A=st.A, F=st.F;
+  const F=st.F;
   document.getElementById('fxTitle').textContent='f(x) = '+F.txt;
   document.getElementById('d1Txt').textContent=F.t1;
   document.getElementById('d2Txt').textContent=F.t2;
+}
+function renderTab(){
+  const A=st.A;
+  document.querySelectorAll('#tabBar button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===st.tab));
+  const info=tabInfo(st.tab);
+  document.getElementById('tabInfo').innerHTML='<strong>'+esc(info.title)+'</strong>'+info.lines.map(l=>'<div>'+esc(l)+'</div>').join('');
   const ol=document.getElementById('stopList');
-  ol.innerHTML = A.stops.length ? A.stops.map((s,i)=>'<li><button type="button" data-i="'+i+'"><span class="dot" style="--c:'+CSSCOL[s.kind]+'"></span><span class="k">'+esc(s.title)+'</span><span class="xy">'+esc(s.pt)+'</span></button></li>').join('')
-    : '<li class="small">No se encontraron ceros, extremos, inflexiones ni discontinuidades en la ventana.</li>';
-  ol.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>jumpToStop(+b.dataset.i)));
-  const facts=[];
-  facts.push('<div><span class="lbl">Dominio en la ventana</span><div class="mono">'+esc(A.domTxt)+'</div></div>');
-  const mx=A.absMax, mn=A.absMin;
-  const ext=(o,word)=> o.none ? 'No tiene '+word+' absoluto en la ventana (f no está acotada cerca de x = '+fmtS(o.x)+').'
-    : (o.attained ? word.charAt(0).toUpperCase()+word.slice(1)+' absoluto '+fmtS(o.v)+' en x = '+fmtS(o.x)+(Math.abs(o.x-st.a)<1e-9||Math.abs(o.x-st.b)<1e-9?' (extremo de la ventana)':'')+'.'
-      : (word==='máximo'?'Supremo ':'Ínfimo ')+fmtS(o.v)+' cerca de x = '+fmtS(o.x)+', no alcanzado.');
-  facts.push('<div><span class="lbl">Extremos absolutos en [' +fmtS(st.a)+', '+fmtS(st.b)+']</span><div>'+esc(ext(mx,'máximo'))+'<br>'+esc(ext(mn,'mínimo'))+'</div></div>');
-  const infLine=(r,sgn)=>{ const s=sgn>0?'+∞':MINUS+'∞'; let t='x → '+s+'   f(x) → '+limTxt(r.L);
-    if(r.L.type==='fin') t+='   asíntota horizontal y = '+fmtS(r.L.v);
-    else if(r.oblique) t+='   asíntota oblicua y = '+linEq(r.oblique.m,r.oblique.n);
-    return t; };
-  facts.push('<div><span class="lbl">Comportamiento en los extremos</span><div class="mono">'+esc(infLine(A.infNeg,-1))+'<br>'+esc(infLine(A.infPos,1))+'</div><div class="small">Estimado evaluando f en x = ±√2·10ᵏ con k = 1, …, 9.</div></div>');
-  document.getElementById('facts').innerHTML=facts.join('');
+  const dotCol=it=> CSSCOL[it.kind] || 'var(--muted)';
+  ol.innerHTML = st.tour.length ? st.tour.map((it,i)=>'<li><button type="button" data-i="'+i+'"'+(i===curTourIdx?' class="cur"':'')+'><span class="dot" style="--c:'+dotCol(it)+'"></span><span class="k">'+esc(it.title)+'</span><span class="xy">'+esc(it.pt)+'</span></button></li>').join('')
+    : '<li class="small">No hay elementos de este tipo en la ventana.</li>';
+  ol.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>jumpToTour(+b.dataset.i)));
+  const ex=[];
+  if(st.tab==='todo'){
+    ex.push('<div><span class="lbl">Dominio en la ventana</span><div class="mono">'+esc(A.domTxt)+'</div></div>');
+    ex.push('<div><span class="lbl">Extremos absolutos en ['+fmtS(st.a)+', '+fmtS(st.b)+']</span><div>'+esc(extTxt(A.absMax,'máximo'))+'<br>'+esc(extTxt(A.absMin,'mínimo'))+'</div></div>');
+  }
+  if(st.tab==='todo'||st.tab==='asint'){
+    ex.push('<div><span class="lbl">Comportamiento en los extremos</span><div class="mono">'+esc(infLine(A.infNeg,-1))+'<br>'+esc(infLine(A.infPos,1))+'</div><div class="small">Estimado evaluando f en x = ±√2·10ᵏ con k = 1, …, 9.</div></div>');
+  }
   const mName={crec:['creciente',CSSCOL.crec],decr:['decreciente',CSSCOL.decr],const:['constante','var(--muted)']};
   const cName={up:['cóncava hacia arriba',CSSCOL.up],down:['cóncava hacia abajo',CSSCOL.down],lin:['lineal','var(--muted)']};
-  document.getElementById('monoTbl').innerHTML = A.mono.map(o=>'<tr><td>'+ivTxt(o.p,o.q)+'</td><td><span class="tag" style="--c:'+mName[o.kind][1]+'"><i></i>'+mName[o.kind][0]+'</span></td></tr>').join('') || '<tr><td>sin datos</td></tr>';
-  document.getElementById('concTbl').innerHTML = A.conc.map(o=>'<tr><td>'+ivTxt(o.p,o.q)+'</td><td><span class="tag" style="--c:'+cName[o.kind][1]+'"><i></i>'+cName[o.kind][0]+'</span></td></tr>').join('') || '<tr><td>sin datos</td></tr>';
+  if(st.tab==='mono'||st.tab==='todo') ex.push('<div><span class="lbl">Monotonía</span><table class="iv">'+(A.mono.map(o=>'<tr><td>'+ivTxt(o.p,o.q)+'</td><td><span class="tag" style="--c:'+mName[o.kind][1]+'"><i></i>'+mName[o.kind][0]+'</span></td></tr>').join('')||'<tr><td>sin datos</td></tr>')+'</table></div>');
+  if(st.tab==='conc'||st.tab==='todo') ex.push('<div><span class="lbl">Concavidad</span><table class="iv">'+(A.conc.map(o=>'<tr><td>'+ivTxt(o.p,o.q)+'</td><td><span class="tag" style="--c:'+cName[o.kind][1]+'"><i></i>'+cName[o.kind][0]+'</span></td></tr>').join('')||'<tr><td>sin datos</td></tr>')+'</table></div>');
+  if(st.tab==='extremos') ex.push('<div><span class="lbl">Extremos absolutos en ['+fmtS(st.a)+', '+fmtS(st.b)+']</span><div>'+esc(extTxt(A.absMax,'máximo'))+'<br>'+esc(extTxt(A.absMin,'mínimo'))+'</div></div>');
+  document.getElementById('tabExtra').innerHTML=ex.join('');
 }
 
 function computeLimit(){
@@ -1258,36 +1625,39 @@ function computeLimit(){
   if(r==='inf'||r==='+inf'||r==='infinito'||r==='+infinito') c=Infinity;
   else if(r==='-inf'||r==='-infinito') c=-Infinity;
   else { try{ c=toNum(M.evaluate(preprocess(raw))); }catch(e){ c=NaN; } }
-  if(!(isFinite(c)||Math.abs(c)===Infinity)){ out.innerHTML='<p class="err">No reconozco ese valor. Pruebe 2, pi/2, inf o -inf.</p>'; st.limit=null; buildLimitVisual(); return; }
+  if(!(isFinite(c)||Math.abs(c)===Infinity)){ out.innerHTML='<p class="err">No reconozco ese valor. Pruebe 2, pi/2, inf o -inf.</p>'; st.limit=null; buildLimitVisual(); return null; }
   const f=st.F.f, res=limitAt(f,c);
-  let html='';
+  let html='', say='';
   if(res.inf){
     const xs=[1,2,3,4,6,8].map(k=>Math.sign(c)*Math.pow(10,k));
     html+='<div class="ltwrap"><table class="lt"><tr><th>x</th><th>f(x)</th></tr>'+xs.map(x=>'<tr><td>'+dec(x,0)+'</td><td>'+dec(f(x),6)+'</td></tr>').join('')+'</table></div>';
     html+='<p class="facts"><span class="mono">lím x→'+(c>0?'+∞':MINUS+'∞')+' f(x) = '+esc(limTxt(res.L))+'</span>'+(res.oblique?'<span>Asíntota oblicua y = '+esc(linEq(res.oblique.m,res.oblique.n))+'</span>':'')+'</p>';
+    say=infSay({L:res.L,oblique:res.oblique},c>0?1:-1);
     st.limit=null;
   } else {
     const hs=[1e-1,1e-2,1e-3,1e-4,1e-5,1e-6].map(h=>h*Math.max(1,Math.abs(c)));
     html+='<div class="ltwrap"><table class="lt"><tr><th>x → c⁻</th><th>f(x)</th><th>x → c⁺</th><th>f(x)</th></tr>'+hs.map(h=>'<tr><td>'+dec(c-h,6)+'</td><td>'+dec(f(c-h),6)+'</td><td>'+dec(c+h,6)+'</td><td>'+dec(f(c+h),6)+'</td></tr>').join('')+'</table></div>';
     const ct=fmtS(c);
-    let concl;
-    if(res.both && !res.both.onlyLeft && !res.both.onlyRight) concl='lím x→'+ct+' f(x) = '+limTxt(res.both);
-    else if(res.both) concl='Solo existe el límite lateral '+(res.both.onlyLeft?'izquierdo':'derecho')+', porque f no está definida al otro lado de '+ct+'.';
-    else concl='El límite no existe, porque los límites laterales no coinciden.';
+    let concl, csay;
+    if(res.both && !res.both.onlyLeft && !res.both.onlyRight){ concl='lím x→'+ct+' f(x) = '+limTxt(res.both); csay='El límite existe y vale '+sayLim(res.both)+'.'; }
+    else if(res.both){ concl='Solo existe el límite lateral '+(res.both.onlyLeft?'izquierdo':'derecho')+', porque f no está definida al otro lado de '+ct+'.'; csay='Solo existe el límite por la '+(res.both.onlyLeft?'izquierda':'derecha')+'.'; }
+    else { concl='El límite no existe, porque los límites laterales no coinciden.'; csay='El límite no existe, porque los límites laterales no coinciden.'; }
     const fc=f(c);
     html+='<div class="facts"><span class="mono">lím x→'+ct+'⁻ f(x) = '+esc(limTxt(res.L))+'</span><span class="mono">lím x→'+ct+'⁺ f(x) = '+esc(limTxt(res.R))+'</span><span>'+esc(concl)+'</span><span class="small">f('+esc(ct)+') '+(isFinite(fc)?'= '+esc(fmtS(fc)):'no está definida')+'.</span></div>';
+    say='Cuando x tiende a '+sayNum(c)+' por la izquierda, f tiende a '+sayLim(res.L)+'. Por la derecha, tiende a '+sayLim(res.R)+'. '+csay;
     st.limit={c,res};
   }
   out.innerHTML=html;
   buildLimitVisual();
+  return say;
 }
 
 /* ================= carga de funciones ================= */
 function num(id){ const v=document.getElementById(id).value.trim(); if(v==='') return null; try{ const r=toNum(M.evaluate(preprocess(v))); return isFinite(r)?r:null; }catch(e){ return null; } }
-function loadFunction(src,a,b,ymin,ymax){
+function loadFunction(src,a,b,ymin,ymax,talk){
   const err=document.getElementById('fnError');
   let F;
-  try{ F=buildF(src); }catch(e){ err.textContent=e.message; err.hidden=false; return false; }
+  try{ F=buildF(src); }catch(e){ err.textContent=e.message; err.hidden=false; speak('No pude leer la función. '+e.message); return false; }
   if(!(b>a)){ err.textContent='La ventana necesita x mín menor que x máx.'; err.hidden=false; return false; }
   const A=analyze(F,a,b);
   if(A.empty){ err.textContent='La función no toma valores reales en esta ventana. Cambie x mín y x máx.'; err.hidden=false; return false; }
@@ -1301,39 +1671,51 @@ function loadFunction(src,a,b,ymin,ymax){
   st.limit=null; document.getElementById('limOut').innerHTML='';
   buildGraph();
   renderPanel();
-  st.piece=0; st.s=0; st.playing=false; updatePlayBtn(); curStopIdx=-1; snapCam=true; pendingJump=null;
-  setMsg('Listo para recorrer f(x) = '+F.txt,[A.stops.length+' puntos característicos en la ventana.']);
+  st.piece=0; st.s=0; st.playing=false; updatePlayBtn(); curTourIdx=-1; curStopIdx=-1; snapCam=true; pendingJump=null;
+  setTab(st.tab,{speak:false});
+  if(talk) speak(tabInfo(st.tab).say);
   computeLimit();
-  hudDirty=true;
+  hudDirty=true; vrDirty=true;
   return true;
 }
 function fmtNum(v){ return String(Math.round(v*1e6)/1e6); }
 
 document.getElementById('fnForm').addEventListener('submit',e=>{ e.preventDefault();
   const a=num('xa'), b=num('xb');
-  loadFunction(document.getElementById('fnInput').value, a===null?-5:a, b===null?5:b, num('ya'), num('yb'));
+  loadFunction(document.getElementById('fnInput').value, a===null?-5:a, b===null?5:b, num('ya'), num('yb'), true);
 });
 ['xa','xb','ya','yb'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); document.getElementById('fnForm').requestSubmit(); } }));
 const presetBox=document.getElementById('presets');
 PRESETS.forEach((p,i)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=p.f; b.addEventListener('click',()=>applyPreset(i)); presetBox.appendChild(b); });
 let presetIdx=0;
-function applyPreset(i){ presetIdx=i; const p=PRESETS[i]; document.getElementById('fnInput').value=p.f; document.getElementById('ya').value=''; document.getElementById('yb').value=''; loadFunction(p.f,p.a,p.b,null,null); }
-document.getElementById('limForm').addEventListener('submit',e=>{ e.preventDefault(); computeLimit(); });
-document.querySelectorAll('input[name="tn"]').forEach(r=>r.addEventListener('change',()=>{ st.tn=+r.value; hudDirty=true; }));
+function applyPreset(i){ presetIdx=i; const p=PRESETS[i]; document.getElementById('fnInput').value=p.f; document.getElementById('ya').value=''; document.getElementById('yb').value=''; loadFunction(p.f,p.a,p.b,null,null,true); }
+document.getElementById('limForm').addEventListener('submit',e=>{ e.preventDefault(); const s=computeLimit(); if(s) speak(s); });
+document.querySelectorAll('input[name="tn"]').forEach(r=>r.addEventListener('change',()=>{ st.tn=+r.value; hudDirty=true; vrDirty=true; }));
 document.querySelectorAll('input[name="tnsrc"]').forEach(r=>r.addEventListener('change',()=>{ st.tnFollow=r.value==='follow'; readTnX(); hudDirty=true; }));
 function readTnX(){ const v=num('tnX'); if(v!==null) st.tnX=v; }
 document.getElementById('tnX').addEventListener('input',()=>{ readTnX(); if(!st.tnFollow) hudDirty=true; });
 document.getElementById('tnX').addEventListener('focus',()=>{ document.querySelector('input[name="tnsrc"][value="fixed"]').checked=true; st.tnFollow=false; });
+document.getElementById('bSpeakTn').addEventListener('click',()=>speak(tnSay()));
 
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 document.querySelectorAll('[data-color]').forEach(b=>b.addEventListener('click',()=>setColor(b.dataset.color)));
+document.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',()=>{ const k=b.dataset.move; if(k==='in') zoomBy(1.25); else if(k==='out') zoomBy(0.8); else if(k==='up') moveBy(0.08); else if(k==='down') moveBy(-0.08); else resetView(); }));
 function setView(v){ st.view=v; document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v)); controls.enabled=(v==='orbit'); if(v==='orbit') placeGraph(); snapCam=true; }
 function setColor(c){ st.color=c; document.querySelectorAll('[data-color]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.color===c)); recolor(); }
-function updatePlayBtn(){ document.getElementById('bPlay').textContent = st.playing?'❚❚ Pausa':'▶ Recorrer'; }
-function togglePlay(){ st.playing=!st.playing; if(st.playing){ const pc=pieces[st.piece]; if(pc && st.s>=pc.L-1e-12 && st.piece===pieces.length-1){ st.piece=0; st.s=0; } st.pauseUntil=0; } updatePlayBtn(); }
+function updatePlayBtn(){ document.getElementById('bPlay').textContent = st.playing?'❚❚ Pausa':'▶ Recorrer'; vrDirty=true; }
+function togglePlay(){
+  st.playing=!st.playing;
+  if(st.playing){ const pc=pieces[st.piece]; if(pc && st.s>=pc.L-1e-12 && st.piece===pieces.length-1){ st.piece=0; st.s=0; } st.pauseUntil=0; st.waitSpeech=false; }
+  else if(TTS.ok){ try{ speechSynthesis.cancel(); }catch(e){} }
+  updatePlayBtn();
+}
 document.getElementById('bPlay').addEventListener('click',togglePlay);
 document.getElementById('bNext').addEventListener('click',()=>stepStop(1));
 document.getElementById('bPrev').addEventListener('click',()=>stepStop(-1));
+document.getElementById('bRideTour').addEventListener('click',rideTour);
+document.getElementById('bSpeakTab').addEventListener('click',()=>speak(tabInfo(st.tab).say));
+document.getElementById('btnTTS').addEventListener('click',()=>{ setTTS(!TTS.on); if(TTS.on) speak('Narración activada.'); });
+document.getElementById('btnHelp').addEventListener('click',()=>{ setMsg('Ayuda',[HELP_2D]); speak(HELP_2D); });
 document.getElementById('speed').addEventListener('input',e=>{ st.speed=+e.target.value; });
 document.getElementById('xslider').addEventListener('input',e=>{ const x=st.a+(st.b-st.a)*(+e.target.value)/1000; st.playing=false; updatePlayBtn(); moveTo(nearestReach(x),false); hudDirty=true; });
 const keys={};
@@ -1341,10 +1723,16 @@ window.addEventListener('keydown',e=>{
   if(e.target.closest('input,textarea,select')) return;
   if(e.key===' '){ e.preventDefault(); togglePlay(); }
   else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){ keys[e.key]=true; e.preventDefault(); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); moveBy(0.08); }
+  else if(e.key==='ArrowDown'){ e.preventDefault(); moveBy(-0.08); }
+  else if(e.key==='+'||e.key==='='){ zoomBy(1.25); }
+  else if(e.key==='-'){ zoomBy(0.8); }
   else if(e.key==='n'||e.key==='N'||e.key==='PageDown') stepStop(1);
   else if(e.key==='p'||e.key==='P'||e.key==='PageUp') stepStop(-1);
 });
 window.addEventListener('keyup',e=>{ keys[e.key]=false; });
+// la primera interacción habilita la voz en navegadores que la bloquean
+window.addEventListener('pointerdown',()=>{ TTS.unlocked=true; },{once:true});
 
 /* ================= WebXR ================= */
 const btnVR=document.getElementById('btnVR'), btnAR=document.getElementById('btnAR'), xrStatus=document.getElementById('xrStatus');
@@ -1356,7 +1744,7 @@ async function checkXR(){
   let framed=false; try{ framed = window.self!==window.top; }catch(e){ framed=true; }
   if(!vr && framed){
     btnVR.disabled=false; btnAR.disabled=false;
-    xrStatus.textContent='Esta vista está incrustada en otra página, que puede bloquear la realidad virtual. Si al pulsar Entrar en VR aparece un error, abra la versión independiente del archivo en el navegador del Quest.';
+    xrStatus.textContent='Esta vista está incrustada en otra página, que puede bloquear la realidad virtual. Si al pulsar Entrar en VR aparece un error, abra la versión publicada en GitHub Pages.';
     return;
   }
   btnVR.disabled=!vr; btnAR.disabled=!ar;
@@ -1367,7 +1755,7 @@ async function enterXR(kind){
   if(renderer.xr.isPresenting){ renderer.xr.getSession().end(); return; }
   try{
     const session=await navigator.xr.requestSession(kind==='ar'?'immersive-ar':'immersive-vr',{optionalFeatures:['local-floor','bounded-floor']});
-    st.xrKind=kind; st.xrMode = kind==='ar' ? 'maqueta' : 'ride';
+    st.xrKind=kind; st.xrMode = kind==='ar' ? 'maqueta' : 'maqueta';
     session.addEventListener('end',onXREnd);
     if(kind==='ar'){ scene.background=null; renderer.setClearAlpha(0); }
     await renderer.xr.setSession(session);
@@ -1375,10 +1763,12 @@ async function enterXR(kind){
     savedCam={p:camera.position.clone(),q:camera.quaternion.clone()};
     camera.position.set(0,0,0); camera.quaternion.identity();
     hudMesh.visible=st.hudVisible;
-    placeGraph(); snapCam=true; hudDirty=true;
-    setMsg(kind==='ar'?'Realidad mixta':'Realidad virtual',[st.xrMode==='ride'?'Está sentado sobre la curva. Mueva el stick para avanzar.':'La maqueta está frente a usted.']);
+    placeGraph(); snapCam=true; hudDirty=true; vrDirty=true;
+    const intro=(kind==='ar'?'Realidad mixta. ':'Realidad virtual. ')+'La función f de x igual a '+sayExpr(st.F.node)+' está frente a usted. A su izquierda está el tablero con las pestañas. Apunte con el mando y pulse el gatillo para elegir. Pulse Subir y recorrer para montarse en la curva. Para escuchar todos los controles, haga clic con el stick derecho.';
+    setMsg(kind==='ar'?'Realidad mixta':'Realidad virtual',['La función está frente a usted. Apunte al tablero y pulse el gatillo para elegir una pestaña.','Clic del stick derecho: ayuda de controles.']);
+    speak(intro);
   }catch(e){
-    xrStatus.textContent='No se pudo iniciar la sesión inmersiva ('+(e&&e.name?e.name:'error')+'). Si abrió la página dentro de otra aplicación, ábrala directamente en el navegador del Quest mediante el archivo independiente.';
+    xrStatus.textContent='No se pudo iniciar la sesión inmersiva ('+(e&&e.name?e.name:'error')+'). Si abrió la página dentro de otra aplicación, ábrala directamente en el navegador del Quest.';
   }
 }
 let savedCam=null;
@@ -1386,37 +1776,86 @@ function onXREnd(){
   scene.background=BG; renderer.setClearAlpha(1);
   rig.position.set(0,0,0); rig.rotation.set(0,0,0);
   hudMesh.visible=false; floor.visible=false; st.xrKind=null;
+  ctrls.forEach(c=>{ c.userData.dot.visible=false; });
   if(savedCam){ camera.position.copy(savedCam.p); camera.quaternion.copy(savedCam.q); }
   controls.enabled = st.view==='orbit';
   placeGraph(); snapCam=true;
 }
 btnVR.addEventListener('click',()=>enterXR('vr'));
 btnAR.addEventListener('click',()=>enterXR('ar'));
+
+/* ---- mandos: rayo al tablero, agarre y zoom ---- */
 const prevBtns={};
+const raycaster=new THREE.Raycaster(), tmpM=new THREE.Matrix4();
+const grab={held:[false,false], start:[new THREE.Vector3(),new THREE.Vector3()], base:null};
+function rayHit(ctrl){
+  if(!hudMesh.visible) return null;
+  tmpM.identity().extractRotation(ctrl.matrixWorld);
+  raycaster.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
+  raycaster.ray.direction.set(0,0,-1).applyMatrix4(tmpM);
+  const h=raycaster.intersectObject(hudMesh,false)[0];
+  if(!h||!h.uv) return null;
+  const cx=h.uv.x*PW, cy=(1-h.uv.y)*PH;
+  const b=vrUI.buttons.find(b=>cx>=b.x&&cx<=b.x+b.w&&cy>=b.y&&cy<=b.y+b.h);
+  return {point:h.point, dist:h.distance, btn:b?b.id:null};
+}
+function grabBaseline(){
+  grab.base={offset:st.offset.clone(), seat:st.seat, zoom:st.zoom, zoomRide:st.zoomRide,
+    dist: ctrls[0].position.distanceTo(ctrls[1].position)};
+  [0,1].forEach(i=>grab.start[i].copy(ctrls[i].position));
+}
 function pollXR(dt){
   const s=renderer.xr.getSession(); if(!s) return;
-  let move=0;
-  for(const src of s.inputSources){
-    const gp=src.gamepad; if(!gp) continue;
-    const h=src.handedness||'none';
+  let move=0, zoomAxis=0, hoverAny=null;
+  rig.updateMatrixWorld(true);
+  let gripChanged=false;
+  ctrls.forEach((ctrl,idx)=>{
+    const src=ctrl.userData.src; const gp=src&&src.gamepad; if(!gp) return;
+    const h=src.handedness||('i'+idx);
     const pr=gp.buttons.map(b=>b&&b.pressed); const was=prevBtns[h]||[];
     const edge=i=>pr[i]&&!was[i];
     const ay=gp.axes.length>=4?gp.axes[3]:(gp.axes[1]||0);
-    if(Math.abs(ay)>0.2) move+=-ay;
+    if(h==='left'){ if(Math.abs(ay)>0.2) zoomAxis+=-ay; }
+    else { if(Math.abs(ay)>0.2) move+=-ay; }
+    // rayo
+    const hit=rayHit(ctrl);
+    const dot=ctrl.userData.dot, line=ctrl.userData.line;
+    if(hit){ dot.visible=true; dot.position.copy(rig.worldToLocal(hit.point.clone())); line.scale.z=hit.dist; if(hit.btn) hoverAny=hit.btn; }
+    else { dot.visible=false; line.scale.z=1.2; }
+    // gatillo
+    if(edge(0)){
+      if(hit && hit.btn) vrAction(hit.btn);
+      else if(!hit) stepStop(h==='left'?-1:1);
+    }
+    // agarre
+    const held=!!pr[1];
+    if(held!==grab.held[idx]){ grab.held[idx]=held; gripChanged=true; }
     if(h==='right'){
-      if(edge(0)) stepStop(1);
-      if(edge(1)){ st.hudVisible=!st.hudVisible; hudMesh.visible=st.hudVisible; }
-      if(edge(4)) togglePlay();
-      if(edge(5)){ st.tn=(st.tn+1)%3; document.querySelector('input[name="tn"][value="'+st.tn+'"]').checked=true; hudDirty=true; }
+      if(edge(4)){ if(st.playing){ togglePlay(); speak('Recorrido en pausa.'); } else rideTour(); }
+      if(edge(5)) cycleRectas();
+      if(edge(3)){ setMsg('Ayuda',[HELP_VR]); speak(HELP_VR); }
     } else if(h==='left'){
-      if(edge(0)) stepStop(-1);
-      if(edge(4) && st.xrKind!=='ar'){ st.xrMode = st.xrMode==='ride'?'maqueta':'ride'; placeGraph(); snapCam=true; setMsg(st.xrMode==='ride'?'Modo montar':'Modo maqueta',[st.xrMode==='ride'?'Está sobre la curva.':'La curva está frente a usted a escala de mesa.']); }
-      if(edge(5)){ const order=['mono','conc','none']; setColor(order[(order.indexOf(st.color)+1)%3]); hudDirty=true; }
+      if(edge(4) && st.xrKind!=='ar') toggleMode();
+      if(edge(5)){ st.hudVisible=!st.hudVisible; hudMesh.visible=st.hudVisible; }
       if(edge(3)){ applyPreset((presetIdx+1)%PRESETS.length); placeGraph(); }
     }
     prevBtns[h]=pr;
+  });
+  if(hoverAny!==vrUI.hover){ vrUI.hover=hoverAny; vrDirty=true; }
+  if(gripChanged) grabBaseline();
+  const nHeld=(grab.held[0]?1:0)+(grab.held[1]?1:0);
+  if(nHeld===2 && grab.base && grab.base.dist>0.02){
+    const k=ctrls[0].position.distanceTo(ctrls[1].position)/grab.base.dist;
+    if(isRide()) st.zoomRide=Math.min(4,Math.max(0.25,grab.base.zoomRide*k)); else st.zoom=Math.min(6,Math.max(0.2,grab.base.zoom*k));
+    placeGraph(false);
+  } else if(nHeld===1 && grab.base){
+    const i=grab.held[0]?0:1;
+    const d=ctrls[i].position.clone().sub(grab.start[i]);
+    if(isRide()){ st.seat=grab.base.seat-d.y; }
+    else { st.offset.copy(grab.base.offset).add(d); placeGraph(false); }
   }
-  if(move!==0){ st.playing=false; updatePlayBtn(); advance(dt,Math.max(-1.5,Math.min(1.5,move)),true); hudDirty=true; }
+  if(zoomAxis!==0) zoomBy(Math.exp(zoomAxis*dt*1.2));
+  if(move!==0){ if(st.playing){ st.playing=false; updatePlayBtn(); } advance(dt,Math.max(-1.5,Math.min(1.5,move)),true); hudDirty=true; vrDirty=true; }
 }
 
 /* ================= bucle ================= */
@@ -1434,9 +1873,13 @@ function loop(){
   if(fadeAnim){ fadeAnim.t+=dt; const h=fadeAnim.dur/2; if(fadeAnim.t>=h && !fadeAnim.done){ fadeAnim.mid(); fadeAnim.done=true; }
     fade.material.opacity = fadeAnim.t<h ? fadeAnim.t/h : Math.max(0,1-(fadeAnim.t-h)/h);
     if(fadeAnim.t>=fadeAnim.dur){ fadeAnim=null; fade.material.opacity=0; } }
-  if(st.playing && now>=st.pauseUntil){
-    if(pendingJump){ moveTo(pendingJump,true); pendingJump=null; st.pauseUntil=now+400; }
-    else { advance(dt,1,false); hudDirty=true; }
+  if(st.playing){
+    const waiting = now<st.pauseUntil || (st.waitSpeech && isSpeaking() && now-(TTS.last||0)<30000);
+    if(!waiting){
+      st.waitSpeech=false;
+      if(pendingJump){ moveTo(pendingJump,true); pendingJump=null; st.pauseUntil=now+400; }
+      else { advance(dt,1,false); hudDirty=true; vrDirty=true; }
+    }
   }
   // posición del vagón
   const pc=pieces[st.piece];
@@ -1444,17 +1887,14 @@ function loop(){
     const p=posAt(pc,st.s), p2=posAt(pc,Math.min(pc.L,st.s+pc.L*1e-3+G.u*0.5)), p1=posAt(pc,Math.max(0,st.s-G.u*0.5));
     G.rider.position.set(p.x,p.y,0);
     tmpT.set(p2.x-p1.x,p2.y-p1.y,0); if(tmpT.lengthSq()<1e-20) tmpT.set(1,0,0); tmpT.normalize();
-    G.rider.children[1].rotation.set(0,Math.PI/2,Math.atan2(tmpT.y,tmpT.x));
     G.rider.children[1].quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),tmpT);
     const pw=worldOf(p.x,p.y,0,tmpV);
     if(renderer.xr.isPresenting){
-      if(st.xrMode==='ride' && st.xrKind!=='ar'){
-        const target=new THREE.Vector3(pw.x,pw.y-1.15,pw.z);
+      if(isRide()){
+        const target=new THREE.Vector3(pw.x,pw.y-1.15+st.seat,pw.z);
         rig.rotation.set(0,-Math.PI/2,0);
         if(snapCam) rig.position.copy(target); else rig.position.lerp(target,Math.min(1,dt*10));
-        G.rider.visible=true;
       } else { rig.position.set(0,0,0); rig.rotation.set(0,0,0); }
-      hudMesh.position.set(-0.42,1.05,-0.62); hudMesh.rotation.set(-0.35,0.55,0,'YXZ');
     } else if(st.view==='board'){
       const S=G.S, tw=new THREE.Vector3(tmpT.x,tmpT.y,0);
       const desired=pw.clone().addScaledVector(tw,-G.u*26*S).add(new THREE.Vector3(0,G.u*9*S,G.u*20*S));
@@ -1483,9 +1923,9 @@ function loop(){
   // marcador activo
   if(G.markers){ G.markers.forEach((m,i)=>{ if(m){ const k = i===curStopIdx ? 1.35+0.15*Math.sin(now/180) : 1; m.scale.setScalar(k); } }); }
   if(!renderer.xr.isPresenting && st.view==='orbit') controls.update();
-  hudT+=dt;
-  if(hudDirty && hudT>0.1){ hudT=0; hudDirty=false; updateHUD(); }
-  else if(st.playing && hudT>0.1){ hudT=0; updateHUD(); }
+  hudT+=dt; vrT+=dt;
+  if((hudDirty||st.playing) && hudT>0.1){ hudT=0; hudDirty=false; updateHUD(); }
+  if(renderer.xr.isPresenting && hudMesh.visible && (vrDirty||st.playing) && vrT>0.1){ vrT=0; vrDirty=false; drawVRPanel(); }
   renderer.render(scene,camera);
 }
 
@@ -1493,7 +1933,7 @@ function resize(){ const r=renderer.domElement.getBoundingClientRect(); const w=
 new ResizeObserver(resize).observe(stage); window.addEventListener('resize',resize);
 resize();
 
-function start(){ loadFunction(PRESETS[0].f,PRESETS[0].a,PRESETS[0].b,null,null); renderer.setAnimationLoop(loop); }
+function start(){ renderTabBar(); updateTTSStatus(); loadFunction(PRESETS[0].f,PRESETS[0].a,PRESETS[0].b,null,null,false); renderer.setAnimationLoop(loop); }
 const fontsReady = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]) : Promise.resolve();
 fontsReady.then(start);
 })();
