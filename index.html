@@ -133,6 +133,16 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
 .ctl dd{margin:0;color:var(--muted)}
 .note{background:var(--soft);border-radius:8px;padding:8px 10px;font-size:12.5px;color:var(--ink)}
 #xrStatus:empty{display:none}
+.mj{font-size:102%;white-space:nowrap}
+.mj svg{overflow:visible;max-width:none}
+.mjf{font-family:var(--mono)}
+.tnv{display:flex;flex-wrap:wrap;gap:4px 18px}
+.brand .fx .mj{font-size:125%}
+.derivs dd{overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.derivs dd .mj,.derivs dt .mj{font-size:118%}
+#hud .row b .mj{font-size:105%}
+#hud .msg .mj,#hud .eq .mj{font-size:110%}
+ol.stops .xy .mj{font-size:108%}
 @media (max-width:900px){
   html,body{height:auto}
   #app{height:auto}
@@ -149,7 +159,6 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 </style>
-
 </head>
 <body>
 <div id="app">
@@ -157,6 +166,7 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
     <div class="brand"><h1>Funciones a bordo</h1><span class="fx" id="fxTitle">f(x) = x³ − 3x</span></div>
     <div class="xrbtns">
       <button class="btn" id="btnTTS" type="button" aria-pressed="true">Narración: sí</button>
+      <button class="btn" id="btnFn" type="button">Cambiar función</button>
       <button class="btn" id="btnHelp" type="button">Ayuda</button>
       <button class="btn primary" id="btnVR" type="button">Entrar en VR</button>
       <button class="btn" id="btnAR" type="button">Realidad mixta</button>
@@ -165,10 +175,10 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
   <main>
     <section id="stage" aria-label="Gráfico tridimensional de la función">
       <div id="hud" aria-live="polite">
-        <div class="row"><b>x</b><span id="hX">0</span></div>
-        <div class="row"><b>f(x)</b><span id="hY">0</span></div>
-        <div class="row"><b>f′(x)</b><span id="hD1">0</span></div>
-        <div class="row"><b>f″(x)</b><span id="hD2">0</span></div>
+        <div class="row"><b data-tex="x">x</b><span id="hX">0</span></div>
+        <div class="row"><b data-tex="f(x)">f(x)</b><span id="hY">0</span></div>
+        <div class="row"><b data-tex="f'(x)">f′(x)</b><span id="hD1">0</span></div>
+        <div class="row"><b data-tex="f''(x)">f″(x)</b><span id="hD2">0</span></div>
         <div class="state" id="hState"></div>
         <div class="eq" id="hEq"></div>
         <div class="msg" id="hMsg"></div>
@@ -189,6 +199,11 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
           <button type="button" data-move="up" aria-label="Subir la función">↑</button>
           <button type="button" data-move="down" aria-label="Bajar la función">↓</button>
           <button type="button" data-move="reset">Centrar</button>
+        </div>
+        <div class="seg" role="group" aria-label="Grosor de las líneas">
+          <button type="button" data-thick="0" aria-pressed="true">Fino</button>
+          <button type="button" data-thick="1" aria-pressed="false">Medio</button>
+          <button type="button" data-thick="2" aria-pressed="false">Grueso</button>
         </div>
       </div>
       <div id="legend"></div>
@@ -224,8 +239,8 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
             <div class="presets" id="presets"></div>
           </div>
           <dl class="derivs">
-            <dt>f′(x)</dt><dd id="d1Txt"></dd>
-            <dt>f″(x)</dt><dd id="d2Txt"></dd>
+            <dt data-tex="f'(x)=">f′(x) =</dt><dd id="d1Txt"></dd>
+            <dt data-tex="f''(x)=">f″(x) =</dt><dd id="d2Txt"></dd>
           </dl>
         </div>
       </details>
@@ -255,7 +270,7 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
           </div>
           <div class="radio">
             <label><input type="radio" name="tnsrc" value="follow" checked> En la posición del vagón</label>
-            <label><input type="radio" name="tnsrc" value="fixed"> En x₀ =</label>
+            <label><input type="radio" name="tnsrc" value="fixed"> En <span data-tex="x_0=">x₀ =</span></label>
             <input id="tnX" value="1.5" style="width:84px;font-family:var(--mono);padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg)" aria-label="Valor de x cero">
           </div>
           <div class="eqbox" id="tnBox"></div>
@@ -295,9 +310,11 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
             <dt>Y</dt><dd>Mostrar u ocultar el tablero</dd>
             <dt>Clic stick derecho</dt><dd>Escuchar la ayuda de controles</dd>
             <dt>Clic stick izquierdo</dt><dd>Siguiente función de ejemplo</dd>
+            <dt>Tablero, Cambiar función</dt><dd>Teclado para escribir f(x), elegir ejemplos y ajustar la ventana en x</dd>
+            <dt>Tablero, Grosor</dt><dd>Líneas finas, medias o gruesas</dd>
           </dl>
           <p class="small" id="ttsStatus"></p>
-          <p class="small">La función se escribe fuera de la inmersión. Salga con el botón Meta, cambie f(x) y vuelva a entrar.</p>
+          <p class="small">Dentro de la inmersión, el botón Cambiar función del tablero abre un teclado para escribir f(x) sin salir de VR. La narración usa la voz del sistema si hay una en español y, en el Quest, una voz sintética integrada que se descarga la primera vez.</p>
         </div>
       </details>
     </aside>
@@ -342,9 +359,10 @@ function preprocess(s){
   s = s.replace(/[−–—]/g,'-').replace(/[·×⋅]/g,'*').replace(/÷/g,'/').replace(/π/g,'pi');
   s = s.replace(/√\s*\(/g,'sqrt(');
   s = s.replace(/²/g,'^2').replace(/³/g,'^3');
-  s = s.replace(/\barcsen\s*\(/gi,'asin(').replace(/\barcsin\s*\(/gi,'asin(').replace(/\barccos\s*\(/gi,'acos(')
-       .replace(/\b(arctg|arctan)\s*\(/gi,'atan(').replace(/\bsen\s*\(/gi,'sin(').replace(/\btg\s*\(/gi,'tan(')
-       .replace(/\bln\s*\(/gi,'log(');
+  // sin \b: así 3sen(2x) o 2ln(x) también se reconocen
+  s = s.replace(/(^|[^a-zA-Z])arcsen\s*\(/gi,'$1asin(').replace(/(^|[^a-zA-Z])arcsin\s*\(/gi,'$1asin(').replace(/(^|[^a-zA-Z])arccos\s*\(/gi,'$1acos(')
+       .replace(/(^|[^a-zA-Z])(arctg|arctan)\s*\(/gi,'$1atan(').replace(/(^|[^a-zA-Z])sen\s*\(/gi,'$1sin(').replace(/(^|[^a-zA-Z])tg\s*\(/gi,'$1tan(')
+       .replace(/(^|[^a-zA-Z])ln\s*\(/gi,'$1log(');
   let prev; do{ prev=s; s=s.replace(/\|([^|]+)\|/,'abs($1)'); }while(s!==prev);
   return s;
 }
@@ -390,12 +408,14 @@ function buildF(src){
   const n2 = x=>{ const h=1e-4*Math.max(1,Math.abs(x)), p=f(x+h), m=f(x-h), c=f(x); return (isFinite(p)&&isFinite(m))?(p-2*c+m)/(h*h):NaN; };
   const f1 = x=>{ if(!isFinite(f(x))) return NaN; const v=g1(x); return isFinite(v)?v:n1(x); };
   const f2 = x=>{ if(!isFinite(f(x))) return NaN; const v=g2(x); return isFinite(v)?v:n2(x); };
-  let t1='(derivada numérica)', t2='(derivada numérica)';
+  let t1='(derivada numérica)', t2='(derivada numérica)', x1='\\text{(derivada numérica)}', x2=x1;
   if(symbolic){
-    try{ t1 = pretty(M.simplify(d1n)); }catch(e){ t1 = pretty(d1n); }
-    try{ t2 = pretty(M.simplify(d2n)); }catch(e){ t2 = pretty(d2n); }
+    let s1=d1n, s2=d2n;
+    try{ s1=M.simplify(d1n); }catch(e){}
+    try{ s2=M.simplify(d2n); }catch(e){}
+    t1=pretty(s1); t2=pretty(s2); x1=nodeTex(s1)||t1; x2=nodeTex(s2)||t2;
   }
-  return {src, pre, node, txt:pretty(node), f, f1, f2, symbolic, t1, t2};
+  return {src, pre, node, txt:pretty(node), tex:nodeTex(node)||pretty(node), f, f1, f2, symbolic, t1, t2, x1, x2};
 }
 
 /* ---- reconocimiento de valores exactos ---- */
@@ -428,6 +448,34 @@ function dec(v,p){
 }
 function fmt(v,p){ const n=niceVal(v); if(n){ if(/^[−]?\d+$/.test(n.t)) return n.t; return n.t+' ≈ '+dec(v,p); } return dec(v,p); }
 function fmtS(v,p){ const n=niceVal(v); if(n) return n.t; return dec(v,p==null?2:p); }
+/* ---- LaTeX ---- */
+const Mx=(t,a)=>({t:t,a:a==null?t:a});
+function texT(t){
+  let s=t.replace(/\u2212/g,'-'); const neg=s.startsWith('-'); if(neg) s=s.slice(1);
+  const conv=x=>x.replace(/\u221a(\d+)/g,'\\sqrt{$1}').replace(/\u03c0/g,'\\pi ').trim();
+  const parts=s.split('/');
+  const r = parts.length===2 ? '\\frac{'+(conv(parts[0])||'1')+'}{'+conv(parts[1])+'}' : conv(s);
+  return (neg?'-':'')+r;
+}
+function texDec(v,p){
+  const d=dec(v,p).replace(/\u2212/g,'-');
+  const m=d.match(/^(-?[\d.]+) \u00d7 10\^(-?\d+)$/); if(m) return m[1]+'\\times 10^{'+m[2]+'}';
+  return d;
+}
+function texNum(v,p){ if(v===Infinity) return '+\\infty'; if(v===-Infinity) return '-\\infty'; if(!isFinite(v)) return '\\text{no def.}'; const n=niceVal(v); const r=n? texT(n.t) : texDec(v,p==null?2:p); return r.charAt(0)==='-' ? '{'+r+'}' : r; }
+function texPt(x,y){ return '\\left('+texNum(x)+',\\ '+(isFinite(y)?texNum(y):'?')+'\\right)'; }
+function texLim(r){ if(!r) return '?'; if(r.type==='fin') return texNum(r.v); if(r.type==='inf') return r.sign>0?'+\\infty':'-\\infty'; if(r.type==='osc') return '\\nexists'; return '\\text{no def.}'; }
+function texIv(p,q){ return '\\left('+texNum(p)+',\\ '+texNum(q)+'\\right)'; }
+function nodeTex(node){
+  let t; try{ t=node.toTex({implicit:'hide',parenthesis:'auto'}); }catch(e){ return ''; }
+  t=t.replace(/\\sin\^\{-1\}/g,'\\operatorname{arcsen}').replace(/\\cos\^\{-1\}/g,'\\arccos').replace(/\\tan\^\{-1\}/g,'\\operatorname{arctg}')
+     .replace(/\\frac\{-(\d+)\}\{/g,'-\\frac{$1}{').replace(/(\\pi|\\infty)\s*\\cdot\s*(?=[a-zA-Z{])/g,'$1 ').replace(/^\s+/,'')
+     .replace(/\\sin\b/g,'\\operatorname{sen}').replace(/\\tan\b/g,'\\operatorname{tg}').replace(/\\arcsin\b/g,'\\operatorname{arcsen}').replace(/\\arctan\b/g,'\\operatorname{arctg}')
+     .replace(/\\cdot\s*-\s*(\d+(?:\.\d+)?)/g,'\\cdot\\left(-$1\\right)')
+     .replace(/(\d)\s*\\cdot\s*(?=[{a-zA-Z(]|\\(?!frac|cdot|left\(\s*-))/g,'$1').replace(/(\d)~\s*/g,'$1').replace(/~/g,'\\,')
+     .replace(/\d+\.\d{5,}/g,m=>String(+(+m).toFixed(4))).replace(/\{\s+/g,'{');
+  return t;
+}
 
 /* ---- límites numéricos ---- */
 function classifySeq(vals){
@@ -775,36 +823,40 @@ function describeStop(s,F){
   const names=[], lines=[], say=[];
   const pt='('+fmtS(s.x)+', '+(isFinite(s.y)?fmtS(s.y):'?')+')';
   const X=sayNum(s.x), Y=isFinite(s.y)?sayNum(s.y):'';
+  const tx=texNum(s.x), fx='f('+fmtS(s.x)+')';
   for(const it of s.items){
     if(it.kind==='cero'){
       names.push('Cero');
       const dbl=s.items.some(o=>o.kind==='max'||o.kind==='min');
       const edge=s.items.some(o=>o.kind==='disc');
-      if(edge){ lines.push('f('+fmtS(s.x)+') = 0.'); say.push('La función vale cero en x igual a '+X+'.'); continue; }
-      lines.push(dbl? 'f('+fmtS(s.x)+') = 0 y la curva toca el eje x sin cruzarlo.' : 'f('+fmtS(s.x)+') = 0. La curva cruza el eje x.');
+      if(edge){ lines.push([Mx('f\\left('+tx+'\\right)=0',fx+' = 0'),'.']); say.push('La función vale cero en x igual a '+X+'.'); continue; }
+      lines.push(dbl? [Mx('f\\left('+tx+'\\right)=0',fx+' = 0'),' y la curva toca el eje x sin cruzarlo.'] : [Mx('f\\left('+tx+'\\right)=0',fx+' = 0'),'. La curva cruza el eje x.']);
       say.push(dbl? 'Cero en x igual a '+X+'. La curva toca el eje x sin cruzarlo.' : 'Cero en x igual a '+X+'. La curva cruza el eje x.');
     } else if(it.kind==='max'||it.kind==='min'){
       const mx=it.kind==='max';
       names.push(KIND_NAME[it.kind]);
-      lines.push(mx ? 'f′ pasa de positiva a negativa.' : 'f′ pasa de negativa a positiva.');
-      lines.push(it.corner ? (it.vertical?'f′ no existe aquí (punto de retroceso, tangente vertical).':'f′ no existe aquí (punto anguloso, las derivadas laterales difieren).') : 'f′('+fmtS(s.x)+') = 0, tangente horizontal.');
+      lines.push([Mx("f'",'f′'), mx ? ' pasa de positiva a negativa.' : ' pasa de negativa a positiva.']);
+      lines.push(it.corner ? [Mx("f'\\left("+tx+"\\right)",'f′('+fmtS(s.x)+')'), it.vertical?' no existe (punto de retroceso, tangente vertical).':' no existe (punto anguloso, las derivadas laterales difieren).']
+        : [Mx("f'\\left("+tx+"\\right)=0",'f′('+fmtS(s.x)+') = 0'),', tangente horizontal.']);
       say.push((mx?'Máximo':'Mínimo')+' local en x igual a '+X+', donde la función vale '+Y+'. La derivada pasa de '+(mx?'positiva a negativa':'negativa a positiva')+'.'
         +(it.corner?(it.vertical?' Aquí la derivada no existe y la tangente es vertical.':' Aquí la derivada no existe, porque es un punto anguloso.'):' La tangente es horizontal.'));
     } else if(it.kind==='silla'){
       names.push(KIND_NAME.silla);
-      lines.push('f′('+fmtS(s.x)+') = 0 pero f′ no cambia de signo. No hay extremo.');
+      lines.push([Mx("f'\\left("+tx+"\\right)=0",'f′('+fmtS(s.x)+') = 0'),' pero ',Mx("f'",'f′'),' no cambia de signo. No hay extremo.']);
       say.push('Punto crítico en x igual a '+X+'. La derivada se anula, pero no cambia de signo, así que no hay extremo.');
     } else if(it.kind==='infl'){
       if(it.noTangent){ names.push('Cambio de concavidad'); lines.push('La concavidad cambia, pero no hay recta tangente. No se considera punto de inflexión.');
         say.push('En x igual a '+X+' cambia la concavidad, pero no hay recta tangente, por lo que no es un punto de inflexión.'); }
-      else { names.push(KIND_NAME.infl); lines.push('f″ cambia de signo y la concavidad se invierte'+(it.vertical?'. La tangente es vertical.':'.'));
+      else { names.push(KIND_NAME.infl); lines.push([Mx("f''",'f″'),' cambia de signo y la concavidad se invierte'+(it.vertical?'. La tangente es vertical.':'.')]);
         say.push('Punto de inflexión en x igual a '+X+'. La curva pasa de '+(it.up?'cóncava hacia arriba a cóncava hacia abajo':'cóncava hacia abajo a cóncava hacia arriba')+'.'+(it.vertical?' La tangente es vertical.':'')); }
     } else if(it.kind==='disc'){
       const b=it.br;
-      const lt='lím x→'+fmtS(b.x)+'⁻ f(x) = '+limTxt(b.L), rt='lím x→'+fmtS(b.x)+'⁺ f(x) = '+limTxt(b.R);
+      const lt=[Mx('\\lim_{x\\to '+tx+'^{-}} f(x)='+texLim(b.L),'lím x→'+fmtS(b.x)+'⁻ f(x) = '+limTxt(b.L))];
+      const rt=[Mx('\\lim_{x\\to '+tx+'^{+}} f(x)='+texLim(b.R),'lím x→'+fmtS(b.x)+'⁺ f(x) = '+limTxt(b.R))];
       const sides=(b.L.type!=='none'?' Por la izquierda, f tiende a '+sayLim(b.L)+'.':'')+(b.R.type!=='none'?' Por la derecha, f tiende a '+sayLim(b.R)+'.':'');
-      if(b.kind==='asintota'){ names.push('Asíntota vertical x = '+fmtS(b.x)); say.push('Asíntota vertical en x igual a '+X+'.'+sides); }
-      else if(b.kind==='evitable'){ names.push('Discontinuidad evitable'); lines.push(isFinite(b.fc)?'f('+fmtS(b.x)+') = '+fmtS(b.fc)+' no coincide con el límite.':'f('+fmtS(b.x)+') no está definida, pero el límite existe.');
+      if(b.kind==='asintota'){ names.push('Asíntota vertical'); say.push('Asíntota vertical en x igual a '+X+'.'+sides); }
+      else if(b.kind==='evitable'){ names.push('Discontinuidad evitable');
+        lines.push(isFinite(b.fc)?[Mx('f\\left('+tx+'\\right)='+texNum(b.fc),fx+' = '+fmtS(b.fc)),' no coincide con el límite.']:[Mx('f\\left('+tx+'\\right)',fx),' no está definida, pero el límite existe.']);
         say.push('Discontinuidad evitable en x igual a '+X+'. El límite existe y vale '+sayLim(b.L)+', pero '+(isFinite(b.fc)?'el valor de la función es distinto.':'la función no está definida allí.')); }
       else if(b.kind==='salto'){ names.push('Discontinuidad de salto'); lines.push('Los límites laterales existen y son distintos.'); say.push('Discontinuidad de salto en x igual a '+X+'.'+sides); }
       else if(b.kind==='borde'){ names.push('Frontera del dominio'); say.push('Frontera del dominio en x igual a '+X+'.'+sides); }
@@ -815,6 +867,7 @@ function describeStop(s,F){
   }
   s.title=[...new Set(names)].join(' · ');
   s.pt = s.kind==='disc' ? 'x = '+fmtS(s.x) : pt;
+  s.ptTeX = s.kind==='disc' ? 'x='+tx : texPt(s.x,s.y);
   s.lines=lines;
   s.say=say.join(' ');
 }
@@ -844,7 +897,10 @@ const hex=c=>'#'+c.toString(16).padStart(6,'0');
 
 const st={F:null,A:null,a:-3,b:3,ymin:-3,ymax:3,color:'mono',tn:2,tnFollow:true,tnX:1.5,view:'orbit',xrMode:'ride',
   playing:false,speed:1,piece:0,s:0,pauseUntil:0,msgTitle:'',msgLines:[],limit:null,xrKind:null,hudVisible:true,
-  tab:'todo',tour:[],zoom:1,zoomRide:1,offset:new THREE.Vector3(),seat:0,waitSpeech:false};
+  tab:'todo',tour:[],zoom:1,zoomRide:1,offset:new THREE.Vector3(),seat:0,waitSpeech:false,
+  thick:0,vrPanel:'main',fnDraft:'',fnErr:'',fnA:-3,fnB:3,fnPreset:0};
+const THICK=[0.35,0.6,1], THICK_NAME=['fino','medio','grueso'];
+const TK=()=>THICK[st.thick];
 
 /* ================= escena ================= */
 const stage=document.getElementById('stage');
@@ -908,6 +964,107 @@ function makeLabel(text,color,h,opts){
   sp.scale.set(h*c.width/c.height,h,1);
   if(opts.center) sp.center.set(opts.center[0],opts.center[1]);
   return sp;
+}
+
+/* ================= LaTeX con MathJax ================= */
+// Toda la simbología matemática se compone con MathJax (TeX → SVG). Mientras carga, se muestra un texto Unicode equivalente.
+const MJ={ready:false,cache:new Map(),img:new Map()};
+window.MathJax={svg:{fontCache:'none'},startup:{typeset:false,ready(){ MathJax.startup.defaultReady(); MathJax.startup.promise.then(()=>onMathJax()); }}};
+(function(){ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js'; s.async=true; document.head.appendChild(s); })();
+function mjSVG(tex){
+  if(!MJ.ready||!tex) return null;
+  if(MJ.cache.has(tex)) return MJ.cache.get(tex);
+  let out=null;
+  try{ const n=MathJax.tex2svg(tex,{display:false}); const svg=n.querySelector('svg'); if(svg && !svg.querySelector('[data-mml-node="merror"]')) out=svg.outerHTML; }catch(e){ out=null; }
+  if(MJ.cache.size>800) MJ.cache.clear();
+  MJ.cache.set(tex,out); return out;
+}
+function texHTML(tex,alt){ const s=mjSVG(tex); if(alt==null) alt=tex; return s ? '<span class="mj" role="img" aria-label="'+esc(alt)+'">'+s+'</span>' : '<span class="mjf">'+esc(alt)+'</span>'; }
+function richHTML(x){ if(x==null) return ''; if(Array.isArray(x)) return x.map(richHTML).join(''); if(typeof x==='object') return texHTML(x.t,x.a); return esc(x); }
+function richText(x){ if(x==null) return ''; if(Array.isArray(x)) return x.map(richText).join(''); if(typeof x==='object') return x.a; return String(x); }
+// imagen de una fórmula para dibujar en lienzos (tablero VR y etiquetas 3D)
+function texImage(tex,color,px){
+  const key=tex+'|'+color+'|'+px;
+  let e=MJ.img.get(key); if(e) return e;
+  const svg=mjSVG(tex); if(!svg) return null;
+  const ex=px*0.442;
+  const grab=re=>{ const m=svg.match(re); return m?parseFloat(m[1]):0; };
+  const wEx=grab(/width="([\d.]+)ex"/), hEx=grab(/height="([\d.]+)ex"/), vaEx=grab(/vertical-align:\s*(-?[\d.]+)ex/);
+  if(!wEx||!hEx) return null;
+  const w=Math.max(1,Math.ceil(wEx*ex)), h=Math.max(1,Math.ceil(hEx*ex));
+  const s2=svg.replace(/currentColor/g,color).replace(/width="[\d.]+ex"/,'width="'+w+'px"').replace(/height="[\d.]+ex"/,'height="'+h+'px"');
+  const img=new Image();
+  e={img,w,h,va:vaEx*ex,ok:false,bad:false,cbs:[]};
+  img.onload=()=>{ e.ok=true; vrDirty=true; const cb=e.cbs; e.cbs=[]; cb.forEach(f=>{ try{ f(); }catch(err){} }); };
+  img.onerror=()=>{ e.bad=true; };
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s2);
+  if(MJ.img.size>600) MJ.img.clear();
+  MJ.img.set(key,e); return e;
+}
+// texto con fórmulas intercaladas y ajuste de línea
+function drawRich(g,parts,x,y,o){
+  o=o||{};
+  const px=o.px||30, font=o.font||('400 '+px+'px "Atkinson Hyperlegible", sans-serif'), color=o.color||'#ffffff';
+  const maxW=o.maxW||1e9, lineH=o.lineH||Math.round(px*1.3), maxY=o.maxY==null?Infinity:o.maxY;
+  if(!Array.isArray(parts)) parts=[parts];
+  g.font=font;
+  const toks=[];
+  parts.forEach(p=>{
+    if(p==null||p==='') return;
+    if(typeof p==='object'){
+      const im=texImage(p.t,color,px);
+      if(im&&im.ok) toks.push({im,w:Math.min(im.w,maxW)});
+      else { if(im&&!im.ok&&!im.bad&&o.pending) o.pending.push(im); toks.push({t:p.a,w:g.measureText(p.a).width}); }
+      return;
+    }
+    String(p).split(/(\s+)/).forEach(s=>{ if(s==='') return; toks.push({t:s,w:g.measureText(s).width,sp:/^\s+$/.test(s)}); });
+  });
+  const lines=[]; let cur=[], cw=0;
+  const flush=()=>{ while(cur.length&&cur[cur.length-1].sp) cw-=cur.pop().w; lines.push({toks:cur,w:cw}); cur=[]; cw=0; };
+  for(const t of toks){
+    if(t.sp && !cur.length) continue;
+    if(cw+t.w>maxW && cur.length){ flush(); if(t.sp) continue; }
+    cur.push(t); cw+=t.w;
+  }
+  if(cur.length) flush();
+  let yy=y, wMax=0, n=0, ascMax=px*0.95, descMax=px*0.3;
+  for(const L of lines){
+    let asc=px*0.95, desc=px*0.3;
+    L.toks.forEach(t=>{ if(t.im){ const sc=Math.min(1,maxW/t.im.w); asc=Math.max(asc,(t.im.h+t.im.va)*sc); desc=Math.max(desc,-t.im.va*sc); } });
+    if(n>0 || !o.fixedBaseline) yy+=Math.max(0,asc-px*0.95);
+    if(yy>maxY) break;
+    if(!o.measureOnly){
+      let xx=x;
+      for(const t of L.toks){
+        if(t.im){ const sc=Math.min(1,maxW/t.im.w), w=t.im.w*sc, h=t.im.h*sc; g.drawImage(t.im.img,xx,yy-h-t.im.va*sc,w,h); xx+=w; }
+        else { g.fillStyle=color; g.fillText(t.t,xx,yy); xx+=t.w; }
+      }
+    }
+    wMax=Math.max(wMax,Math.min(L.w,maxW)); ascMax=Math.max(ascMax,asc); descMax=Math.max(descMax,desc); n++;
+    yy+=lineH+Math.max(0,desc-px*0.3);
+  }
+  return {y:yy,w:wMax,lines:n,asc:ascMax,desc:descMax};
+}
+// etiqueta 3D con fórmulas; se vuelve a dibujar cuando terminan de cargar las imágenes
+function makeRichLabel(parts,color,h,opts){
+  opts=opts||{};
+  const fs=56, font=(opts.bold===false?'400 ':'700 ')+fs+'px "Atkinson Hyperlegible", system-ui, sans-serif';
+  const c=document.createElement('canvas'), ctx=c.getContext('2d');
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false}));
+  if(opts.center) sp.center.set(opts.center[0],opts.center[1]);
+  const draw=()=>{
+    const pend=[];
+    const m=drawRich(ctx,parts,0,0,{px:fs,font,color,measureOnly:true,pending:pend,fixedBaseline:true});
+    const top=fs*0.22, asc=m.asc, desc=m.desc;
+    c.width=Math.max(8,Math.ceil(m.w+fs*0.7)); c.height=Math.ceil(asc+desc+top*2);
+    if(opts.bg!==false){ ctx.fillStyle='rgba(8,18,22,0.78)'; roundRect(ctx,0,0,c.width,c.height,fs*0.35); ctx.fill(); }
+    drawRich(ctx,parts,fs*0.35,top+asc,{px:fs,font,color,fixedBaseline:true});
+    const old=sp.material.map; const tex=new THREE.CanvasTexture(c); tex.encoding=THREE.sRGBEncoding;
+    sp.material.map=tex; sp.material.needsUpdate=true; if(old) old.dispose();
+    const k=h/(fs*1.45); sp.scale.set(c.width*k,c.height*k,1);
+    if(pend.length){ let left=pend.length; pend.forEach(e=>e.cbs.push(()=>{ if(--left===0) draw(); })); }
+  };
+  draw(); return sp;
 }
 const UP=new THREE.Vector3(0,1,0);
 const cylGeo=new THREE.CylinderGeometry(1,1,1,10,1);
@@ -996,12 +1153,13 @@ function recolor(){
   updateLegend();
 }
 
-function buildGraph(){
+function buildGraph(resetCam){
   disposeTree(graph); while(graph.children.length) graph.remove(graph.children[0]);
   tubes=[]; G={};
   const A=st.A, a=st.a, b=st.b, y0=st.ymin, y1=st.ymax, W=b-a, H=y1-y0;
   const u=Math.max(W,H*0.6)/100;
   G.u=u;
+  const tk=TK(), ks=0.45+0.55*tk;
   // tablero de fondo
   const board=new THREE.Mesh(new THREE.PlaneGeometry(W*1.04,H*1.04),new THREE.MeshBasicMaterial({color:0x0f2229,transparent:true,opacity:0.88,side:THREE.DoubleSide}));
   board.position.set((a+b)/2,(y0+y1)/2,-u*1.2); graph.add(board); G.board=board;
@@ -1013,13 +1171,13 @@ function buildGraph(){
   // ejes
   const axCol=0x9fb6bc;
   const xAxY = (y0<=0&&y1>=0)?0:y0, yAxX=(a<=0&&b>=0)?0:a;
-  const ax=makeRod(axCol,u*0.22); setRod(ax,new THREE.Vector3(a,xAxY,0),new THREE.Vector3(b,xAxY,0)); graph.add(ax);
-  const ay=makeRod(axCol,u*0.22); setRod(ay,new THREE.Vector3(yAxX,y0,0),new THREE.Vector3(yAxX,y1,0)); graph.add(ay);
-  const cone=new THREE.ConeGeometry(u*0.9,u*2.6,12);
+  const ax=makeRod(axCol,u*0.22*Math.max(tk,0.5)); setRod(ax,new THREE.Vector3(a,xAxY,0),new THREE.Vector3(b,xAxY,0)); graph.add(ax);
+  const ay=makeRod(axCol,u*0.22*Math.max(tk,0.5)); setRod(ay,new THREE.Vector3(yAxX,y0,0),new THREE.Vector3(yAxX,y1,0)); graph.add(ay);
+  const cone=new THREE.ConeGeometry(u*0.9*ks,u*2.6*ks,12);
   const cx=new THREE.Mesh(cone,new THREE.MeshStandardMaterial({color:axCol})); cx.position.set(b+u*1.2,xAxY,0); cx.rotation.z=-Math.PI/2; graph.add(cx);
   const cy=new THREE.Mesh(cone,new THREE.MeshStandardMaterial({color:axCol})); cy.position.set(yAxX,y1+u*1.2,0); graph.add(cy);
-  const lx=makeLabel('x','#cfe0e3',u*3.2,{bg:false,center:[0,0.5]}); lx.position.set(b+u*3,xAxY,0); graph.add(lx);
-  const ly=makeLabel('y','#cfe0e3',u*3.2,{bg:false,center:[0.5,0]}); ly.position.set(yAxX,y1+u*3,0); graph.add(ly);
+  const lx=makeRichLabel([Mx('x')],'#cfe0e3',u*3.2,{bg:false,center:[0,0.5]}); lx.position.set(b+u*3,xAxY,0); graph.add(lx);
+  const ly=makeRichLabel([Mx('y')],'#cfe0e3',u*3.2,{bg:false,center:[0.5,0]}); ly.position.set(yAxX,y1+u*3,0); graph.add(ly);
   const tickH=u*2.4;
   for(let x=Math.ceil(a/step)*step; x<=b+1e-9; x+=step){ if(Math.abs(x)<step*1e-6 && yAxX===0) continue; const t=makeLabel(fmtS(x,2),'#9fb6bc',tickH,{bg:false,bold:false,center:[0.5,1]}); t.position.set(x,xAxY-u*1.1,0); graph.add(t); }
   for(let y=Math.ceil(y0/step)*step; y<=y1+1e-9; y+=step){ if(Math.abs(y)<step*1e-6 && xAxY===0) continue; const t=makeLabel(fmtS(y,2),'#9fb6bc',tickH,{bg:false,bold:false,center:[1,0.5]}); t.position.set(yAxX-u*1.1,y,0); graph.add(t); }
@@ -1028,9 +1186,9 @@ function buildGraph(){
   buildPieces();
   const radial=8;
   for(const pc of pieces){
-    const segsN=Math.max(8,Math.min(1600,Math.round(pc.L/(u*0.35))));
+    const segsN=Math.max(8,Math.min(2400,Math.round(pc.L/(u*0.3))));
     const curve=new PieceCurve(pc);
-    const geo=new THREE.TubeGeometry(curve,segsN,u*0.75,radial,false);
+    const geo=new THREE.TubeGeometry(curve,segsN,u*0.75*tk,radial,false);
     const ringX=[]; for(let i=0;i<=segsN;i++) ringX.push(curve.getPointAt(i/segsN).x);
     geo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count*3),3));
     const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.45,metalness:0.05,emissive:0x0b1a1f}));
@@ -1044,10 +1202,10 @@ function buildGraph(){
   for(const br of A.breaks){
     if(br.kind==='asintota'){
       AG.add(dashed([new THREE.Vector3(br.x,y0,0),new THREE.Vector3(br.x,y1,0)],COL.disc,u*1.4));
-      const l=makeLabel('x = '+fmtS(br.x),hex(COL.disc),u*3,{center:[0,1]}); l.position.set(br.x+u*1.2,y1-u,u); AG.add(l);
+      const l=makeRichLabel([Mx('x='+texNum(br.x),'x = '+fmtS(br.x))],hex(COL.disc),u*3,{center:[0,1]}); l.position.set(br.x+u*1.2,y1-u,u); AG.add(l);
     }
-    const ring=(y,filled)=>{ if(!inWin(br.x,y)) return; const m=filled? new THREE.Mesh(new THREE.SphereGeometry(u*1.3,16,12),new THREE.MeshStandardMaterial({color:COL.disc,emissive:COL.disc,emissiveIntensity:0.3}))
-        : new THREE.Mesh(new THREE.TorusGeometry(u*1.3,u*0.35,10,28),new THREE.MeshStandardMaterial({color:COL.disc,emissive:COL.disc,emissiveIntensity:0.4})); m.position.set(br.x,y,0); AG.add(m); };
+    const ring=(y,filled)=>{ if(!inWin(br.x,y)) return; const m=filled? new THREE.Mesh(new THREE.SphereGeometry(u*1.3*ks,16,12),new THREE.MeshStandardMaterial({color:COL.disc,emissive:COL.disc,emissiveIntensity:0.3}))
+        : new THREE.Mesh(new THREE.TorusGeometry(u*1.3*ks,u*0.35*ks,10,28),new THREE.MeshStandardMaterial({color:COL.disc,emissive:COL.disc,emissiveIntensity:0.4})); m.position.set(br.x,y,0); AG.add(m); };
     if(br.kind==='evitable'||br.kind==='salto'||br.kind==='borde'){
       if(br.L.type==='fin') ring(br.L.v, isFinite(br.fc)&&Math.abs(br.fc-br.L.v)<1e-6*(1+Math.abs(br.fc)));
       if(br.R.type==='fin' && !(br.L.type==='fin'&&Math.abs(br.L.v-br.R.v)<1e-9)) ring(br.R.v, isFinite(br.fc)&&Math.abs(br.fc-br.R.v)<1e-6*(1+Math.abs(br.fc)));
@@ -1057,9 +1215,9 @@ function buildGraph(){
   // asíntotas en ±∞
   G.asy=[];
   const addAsy=(inf,side)=>{
-    let m=null,n=null,txt='';
-    if(inf.L.type==='fin'){ m=0; n=inf.L.v; txt='y = '+fmtS(n); }
-    else if(inf.oblique){ m=inf.oblique.m; n=inf.oblique.n; txt='y = '+linEq(m,n); }
+    let m=null,n=null,txt=null;
+    if(inf.L.type==='fin'){ m=0; n=inf.L.v; txt=Mx('y='+texNum(n),'y = '+fmtS(n)); }
+    else if(inf.oblique){ m=inf.oblique.m; n=inf.oblique.n; txt=Mx('y='+linEqTeX(m,n),'y = '+linEq(m,n)); }
     if(m===null) return;
     if(G.asy.some(o=>Math.abs(o.m-m)<1e-9&&Math.abs(o.n-n)<1e-9)) return;
     G.asy.push({m,n});
@@ -1067,7 +1225,7 @@ function buildGraph(){
     const p=new THREE.Vector3(cl[0],n+m*cl[0],0), q=new THREE.Vector3(cl[1],n+m*cl[1],0);
     AG.add(dashed([p,q],0xbfa2f0,u*1.4));
     const at = side>0? q : p;
-    const l=makeLabel(txt,'#cdb6f5',u*3,{center:[side>0?1:0,0]}); l.position.set(at.x,at.y+u,u); AG.add(l);
+    const l=makeRichLabel([txt],'#cdb6f5',u*3,{center:[side>0?1:0,0]}); l.position.set(at.x,at.y+u,u); AG.add(l);
   };
   addAsy(A.infPos,1); addAsy(A.infNeg,-1);
 
@@ -1077,31 +1235,31 @@ function buildGraph(){
     if(s.kind==='disc' || !isFinite(s.y) || !inWin(s.x,s.y)) { G.markers.push(null); G.markerGroups.push(null); return; }
     const col=COL[s.kind];
     const grp=new THREE.Group(); graph.add(grp);
-    const mk=new THREE.Mesh(new THREE.SphereGeometry(u*1.55,20,14),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.35,roughness:0.35}));
+    const mk=new THREE.Mesh(new THREE.SphereGeometry(u*1.55*ks,20,14),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.35,roughness:0.35}));
     mk.position.set(s.x,s.y,0); grp.add(mk);
     const short={cero:'cero',max:'máx',min:'mín',silla:'f′ = 0',infl:'inflexión'};
     const names=[...new Set(s.items.map(it=>it.noTangent?'cambio de concavidad':short[it.kind]))].join(' · ');
     const above = s.kind!=='min';
-    const l=makeLabel(names+'  '+s.pt,hex(col),u*2.5,{center:[0.5,above?0:1]});
-    l.position.set(s.x,s.y+(above?u*2.4:-u*2.4),u*1.5); grp.add(l);
+    const l=makeRichLabel([names+'  ',Mx(s.ptTeX,s.pt)],hex(col),u*2.5,{center:[0.5,above?0:1]});
+    l.position.set(s.x,s.y+(above?u*2.2*ks+u*0.6:-(u*2.2*ks+u*0.6)),u*1.5); grp.add(l);
     G.markers.push(mk); G.markerGroups.push(grp);
   });
 
   // vagón
   const rider=new THREE.Group();
-  const body=new THREE.Mesh(new THREE.SphereGeometry(u*1.9,24,16),new THREE.MeshStandardMaterial({color:COL.rider,emissive:COL.rider,emissiveIntensity:0.45,roughness:0.3}));
-  const halo=new THREE.Mesh(new THREE.TorusGeometry(u*2.8,u*0.28,10,36),new THREE.MeshBasicMaterial({color:0xe3ecec}));
+  const body=new THREE.Mesh(new THREE.SphereGeometry(u*1.5*ks,24,16),new THREE.MeshStandardMaterial({color:COL.rider,emissive:COL.rider,emissiveIntensity:0.45,roughness:0.3,transparent:true,opacity:1}));
+  const halo=new THREE.Mesh(new THREE.TorusGeometry(u*2.4*ks,u*0.2*ks,10,36),new THREE.MeshBasicMaterial({color:0xe3ecec,transparent:true,opacity:1}));
   rider.add(body); rider.add(halo); graph.add(rider); G.rider=rider;
   // tangente y normal
-  G.tan=makeRod(COL.tan,u*0.3); G.nor=makeRod(COL.nor,u*0.3); graph.add(G.tan); graph.add(G.nor);
-  G.tanPt=new THREE.Mesh(new THREE.SphereGeometry(u*1.1,14,10),new THREE.MeshBasicMaterial({color:COL.tan})); graph.add(G.tanPt);
+  G.tan=makeRod(COL.tan,u*0.12*(0.6+tk)); G.nor=makeRod(COL.nor,u*0.12*(0.6+tk)); graph.add(G.tan); graph.add(G.nor);
+  G.tanPt=new THREE.Mesh(new THREE.SphereGeometry(u*0.5*ks,14,10),new THREE.MeshBasicMaterial({color:COL.tan})); graph.add(G.tanPt);
   // límites
   G.lim=new THREE.Group(); graph.add(G.lim);
-  G.beadL=new THREE.Mesh(new THREE.SphereGeometry(u*1.2,14,10),new THREE.MeshBasicMaterial({color:0xffffff}));
-  G.beadR=new THREE.Mesh(new THREE.SphereGeometry(u*1.2,14,10),new THREE.MeshBasicMaterial({color:0xffffff}));
+  G.beadL=new THREE.Mesh(new THREE.SphereGeometry(u*1.2*ks,14,10),new THREE.MeshBasicMaterial({color:0xffffff}));
+  G.beadR=new THREE.Mesh(new THREE.SphereGeometry(u*1.2*ks,14,10),new THREE.MeshBasicMaterial({color:0xffffff}));
   graph.add(G.beadL); graph.add(G.beadR);
   buildLimitVisual();
-  placeGraph();
+  placeGraph(resetCam!==false);
 }
 
 function buildLimitVisual(){
@@ -1143,41 +1301,105 @@ function moveBy(dy){
 function resetView(){ st.zoom=1; st.zoomRide=1; st.offset.set(0,0,0); st.seat=0; placeGraph(!renderer.xr.isPresenting); snapCam=true; }
 
 /* ================= narración ================= */
-const TTS={ok:('speechSynthesis' in window) && typeof SpeechSynthesisUtterance!=='undefined', on:true, voice:null, unlocked:false};
+// Voz del sistema si hay una en español; si no (p. ej. navegador del Quest), voz integrada meSpeak en español latinoamericano.
+const MS_BASE='https://cdn.jsdelivr.net/npm/mespeak@1.9.6/';
+const IS_QUEST=/OculusBrowser|Quest/i.test(navigator.userAgent||'');
+const TTS={web:('speechSynthesis' in window)&&typeof SpeechSynthesisUtterance!=='undefined', on:true, voice:null, nVoices:0,
+  engine: 'mespeak', ms:'idle', ctx:null, queue:[], playing:false, src:null, last:0, gen:0};
 function pickVoice(){
-  if(!TTS.ok) return;
-  let vs=[]; try{ vs=speechSynthesis.getVoices()||[]; }catch(e){}
-  const norm=l=>(l||'').replace('_','-').toLowerCase();
-  let v=null;
-  for(const p of ['es-cl','es-419','es-us','es-mx','es-ar','es-es']){ v=vs.find(x=>norm(x.lang)===p); if(v) break; }
-  if(!v) v=vs.find(x=>norm(x.lang).startsWith('es'));
-  TTS.voice=v||null; TTS.nVoices=vs.length; updateTTSStatus();
+  if(TTS.web){
+    let vs=[]; try{ vs=speechSynthesis.getVoices()||[]; }catch(e){}
+    const norm=l=>(l||'').replace('_','-').toLowerCase();
+    let v=null;
+    for(const p of ['es-cl','es-419','es-us','es-mx','es-ar','es-es']){ v=vs.find(x=>norm(x.lang)===p); if(v) break; }
+    if(!v) v=vs.find(x=>norm(x.lang).startsWith('es'));
+    TTS.voice=v||null; TTS.nVoices=vs.length;
+  }
+  TTS.engine = (TTS.voice && !IS_QUEST) ? 'web' : 'mespeak';
+  updateTTSStatus();
 }
 function updateTTSStatus(){
   const el=document.getElementById('ttsStatus'); if(!el) return;
-  if(!TTS.ok) el.textContent='Este navegador no ofrece síntesis de voz, así que la narración no sonará. Los textos siguen apareciendo en pantalla.';
-  else if(TTS.nVoices && !TTS.voice) el.textContent='No se encontró una voz en español en este dispositivo. La narración usará la voz disponible.';
-  else el.textContent=TTS.voice?('Voz de narración: '+TTS.voice.name+'.'):'';
+  if(TTS.engine==='web') el.textContent='Narración con la voz del sistema: '+TTS.voice.name+'.';
+  else if(TTS.ms==='ready') el.textContent='Narración con la voz integrada en español (voz sintética).';
+  else if(TTS.ms==='loading') el.textContent='Cargando la voz integrada en español…';
+  else if(TTS.ms==='error') el.textContent='No se pudo cargar la voz integrada. Revise la conexión a internet y recargue la página. Los textos siguen apareciendo en pantalla.';
+  else el.textContent='La voz integrada en español se cargará con la primera narración.';
 }
-if(TTS.ok){ pickVoice(); try{ speechSynthesis.onvoiceschanged=pickVoice; }catch(e){} }
+function audioCtx(){
+  if(!TTS.ctx){ try{ const AC=window.AudioContext||window.webkitAudioContext; if(AC) TTS.ctx=new AC(); }catch(e){} }
+  if(TTS.ctx && TTS.ctx.state==='suspended'){ try{ TTS.ctx.resume(); }catch(e){} }
+  return TTS.ctx;
+}
+function loadMeSpeak(){
+  if(TTS.ms!=='idle') return;
+  TTS.ms='loading'; updateTTSStatus();
+  const sc=document.createElement('script'); sc.src=MS_BASE+'mespeak.js';
+  sc.onload=()=>{
+    try{
+      meSpeak.loadConfig(MS_BASE+'mespeak_config.json');
+      meSpeak.loadVoice(MS_BASE+'voices/es-la.json',ok=>{ TTS.ms= ok?'ready':'error'; updateTTSStatus(); if(ok) pump(); });
+    }catch(e){ TTS.ms='error'; updateTTSStatus(); }
+  };
+  sc.onerror=()=>{ TTS.ms='error'; updateTTSStatus(); };
+  document.head.appendChild(sc);
+}
+function stopSpeech(){
+  TTS.queue=[]; TTS.gen++;
+  if(TTS.src){ try{ TTS.src.onended=null; TTS.src.stop(); }catch(e){} TTS.src=null; }
+  TTS.playing=false;
+  if(TTS.web){ try{ speechSynthesis.cancel(); }catch(e){} }
+}
+function pump(){
+  if(TTS.playing||!TTS.queue.length) return;
+  if(TTS.ms!=='ready' || typeof meSpeak==='undefined' || !meSpeak.isConfigLoaded()){ if(TTS.ms==='ready'||TTS.ms==='loading') setTimeout(pump,300); return; }
+  const ctx=audioCtx(); if(!ctx) return;
+  const t=TTS.queue.shift(); TTS.playing=true; const gen=TTS.gen;
+  let raw=null; try{ raw=meSpeak.speak(t,{rawdata:'default',speed:160,pitch:45}); }catch(e){ raw=null; }
+  if(!raw){ TTS.playing=false; pump(); return; }
+  const ab = raw instanceof ArrayBuffer ? raw.slice(0) : (raw.buffer ? raw.buffer.slice(0) : new Uint8Array(raw).buffer);
+  ctx.decodeAudioData(ab).then(buf=>{
+    if(gen!==TTS.gen) return;
+    const src=ctx.createBufferSource(); src.buffer=buf; src.connect(ctx.destination);
+    src.onended=()=>{ if(TTS.src===src){ TTS.src=null; TTS.playing=false; pump(); } };
+    TTS.src=src; src.start();
+  }).catch(()=>{ if(gen===TTS.gen){ TTS.playing=false; pump(); } });
+}
 function speak(text,interrupt){
   if(interrupt===undefined) interrupt=true;
-  if(!TTS.ok||!TTS.on||!text) return;
-  try{
-    if(interrupt) speechSynthesis.cancel();
-    const parts=String(text).match(/[^.!?]+[.!?]*/g)||[text];
-    parts.forEach(p=>{ const t=p.trim(); if(!t) return; const u=new SpeechSynthesisUtterance(t); u.lang=TTS.voice?TTS.voice.lang:'es-ES'; if(TTS.voice) u.voice=TTS.voice; u.rate=1.0; speechSynthesis.speak(u); });
-    TTS.last=performance.now();
-  }catch(e){}
+  if(!TTS.on||!text) return;
+  if(TTS.engine==='web'){
+    try{
+      if(interrupt) speechSynthesis.cancel();
+      const parts=String(text).match(/[^.!?]+[.!?]*/g)||[text];
+      parts.forEach(p=>{ const t=p.trim(); if(!t) return; const u=new SpeechSynthesisUtterance(t); u.lang=TTS.voice.lang; u.voice=TTS.voice; u.rate=1.0; speechSynthesis.speak(u); });
+      TTS.last=performance.now();
+    }catch(e){}
+    return;
+  }
+  if(interrupt) stopSpeech();
+  const parts=String(text).match(/[^.!?]+[.!?]*/g)||[text];
+  parts.forEach(p=>{ const t=p.trim(); if(t) TTS.queue.push(t); });
+  TTS.last=performance.now();
+  if(TTS.ms==='idle') loadMeSpeak();
+  audioCtx(); pump();
 }
-function isSpeaking(){ if(!TTS.ok||!TTS.on) return false; try{ return speechSynthesis.speaking||speechSynthesis.pending; }catch(e){ return false; } }
+function isSpeaking(){
+  if(!TTS.on) return false;
+  if(TTS.engine==='web'){ try{ return speechSynthesis.speaking||speechSynthesis.pending; }catch(e){ return false; } }
+  if(TTS.ms==='error') return false;
+  return TTS.playing || TTS.queue.length>0;
+}
+pickVoice();
+if(TTS.web){ try{ speechSynthesis.onvoiceschanged=pickVoice; }catch(e){} }
+['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{ audioCtx(); if(TTS.engine==='mespeak') loadMeSpeak(); },{passive:true}));
 function setTTS(on){
-  TTS.on=on; if(!on && TTS.ok){ try{ speechSynthesis.cancel(); }catch(e){} }
+  TTS.on=on; if(!on) stopSpeech();
   const b=document.getElementById('btnTTS'); b.setAttribute('aria-pressed',on); b.textContent='Narración: '+(on?'sí':'no');
   vrDirty=true;
 }
 function sayList(arr){ if(!arr.length) return ''; if(arr.length===1) return arr[0]; return arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1]; }
-const HELP_VR='Controles en realidad virtual. El stick derecho avanza o retrocede sobre la curva. El stick izquierdo acerca o aleja la función. Mantenga apretado el botón de agarre, al costado del mando, y mueva la mano para subir, bajar o desplazar la función. Con los dos agarres a la vez puede estirarla o encogerla. Apunte al tablero y pulse el gatillo para elegir una pestaña o un botón. Fuera del tablero, el gatillo derecho salta al punto siguiente y el izquierdo al anterior. El botón A inicia o pausa el recorrido. El botón B muestra la tangente y la normal. El botón X cambia entre montar la curva y verla como maqueta. El botón Y muestra u oculta el tablero. El clic del stick derecho repite esta ayuda.';
+const HELP_VR='Controles en realidad virtual. El stick derecho avanza o retrocede sobre la curva. El stick izquierdo acerca o aleja la función. Mantenga apretado el botón de agarre, al costado del mando, y mueva la mano para subir, bajar o desplazar la función. Con los dos agarres a la vez puede estirarla o encogerla. Apunte al tablero y pulse el gatillo para elegir una pestaña o un botón. Fuera del tablero, el gatillo derecho salta al punto siguiente y el izquierdo al anterior. El botón A inicia o pausa el recorrido. El botón B muestra la tangente y la normal. El botón X cambia entre montar la curva y verla como maqueta. El botón Y muestra u oculta el tablero. En el tablero, Cambiar función abre un teclado para escribir una nueva función y elegir la ventana, y Grosor alterna entre líneas finas, medias y gruesas. El clic del stick izquierdo carga la siguiente función de ejemplo. El clic del stick derecho repite esta ayuda.';
 const HELP_2D='Arrastre sobre el gráfico para girarlo y use la rueda o los botones más y menos para acercarlo. Las flechas hacia arriba y hacia abajo mueven la función. Elija una pestaña para estudiar ceros, extremos, monotonía, concavidad o asíntotas, y pulse Subir y recorrer para que el vagón visite esos elementos mientras la narración los explica.';
 
 /* ================= pestañas ================= */
@@ -1204,20 +1426,20 @@ function tabName(id){ return (TABS.find(t=>t.id===id)||TABS[0]).name; }
 function ivTxt(p,q){ return '('+fmtS(p)+', '+fmtS(q)+')'; }
 function buildTour(){
   const A=st.A, tab=st.tab, W=st.b-st.a, items=[];
-  A.stops.forEach(s=>{ if(stopInTab(s,tab)) items.push({x:s.x, kind:s.kind, title:s.title, pt:s.pt, lines:s.lines, say:s.say, stop:s}); });
+  A.stops.forEach(s=>{ if(stopInTab(s,tab)) items.push({x:s.x, kind:s.kind, title:s.title, pt:s.pt, ptTeX:s.ptTeX, lines:s.lines, say:s.say, stop:s}); });
   const addIv=(list,names,sayFn,lineFn)=>{
     list.forEach(o=>{
       const w=o.q-o.p; if(w<1e-6*W) return;
       const x=o.p+Math.min(w*0.5,Math.max(w*0.06,W*0.012));
-      items.push({x, kind:o.kind, title:names[o.kind], pt:ivTxt(o.p,o.q), lines:[lineFn(o)], say:sayFn(o), iv:o});
+      items.push({x, kind:o.kind, title:names[o.kind], pt:ivTxt(o.p,o.q), ptTeX:texIv(o.p,o.q), lines:[lineFn(o)], say:sayFn(o), iv:o});
     });
   };
   if(tab==='mono') addIv(A.mono,{crec:'Intervalo creciente',decr:'Intervalo decreciente',const:'Intervalo constante'},
     o=>'Ahora la función es '+({crec:'creciente',decr:'decreciente',const:'constante'}[o.kind])+', desde x igual a '+sayNum(o.p)+' hasta x igual a '+sayNum(o.q)+'. En este tramo la derivada es '+({crec:'positiva',decr:'negativa',const:'cero'}[o.kind])+'.',
-    o=>'f′(x) '+({crec:'> 0',decr:'< 0',const:'= 0'}[o.kind])+' en '+ivTxt(o.p,o.q)+'.');
+    o=>[Mx("f'(x)"+({crec:'>0',decr:'<0',const:'=0'}[o.kind]),'f′(x) '+({crec:'> 0',decr:'< 0',const:'= 0'}[o.kind])),' en ',Mx(texIv(o.p,o.q),ivTxt(o.p,o.q)),'.']);
   if(tab==='conc') addIv(A.conc,{up:'Cóncava hacia arriba',down:'Cóncava hacia abajo',lin:'Tramo lineal'},
     o=>'Ahora la curva es '+({up:'cóncava hacia arriba',down:'cóncava hacia abajo',lin:'recta'}[o.kind])+', desde x igual a '+sayNum(o.p)+' hasta x igual a '+sayNum(o.q)+'. La segunda derivada es '+({up:'positiva',down:'negativa',lin:'cero'}[o.kind])+'.',
-    o=>'f″(x) '+({up:'> 0',down:'< 0',lin:'= 0'}[o.kind])+' en '+ivTxt(o.p,o.q)+'.');
+    o=>[Mx("f''(x)"+({up:'>0',down:'<0',lin:'=0'}[o.kind]),'f″(x) '+({up:'> 0',down:'< 0',lin:'= 0'}[o.kind])),' en ',Mx(texIv(o.p,o.q),ivTxt(o.p,o.q)),'.']);
   items.sort((p,q)=>p.x-q.x);
   items.forEach(it=>{ it.reach=stopReach(it); });
   st.tour=items;
@@ -1234,36 +1456,44 @@ function sayLin(m,n){
   if(Math.abs(n)>1e-12) t += (n<0?' menos ':' más ')+sayNum(Math.abs(n));
   return t;
 }
-function infLine(r,sgn){ const s=sgn>0?'+∞':MINUS+'∞'; let t='x → '+s+'   f(x) → '+limTxt(r.L);
-  if(r.L.type==='fin') t+='   asíntota horizontal y = '+fmtS(r.L.v);
-  else if(r.oblique) t+='   asíntota oblicua y = '+linEq(r.oblique.m,r.oblique.n);
-  return t; }
-function extTxt(o,word){ return o.none ? 'No tiene '+word+' absoluto en la ventana (f no está acotada cerca de x = '+fmtS(o.x)+').'
-    : (o.attained ? word.charAt(0).toUpperCase()+word.slice(1)+' absoluto '+fmtS(o.v)+' en x = '+fmtS(o.x)+(Math.abs(o.x-st.a)<1e-9||Math.abs(o.x-st.b)<1e-9?' (extremo de la ventana)':'')+'.'
-      : (word==='máximo'?'Supremo ':'Ínfimo ')+fmtS(o.v)+' cerca de x = '+fmtS(o.x)+', no alcanzado.'); }
+function domTeX(A){ return A.dom.length? A.dom.map(d=>(d.pc?'\\left[':'\\left(')+texNum(d.p)+',\\ '+texNum(d.q)+(d.qc?'\\right]':'\\right)')).join('\\cup ') : '\\varnothing'; }
+const MxX=xs=>Mx('x='+xs.map(v=>texNum(v)).join(',\\ '),'x = '+xs.map(v=>fmtS(v)).join(', '));
+const MxV=v=>Mx(texNum(v),fmtS(v));
+const MxIvs=l=>Mx(l.map(o=>texIv(o.p,o.q)).join('\\cup '),l.map(o=>ivTxt(o.p,o.q)).join(' ∪ '));
+const MxWin=()=>Mx('\\left['+texNum(st.a)+',\\ '+texNum(st.b)+'\\right]','['+fmtS(st.a)+', '+fmtS(st.b)+']');
+function infLine(r,sgn){
+  const out=[Mx('\\lim_{x\\to '+(sgn>0?'+':'-')+'\\infty} f(x)='+texLim(r.L),'lím x→'+(sgn>0?'+∞':MINUS+'∞')+' f(x) = '+limTxt(r.L))];
+  if(r.L.type==='fin') out.push(', asíntota horizontal ',Mx('y='+texNum(r.L.v),'y = '+fmtS(r.L.v)));
+  else if(r.oblique) out.push(', asíntota oblicua ',Mx('y='+linEqTeX(r.oblique.m,r.oblique.n),'y = '+linEq(r.oblique.m,r.oblique.n)));
+  out.push('.'); return out;
+}
+function extTxt(o,word){
+  if(o.none) return ['No tiene '+word+' absoluto en la ventana, porque f no está acotada cerca de ',MxX([o.x]),'.'];
+  if(o.attained) return [word.charAt(0).toUpperCase()+word.slice(1)+' absoluto ',MxV(o.v),' en ',MxX([o.x]),(Math.abs(o.x-st.a)<1e-9||Math.abs(o.x-st.b)<1e-9?', extremo de la ventana.':'.')];
+  return [(word==='máximo'?'Supremo ':'Ínfimo '),MxV(o.v),' cerca de ',MxX([o.x]),', no alcanzado.'];
+}
 function extSay(o,word){ return o.none ? 'No hay '+word+' absoluto en la ventana, porque la función no está acotada cerca de x igual a '+sayNum(o.x)+'.'
     : (o.attained ? 'El '+word+' absoluto en la ventana es '+sayNum(o.v)+', en x igual a '+sayNum(o.x)+'.' : 'La función se acerca a '+sayNum(o.v)+' cerca de x igual a '+sayNum(o.x)+', sin alcanzarlo.'); }
 function tabInfo(tab){
   const A=st.A, F=st.F;
   const ivs=(list,k)=>list.filter(o=>o.kind===k);
   const ivSay=l=>sayList(l.map(o=>'entre '+sayNum(o.p)+' y '+sayNum(o.q)));
-  const ivShow=l=>l.map(o=>ivTxt(o.p,o.q)).join(' ∪ ');
   switch(tab){
     case 'todo': {
       const n=A.stops.length;
-      return {title:'Vista general', lines:[n+' puntos característicos en la ventana ['+fmtS(st.a)+', '+fmtS(st.b)+'].','Dominio en la ventana '+A.domTxt+'.'],
+      return {title:'Vista general', lines:[[n+' puntos característicos en la ventana ',MxWin(),'.'],['Dominio en la ventana ',Mx(domTeX(A),A.domTxt),'.']],
         say:'Función f de x igual a '+sayExpr(F.node)+'. En la ventana de x igual a '+sayNum(st.a)+' hasta '+sayNum(st.b)+' hay '+n+' puntos característicos. Use las pestañas para estudiar ceros, extremos, monotonía, concavidad y asíntotas.'};
     }
     case 'ceros': {
       const z=A.zeros.map(o=>o.x);
-      return {title:'Ceros', lines: z.length? ['f(x) = 0 en x = '+z.map(v=>fmtS(v)).join(', ')+'.','Son los puntos donde la curva corta o toca el eje x.'] : ['No hay ceros en la ventana.'],
+      return {title:'Ceros', lines: z.length? [[Mx('f(x)=0','f(x) = 0'),' en ',MxX(z),'.'],'Son los puntos donde la curva corta o toca el eje x.'] : ['No hay ceros en la ventana.'],
         say: z.length? 'Ceros. La función se anula en '+(z.length===1?'un punto':z.length+' puntos')+': x igual a '+sayList(z.map(sayNum))+'. Allí la curva corta o toca el eje x.' : 'Ceros. La función no se anula en esta ventana.'};
     }
     case 'extremos': {
       const mx=A.crit.filter(c=>c.kind==='max'), mn=A.crit.filter(c=>c.kind==='min');
       const lines=[];
-      if(mx.length) lines.push('Máximos locales en x = '+mx.map(c=>fmtS(c.x)).join(', ')+'.');
-      if(mn.length) lines.push('Mínimos locales en x = '+mn.map(c=>fmtS(c.x)).join(', ')+'.');
+      if(mx.length) lines.push([(mx.length>1?'Máximos locales en ':'Máximo local en '),MxX(mx.map(c=>c.x)),'.']);
+      if(mn.length) lines.push([(mn.length>1?'Mínimos locales en ':'Mínimo local en '),MxX(mn.map(c=>c.x)),'.']);
       if(!mx.length&&!mn.length) lines.push('No hay extremos locales en la ventana.');
       lines.push(extTxt(A.absMax,'máximo')); lines.push(extTxt(A.absMin,'mínimo'));
       let say='Extremos. ';
@@ -1275,7 +1505,7 @@ function tabInfo(tab){
     }
     case 'mono': {
       const c=ivs(A.mono,'crec'), d=ivs(A.mono,'decr');
-      const lines=[]; if(c.length) lines.push('Creciente en '+ivShow(c)+'.'); if(d.length) lines.push('Decreciente en '+ivShow(d)+'.');
+      const lines=[]; if(c.length) lines.push(['Creciente en ',MxIvs(c),'.']); if(d.length) lines.push(['Decreciente en ',MxIvs(d),'.']);
       lines.push('Verde indica creciente y naranja decreciente.');
       let say='Monotonía. La curva se colorea en verde donde la función crece y en naranja donde decrece. ';
       if(c.length) say+='La función es creciente '+ivSay(c)+'. ';
@@ -1285,8 +1515,8 @@ function tabInfo(tab){
     case 'conc': {
       const u=ivs(A.conc,'up'), d=ivs(A.conc,'down');
       const inf=A.infl.filter(p=>!p.noTangent);
-      const lines=[]; if(u.length) lines.push('Cóncava hacia arriba en '+ivShow(u)+'.'); if(d.length) lines.push('Cóncava hacia abajo en '+ivShow(d)+'.');
-      lines.push(inf.length?'Inflexiones en x = '+inf.map(p=>fmtS(p.x)).join(', ')+'.':'Sin puntos de inflexión en la ventana.');
+      const lines=[]; if(u.length) lines.push(['Cóncava hacia arriba en ',MxIvs(u),'.']); if(d.length) lines.push(['Cóncava hacia abajo en ',MxIvs(d),'.']);
+      lines.push(inf.length?[(inf.length>1?'Inflexiones en ':'Inflexión en '),MxX(inf.map(p=>p.x)),'.']:'Sin puntos de inflexión en la ventana.');
       lines.push('Azul indica cóncava hacia arriba y magenta cóncava hacia abajo.');
       let say='Concavidad. La curva se colorea en azul donde es cóncava hacia arriba y en magenta donde es cóncava hacia abajo. ';
       if(u.length) say+='Es cóncava hacia arriba '+ivSay(u)+'. ';
@@ -1297,8 +1527,8 @@ function tabInfo(tab){
     case 'asint': {
       const va=A.breaks.filter(b=>b.kind==='asintota'), other=A.breaks.filter(b=>b.kind!=='asintota');
       const lines=[];
-      lines.push(va.length?'Asíntotas verticales x = '+va.map(b=>fmtS(b.x)).join(', ')+'.':'Sin asíntotas verticales en la ventana.');
-      if(other.length) lines.push('Otras discontinuidades o bordes en x = '+other.map(b=>fmtS(b.x)).join(', ')+'.');
+      lines.push(va.length?[(va.length>1?'Asíntotas verticales ':'Asíntota vertical '),MxX(va.map(b=>b.x)),'.']:'Sin asíntotas verticales en la ventana.');
+      if(other.length) lines.push(['Otras discontinuidades o bordes en ',MxX(other.map(b=>b.x)),'.']);
       lines.push(infLine(A.infNeg,-1)); lines.push(infLine(A.infPos,1));
       let say='Asíntotas y límites. ';
       say+= va.length ? 'Hay '+(va.length===1?'una asíntota vertical':va.length+' asíntotas verticales')+', en x igual a '+sayList(va.map(b=>sayNum(b.x)))+'. ' : 'No hay asíntotas verticales en la ventana. ';
@@ -1351,7 +1581,7 @@ function moveTo(r,withFade){
 }
 let curTourIdx=-1, curStopIdx=-1;
 function announce(it,talk){
-  setMsg(it.title+'  '+it.pt, it.lines);
+  setMsg([it.title+'  ',Mx(it.ptTeX||it.pt,it.pt)], it.lines);
   curTourIdx=st.tour.indexOf(it);
   curStopIdx=it.stop?st.A.stops.indexOf(it.stop):-1;
   document.querySelectorAll('#stopList button').forEach((b,i)=>b.classList.toggle('cur',i===curTourIdx));
@@ -1439,16 +1669,22 @@ function linEq(m,b){
   if(Math.abs(b)>1e-12 || !s){ const bt=fmtS(Math.abs(b),3); s += s ? (b<0?' '+MINUS+' ':' + ')+bt : (b<0?MINUS:'')+bt; }
   return s;
 }
+function linEqTeX(m,b){
+  let s='';
+  if(Math.abs(m)>1e-12){ s=(Math.abs(m-1)<1e-12?'':Math.abs(m+1)<1e-12?'-':texNum(m,3)+' ')+'x'; }
+  if(Math.abs(b)>1e-12 || !s){ const bt=texNum(Math.abs(b),3); s += s ? (b<0?'-':'+')+bt : (b<0?'-':'')+bt; }
+  return s;
+}
 function tnEquations(t){
-  if(!t.ok) return {tan:'f no está definida en x₀ = '+fmtS(t.x0),nor:''};
+  if(!t.ok) return {tan:'f no está definida en x₀ = '+fmtS(t.x0),nor:'',tanT:null,norT:null};
   const x0=fmtS(t.x0), y0=fmtS(t.y0);
-  if(t.vertical) return {tan:'x = '+x0+'  (tangente vertical)', nor:'y = '+y0};
+  if(t.vertical) return {tan:'x = '+x0, nor:'y = '+y0, tanT:'x='+texNum(t.x0), norT:'y='+texNum(t.y0), vert:true};
   const m=t.m, bT=t.y0-m*t.x0;
-  const tan='y = '+linEq(m,bT);
-  let nor;
-  if(Math.abs(m)<1e-12) nor='x = '+x0;
-  else { const mn=-1/m; nor='y = '+linEq(mn,t.y0-mn*t.x0); }
-  return {tan,nor,m};
+  const tan='y = '+linEq(m,bT), tanT='y='+linEqTeX(m,bT);
+  let nor, norT;
+  if(Math.abs(m)<1e-12){ nor='x = '+x0; norT='x='+texNum(t.x0); }
+  else { const mn=-1/m; nor='y = '+linEq(mn,t.y0-mn*t.x0); norT='y='+linEqTeX(mn,t.y0-mn*t.x0); }
+  return {tan,nor,tanT,norT,m};
 }
 function tnSay(){
   const t=tangentInfo(); if(!t.ok) return 'En este punto la función no está definida.';
@@ -1459,6 +1695,8 @@ function tnSay(){
   return s;
 }
 function shiftTxt(v,varName){ if(Math.abs(v)<1e-12) return varName; return varName+(v<0?' + ':' '+MINUS+' ')+fmtS(Math.abs(v),3); }
+function shiftTeX(v,n){ if(Math.abs(v)<1e-12) return n; return n+(v<0?'+':'-')+texNum(Math.abs(v),3); }
+function pointSlopeTeX(t){ const m=texNum(t.m,3); return shiftTeX(t.y0,'y')+'='+(Math.abs(t.x0)<1e-12? m+' x' : m+'\\left('+shiftTeX(t.x0,'x')+'\\right)'); }
 function pointSlope(t){ const L=shiftTxt(t.y0,'y'), R=shiftTxt(t.x0,'x'); const m=fmtS(t.m,3); return L+' = '+(Math.abs(t.x0)<1e-12? m+'x' : m+'('+R+')'); }
 function stateAt(x){
   const F=st.F, d1=F.f1(x), d2=F.f2(x);
@@ -1476,13 +1714,12 @@ function updateHUD(){
   document.getElementById('hD2').textContent=fmtS(d2,3);
   document.getElementById('hState').innerHTML=stateAt(x).map(([t,c])=>'<span class="pill" style="color:'+c+'">'+t+'</span>').join('');
   const t=tangentInfo(), e=tnEquations(t);
-  document.getElementById('hEq').innerHTML = st.tn>0 ? '<span style="color:'+hex(COL.tan)+'">tangente '+e.tan+'</span>'+(st.tn>1&&e.nor?'<br><span style="color:'+hex(COL.nor)+'">normal '+e.nor+'</span>':'') : '';
-  document.getElementById('hMsg').innerHTML = st.msgTitle? '<strong>'+esc(st.msgTitle)+'</strong>'+st.msgLines.map(esc).join('<br>') : '<span style="color:var(--stage-muted)">Elija una pestaña y pulse Subir y recorrer.</span>';
-  const x0t=fmtS(t.x0);
+  document.getElementById('hEq').innerHTML = st.tn>0 && e.tanT ? '<span style="color:'+hex(COL.tan)+'">tangente '+texHTML(e.tanT,e.tan)+'</span>'+(st.tn>1&&e.norT?'<br><span style="color:'+hex(COL.nor)+'">normal '+texHTML(e.norT,e.nor)+'</span>':'') : '';
+  document.getElementById('hMsg').innerHTML = (st.msgTitle && st.msgTitle.length)? '<strong>'+richHTML(st.msgTitle)+'</strong>'+st.msgLines.map(richHTML).join('<br>') : '<span style="color:var(--stage-muted)">Elija una pestaña y pulse Subir y recorrer.</span>';
   document.getElementById('tnBox').innerHTML = t.ok ?
-    '<div>x₀ = '+x0t+'   f(x₀) = '+fmtS(t.y0,3)+'   f′(x₀) = '+(t.vertical?'no existe':fmtS(t.m,3))+'</div>'+
-    '<div class="t">Tangente  '+e.tan+'</div>'+(t.vertical||Math.abs(t.m)<1e-12?'':'<div class="t">          '+pointSlope(t)+'</div>')+
-    '<div class="n">Normal    '+e.nor+'</div>' : '<div>'+esc(e.tan)+'</div>';
+    '<div class="tnv">'+texHTML('x_0='+texNum(t.x0),'x₀ = '+fmtS(t.x0))+' '+texHTML('f(x_0)='+texNum(t.y0,3),'f(x₀) = '+fmtS(t.y0,3))+' '+(t.vertical?texHTML("f'(x_0)","f′(x₀)")+' no existe':texHTML("f'(x_0)="+texNum(t.m,3),'f′(x₀) = '+fmtS(t.m,3)))+'</div>'+
+    '<div class="t">Tangente '+texHTML(e.tanT,e.tan)+(t.vertical?' (vertical)':'')+'</div>'+(t.vertical||Math.abs(t.m)<1e-12?'':'<div class="t">Forma punto pendiente '+texHTML(pointSlopeTeX(t),pointSlope(t))+'</div>')+
+    '<div class="n">Normal '+texHTML(e.norT,e.nor)+'</div>' : '<div>'+esc(e.tan)+'</div>';
   const sl=document.getElementById('xslider'); if(document.activeElement!==sl) sl.value=Math.round((x-st.a)/(st.b-st.a)*1000);
 }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -1495,8 +1732,26 @@ function wrap(g,text,maxW){
 
 /* ---- tablero VR con botones ---- */
 const vrUI={buttons:[],hover:null};
+const FN_KEYS=[
+  [['7','7'],['8','8'],['9','9'],['(','('],[')',')'],['⌫','BS']],
+  [['4','4'],['5','5'],['6','6'],['x','x'],['xⁿ','^'],['Borrar','CLR']],
+  [['1','1'],['2','2'],['3','3'],['+','+'],[MINUS,'-'],['·','*']],
+  [['0','0'],['.','.'],['÷','/'],['π','π'],['e','e'],['√','sqrt(']],
+  [['sen','sen('],['cos','cos('],['tg','tg('],['ln','ln('],['|x|','abs('],['x²','^2']]
+];
+const WINS=[1,2,3,4,5,6,8,10,12,15,20,30,50];
 function vrLayout(){
   const B=[], pad=24, gap=12;
+  if(st.vrPanel==='fn'){
+    const kw=(PW-2*pad-5*10)/6, kh=62;
+    FN_KEYS.forEach((row,r)=>row.forEach((k,c)=>B.push({id:'k:'+k[1], label:k[0], x:pad+c*(kw+10), y:272+r*(kh+10), w:kw, h:kh, key:true})));
+    const w4=(PW-2*pad-3*10)/4, y6=272+5*(kh+10);
+    [['fnprev','◀ Ejemplo'],['fnnext','Ejemplo ▶'],['winm','Ventana '+MINUS],['winp','Ventana +']].forEach((a,i)=>B.push({id:a[0],label:a[1],x:pad+i*(w4+10),y:y6,w:w4,h:kh}));
+    const w2=(PW-2*pad-10)/2, y7=y6+kh+16;
+    B.push({id:'fncancel',label:'Cancelar',x:pad,y:y7,w:w2,h:84});
+    B.push({id:'fnok',label:'Graficar',x:pad+w2+10,y:y7,w:w2,h:84,primary:true});
+    vrUI.buttons=B; return;
+  }
   const tw=(PW-2*pad-2*gap)/3, th=62;
   TABS.forEach((t,i)=>{ B.push({id:'tab:'+t.id, label:t.name, x:pad+(i%3)*(tw+gap), y:20+Math.floor(i/3)*(th+gap), w:tw, h:th, tab:t.id}); });
   const acts=[
@@ -1511,7 +1766,38 @@ function vrLayout(){
   const zb=[{id:'zin',label:'+'},{id:'zout',label:MINUS},{id:'up',label:'↑'},{id:'down',label:'↓'},{id:'reset',label:'Centrar'}];
   const zw=[70,70,70,70,150]; let zx=PW-pad-zw.reduce((a,b)=>a+b,0)-gap*4;
   zb.forEach((z,i)=>{ B.push(Object.assign(z,{x:zx, y:by-78, w:zw[i], h:62})); zx+=zw[i]+gap; });
+  B.push({id:'fnopen',label:'Cambiar función',x:pad,y:by-78,w:300,h:62,primary:true});
+  B.push({id:'thick',label:'Grosor: '+THICK_NAME[st.thick],x:pad+300+gap,y:by-78,w:250,h:62});
   vrUI.buttons=B;
+}
+// conserva la última fórmula ya dibujada mientras se prepara la nueva (evita parpadeo al moverse)
+const lastTex={};
+function stableMx(slot,t,a,color,px){
+  const im=texImage(t,color,px);
+  if(im&&im.ok){ lastTex[slot]={t,a}; return Mx(t,a); }
+  const L=lastTex[slot]; if(L){ const im2=texImage(L.t,color,px); if(im2&&im2.ok) return Mx(L.t,L.a); }
+  return Mx(t,a);
+}
+let fnPrev={src:null,v:null};
+function fnPreview(){
+  const src=st.fnDraft; if(fnPrev.src===src) return fnPrev.v;
+  let v=null; try{ const n=M.parse(preprocess(src)); const t=nodeTex(n); if(t) v={tex:t,alt:pretty(n)}; }catch(e){ v=null; }
+  fnPrev={src,v}; return v;
+}
+const SANS='"Atkinson Hyperlegible", sans-serif';
+function drawFnPanel(g){
+  const W=PW;
+  g.fillStyle='#ffffff'; g.font='700 36px '+SANS; g.fillText('Cambiar la función',28,58);
+  g.fillStyle='#94a8ae'; g.font='400 28px '+SANS; g.textAlign='right'; g.fillText('Ventana: x de '+fmtS(st.fnA)+' a '+fmtS(st.fnB),W-28,58); g.textAlign='left';
+  g.fillStyle='#0f2229'; roundRect(g,24,78,W-48,160,16); g.fill();
+  g.strokeStyle='rgba(148,168,174,0.45)'; g.lineWidth=2; roundRect(g,24,78,W-48,160,16); g.stroke();
+  g.font='600 30px "JetBrains Mono", monospace'; g.fillStyle='#e3ecec';
+  let raw=st.fnDraft; while(raw.length>1 && g.measureText('…'+raw+'▏').width>W-96) raw=raw.slice(1);
+  g.fillText((raw!==st.fnDraft?'…':'')+raw+'▏',44,122);
+  const pv=fnPreview();
+  if(pv && st.fnDraft.trim()) drawRich(g,[Mx('\\displaystyle f(x)='+pv.tex,'f(x) = '+pv.alt)],44,192,{px:36,color:'#7fdde3',maxW:W-96,fixedBaseline:true});
+  else { g.fillStyle='#94a8ae'; g.font='italic 400 27px '+SANS; g.fillText(st.fnDraft.trim()?'Expresión incompleta':'Escriba f(x) con el teclado',44,196); }
+  if(st.fnErr){ g.fillStyle='#f2887f'; g.font='400 24px '+SANS; const l=wrap(g,st.fnErr,W-56)[0]; g.fillText(l,28,262); }
 }
 function drawVRPanel(){
   vrLayout();
@@ -1521,34 +1807,77 @@ function drawVRPanel(){
   g.strokeStyle='rgba(148,168,174,0.4)'; g.lineWidth=3; roundRect(g,1.5,1.5,W-3,H-3,29); g.stroke();
   const drawBtn=(b,active)=>{
     const hov=vrUI.hover===b.id;
-    g.fillStyle= active ? '#0d7480' : (hov ? '#24444d' : '#162c33');
+    g.fillStyle= active ? '#0d7480' : b.primary ? (hov?'#1c5d66':'#154a52') : (hov ? '#24444d' : '#162c33');
     roundRect(g,b.x,b.y,b.w,b.h,14); g.fill();
     g.strokeStyle= hov ? '#9fe3e8' : 'rgba(148,168,174,0.45)'; g.lineWidth= hov?4:2; roundRect(g,b.x,b.y,b.w,b.h,14); g.stroke();
-    g.fillStyle='#eef5f5'; g.font='700 '+(b.label.length>14?28:32)+'px "Atkinson Hyperlegible", sans-serif'; g.textAlign='center'; g.textBaseline='middle';
+    g.fillStyle='#eef5f5'; g.font=(b.key?'600 ':'700 ')+(b.key?34:(b.label.length>14?28:32))+'px '+SANS; g.textAlign='center'; g.textBaseline='middle';
     g.fillText(b.label,b.x+b.w/2,b.y+b.h/2+2); g.textAlign='left'; g.textBaseline='alphabetic';
   };
   vrUI.buttons.forEach(b=>drawBtn(b, (b.tab&&b.tab===st.tab) || (b.id==='ride'&&st.playing)));
+  if(st.vrPanel==='fn'){ drawFnPanel(g); hudTex.needsUpdate=true; return; }
   const F=st.F, x=curX(), y=F.f(x), d1=F.f1(x), d2=F.f2(x);
-  let yy=200;
-  g.fillStyle='#94a8ae'; g.font='700 30px "Atkinson Hyperlegible", sans-serif'; g.fillText('f(x) = '+F.txt,28,yy); yy+=48;
+  let yy=204;
+  drawRich(g,[Mx('f(x)='+F.tex,'f(x) = '+F.txt)],28,yy,{px:32,color:'#cfe0e3',maxW:W-56,fixedBaseline:true}); yy+=52;
   g.font='600 32px "JetBrains Mono", monospace';
-  [['x',fmtS(x,3)],['f(x)',fmtS(y,3)],['f′(x)',fmtS(d1,3)],['f″(x)',fmtS(d2,3)]].forEach((r,i)=>{ const cx=28+i*290; g.fillStyle='#94a8ae'; g.fillText(r[0],cx,yy); g.fillStyle='#e3ecec'; g.fillText(r[1],cx+g.measureText(r[0]).width+14,yy); });
+  const labs=[[Mx('x'),'x'],[Mx('f(x)'),'f(x)'],[Mx("f'(x)"),'f′(x)'],[Mx("f''(x)"),'f″(x)']];
+  [fmtS(x,3),fmtS(y,3),fmtS(d1,3),fmtS(d2,3)].forEach((v,i)=>{ const cx=28+i*290; const r=drawRich(g,[labs[i][0]],cx,yy,{px:30,color:'#94a8ae',fixedBaseline:true}); g.font='600 32px "JetBrains Mono", monospace'; g.fillStyle='#e3ecec'; g.fillText(v,cx+r.w+14,yy); });
   yy+=26;
-  let px=28; g.font='700 27px "Atkinson Hyperlegible", sans-serif';
-  stateAt(x).forEach(([t,col])=>{ const w=g.measureText(t).width+30; g.strokeStyle=col; g.lineWidth=3; roundRect(g,px,yy,w,42,21); g.stroke(); g.fillStyle=col; g.fillText(t,px+15,yy+30); px+=w+12; });
-  if(st.tn>0){ const e=tnEquations(tangentInfo()); g.font='600 25px "JetBrains Mono", monospace'; g.fillStyle=hex(COL.tan); g.fillText('tangente '+e.tan,px+8,yy+22); if(st.tn>1&&e.nor){ g.fillStyle=hex(COL.nor); g.fillText('normal '+e.nor,px+8,yy+48); } }
-  yy+=92;
-  const maxY=PH-78-20-78-14;
-  if(st.msgTitle){
-    g.fillStyle='#ffffff'; g.font='700 34px "Atkinson Hyperlegible", sans-serif';
-    wrap(g,st.msgTitle,W-56).slice(0,2).forEach(l=>{ if(yy<maxY){ g.fillText(l,28,yy); yy+=42; } });
-    g.fillStyle='#c9d6d8'; g.font='400 29px "Atkinson Hyperlegible", sans-serif';
-    for(const para of st.msgLines){ for(const l of wrap(g,para,W-56)){ if(yy<maxY){ g.fillText(l,28,yy); yy+=37; } } }
+  let px=28; g.font='700 27px '+SANS;
+  stateAt(x).forEach(([t,col])=>{ g.font='700 27px '+SANS; const w=g.measureText(t).width+30; g.strokeStyle=col; g.lineWidth=3; roundRect(g,px,yy,w,42,21); g.stroke(); g.fillStyle=col; g.fillText(t,px+15,yy+30); px+=w+12; });
+  if(st.tn>0){ const e=tnEquations(tangentInfo());
+    if(e.tanT){ const r=drawRich(g,['tangente ',stableMx('tan',e.tanT,e.tan,hex(COL.tan),26)],px+8,yy+24,{px:26,color:hex(COL.tan),fixedBaseline:true});
+      if(st.tn>1&&e.norT) drawRich(g,['normal ',stableMx('nor',e.norT,e.nor,hex(COL.nor),26)],px+8,yy+62,{px:26,color:hex(COL.nor),fixedBaseline:true}); } }
+  yy+=100;
+  const maxY=PH-78-20-78-18;
+  if(st.msgTitle && st.msgTitle.length){
+    const r=drawRich(g,st.msgTitle,28,yy,{px:34,font:'700 34px '+SANS,color:'#ffffff',maxW:W-56,lineH:44,maxY,fixedBaseline:true});
+    yy=r.y;
+    for(const para of st.msgLines){ if(yy>maxY) break; const r2=drawRich(g,para,28,yy,{px:29,color:'#c9d6d8',maxW:W-56,lineH:38,maxY}); yy=r2.y; }
   }
   hudTex.needsUpdate=true;
 }
+function openFnPanel(){
+  st.vrPanel='fn'; st.fnDraft=st.F?st.F.src:''; st.fnA=st.a; st.fnB=st.b; st.fnErr='';
+  setMsg('Cambiar la función',['Escriba f(x) con el teclado del tablero y pulse Graficar.']);
+  speak('Cambiar la función. Escriba la nueva función con el teclado del tablero, o elija un ejemplo, y pulse Graficar. Los botones Ventana cambian el intervalo de x.');
+}
+function fnKey(k){
+  if(k==='BS'){ const m=st.fnDraft.match(/(sen|cos|tg|ln|abs|sqrt)\($/); st.fnDraft = m ? st.fnDraft.slice(0,-m[0].length) : st.fnDraft.slice(0,-1); }
+  else if(k==='CLR') st.fnDraft='';
+  else st.fnDraft+=k;
+  st.fnErr='';
+}
+function fnWindow(dir){
+  const half=(st.fnB-st.fnA)/2;
+  let i=WINS.findIndex(w=>w>=half-1e-9); if(i<0) i=WINS.length-1;
+  if(dir>0){ if(WINS[i]<=half+1e-9) i++; } else i--;
+  i=Math.max(0,Math.min(WINS.length-1,i)); const nh=WINS[i];
+  if(st.fnA>=0){ st.fnB=st.fnA+2*nh; }
+  else { const c=Math.round((st.fnA+st.fnB)/2); st.fnA=c-nh; st.fnB=c+nh; }
+  speak('Ventana de x igual a '+sayNum(st.fnA)+' a '+sayNum(st.fnB)+'.');
+}
+function fnSubmit(){
+  const src=st.fnDraft;
+  const ok=loadFunction(src,st.fnA,st.fnB,null,null,true);
+  if(ok){
+    document.getElementById('fnInput').value=src; document.getElementById('ya').value=''; document.getElementById('yb').value='';
+    st.vrPanel='main'; st.fnErr='';
+  } else {
+    st.fnErr=document.getElementById('fnError').textContent||'No se pudo graficar esta función.';
+    speak(st.fnErr);
+  }
+}
+function setThick(k,talk){
+  st.thick=k;
+  document.querySelectorAll('[data-thick]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.thick===k));
+  if(!st.A) return;
+  buildGraph(false); applyTabVisibility(); buildTour();
+  hudDirty=true; vrDirty=true;
+  if(talk) speak('Líneas '+['finas','medias','gruesas'][k]+'.');
+}
 function vrAction(id){
   if(id.startsWith('tab:')){ setTab(id.slice(4),{speak:true}); return; }
+  if(id.startsWith('k:')){ fnKey(id.slice(2)); vrDirty=true; return; }
   switch(id){
     case 'ride': if(st.playing){ st.playing=false; updatePlayBtn(); speak('Recorrido en pausa.'); } else rideTour(); break;
     case 'mode': if(st.xrKind==='ar'){ resetView(); } else toggleMode(); break;
@@ -1560,6 +1889,13 @@ function vrAction(id){
     case 'up': moveBy(0.1); break;
     case 'down': moveBy(-0.1); break;
     case 'reset': resetView(); speak('Vista centrada.'); break;
+    case 'fnopen': openFnPanel(); break;
+    case 'thick': setThick((st.thick+1)%3,true); break;
+    case 'fnprev': case 'fnnext': { const n=PRESETS.length; st.fnPreset=(st.fnPreset+(id==='fnnext'?1:-1)+n)%n; const p=PRESETS[st.fnPreset]; st.fnDraft=p.f; st.fnA=p.a; st.fnB=p.b; st.fnErr=''; break; }
+    case 'winm': fnWindow(-1); break;
+    case 'winp': fnWindow(1); break;
+    case 'fncancel': st.vrPanel='main'; st.fnErr=''; speak('Se mantiene la función actual.'); break;
+    case 'fnok': fnSubmit(); break;
   }
   vrDirty=true;
 }
@@ -1587,36 +1923,51 @@ function renderTabBar(){
 }
 function renderPanel(){
   const F=st.F;
-  document.getElementById('fxTitle').textContent='f(x) = '+F.txt;
-  document.getElementById('d1Txt').textContent=F.t1;
-  document.getElementById('d2Txt').textContent=F.t2;
+  document.getElementById('fxTitle').innerHTML=texHTML('f(x)='+F.tex,'f(x) = '+F.txt);
+  document.getElementById('d1Txt').innerHTML=F.symbolic?texHTML(F.x1,F.t1):esc(F.t1);
+  document.getElementById('d2Txt').innerHTML=F.symbolic?texHTML(F.x2,F.t2):esc(F.t2);
+}
+function applyStaticTex(){
+  document.querySelectorAll('[data-tex]').forEach(el=>{ if(el.dataset.alt==null) el.dataset.alt=el.textContent; el.innerHTML=texHTML(el.dataset.tex,el.dataset.alt); });
+}
+function onMathJax(){
+  MJ.ready=true; MJ.cache.clear(); MJ.img.clear();
+  applyStaticTex();
+  if(!st.F) return;
+  renderPanel();
+  buildGraph(false); applyTabVisibility(); buildTour(); renderTab();
+  if(document.getElementById('limOut').innerHTML) computeLimit();
+  hudDirty=true; vrDirty=true;
 }
 function renderTab(){
   const A=st.A;
   document.querySelectorAll('#tabBar button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===st.tab));
   const info=tabInfo(st.tab);
-  document.getElementById('tabInfo').innerHTML='<strong>'+esc(info.title)+'</strong>'+info.lines.map(l=>'<div>'+esc(l)+'</div>').join('');
+  document.getElementById('tabInfo').innerHTML='<strong>'+esc(info.title)+'</strong>'+info.lines.map(l=>'<div>'+richHTML(l)+'</div>').join('');
   const ol=document.getElementById('stopList');
   const dotCol=it=> CSSCOL[it.kind] || 'var(--muted)';
-  ol.innerHTML = st.tour.length ? st.tour.map((it,i)=>'<li><button type="button" data-i="'+i+'"'+(i===curTourIdx?' class="cur"':'')+'><span class="dot" style="--c:'+dotCol(it)+'"></span><span class="k">'+esc(it.title)+'</span><span class="xy">'+esc(it.pt)+'</span></button></li>').join('')
+  ol.innerHTML = st.tour.length ? st.tour.map((it,i)=>'<li><button type="button" data-i="'+i+'"'+(i===curTourIdx?' class="cur"':'')+'><span class="dot" style="--c:'+dotCol(it)+'"></span><span class="k">'+esc(it.title)+'</span><span class="xy">'+texHTML(it.ptTeX||it.pt,it.pt)+'</span></button></li>').join('')
     : '<li class="small">No hay elementos de este tipo en la ventana.</li>';
   ol.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>jumpToTour(+b.dataset.i)));
   const ex=[];
+  const absBlock=()=>'<div><span class="lbl">Extremos absolutos en la ventana</span><div>'+richHTML(extTxt(A.absMax,'máximo'))+'<br>'+richHTML(extTxt(A.absMin,'mínimo'))+'</div></div>';
   if(st.tab==='todo'){
-    ex.push('<div><span class="lbl">Dominio en la ventana</span><div class="mono">'+esc(A.domTxt)+'</div></div>');
-    ex.push('<div><span class="lbl">Extremos absolutos en ['+fmtS(st.a)+', '+fmtS(st.b)+']</span><div>'+esc(extTxt(A.absMax,'máximo'))+'<br>'+esc(extTxt(A.absMin,'mínimo'))+'</div></div>');
+    ex.push('<div><span class="lbl">Dominio en la ventana</span><div>'+texHTML(domTeX(A),A.domTxt)+'</div></div>');
+    ex.push(absBlock());
   }
   if(st.tab==='todo'||st.tab==='asint'){
-    ex.push('<div><span class="lbl">Comportamiento en los extremos</span><div class="mono">'+esc(infLine(A.infNeg,-1))+'<br>'+esc(infLine(A.infPos,1))+'</div><div class="small">Estimado evaluando f en x = ±√2·10ᵏ con k = 1, …, 9.</div></div>');
+    ex.push('<div><span class="lbl">Comportamiento en los extremos</span><div>'+richHTML(infLine(A.infNeg,-1))+'<br>'+richHTML(infLine(A.infPos,1))+'</div><div class="small">Estimado evaluando f en '+texHTML('x=\\pm\\sqrt{2}\\cdot 10^{k},\\ k=1,\\dots,9','x = ±√2·10ᵏ con k = 1, …, 9')+'.</div></div>');
   }
   const mName={crec:['creciente',CSSCOL.crec],decr:['decreciente',CSSCOL.decr],const:['constante','var(--muted)']};
   const cName={up:['cóncava hacia arriba',CSSCOL.up],down:['cóncava hacia abajo',CSSCOL.down],lin:['lineal','var(--muted)']};
-  if(st.tab==='mono'||st.tab==='todo') ex.push('<div><span class="lbl">Monotonía</span><table class="iv">'+(A.mono.map(o=>'<tr><td>'+ivTxt(o.p,o.q)+'</td><td><span class="tag" style="--c:'+mName[o.kind][1]+'"><i></i>'+mName[o.kind][0]+'</span></td></tr>').join('')||'<tr><td>sin datos</td></tr>')+'</table></div>');
-  if(st.tab==='conc'||st.tab==='todo') ex.push('<div><span class="lbl">Concavidad</span><table class="iv">'+(A.conc.map(o=>'<tr><td>'+ivTxt(o.p,o.q)+'</td><td><span class="tag" style="--c:'+cName[o.kind][1]+'"><i></i>'+cName[o.kind][0]+'</span></td></tr>').join('')||'<tr><td>sin datos</td></tr>')+'</table></div>');
-  if(st.tab==='extremos') ex.push('<div><span class="lbl">Extremos absolutos en ['+fmtS(st.a)+', '+fmtS(st.b)+']</span><div>'+esc(extTxt(A.absMax,'máximo'))+'<br>'+esc(extTxt(A.absMin,'mínimo'))+'</div></div>');
+  const ivCell=o=>'<td>'+texHTML(texIv(o.p,o.q),ivTxt(o.p,o.q))+'</td>';
+  if(st.tab==='mono'||st.tab==='todo') ex.push('<div><span class="lbl">Monotonía</span><table class="iv">'+(A.mono.map(o=>'<tr>'+ivCell(o)+'<td><span class="tag" style="--c:'+mName[o.kind][1]+'"><i></i>'+mName[o.kind][0]+'</span></td></tr>').join('')||'<tr><td>sin datos</td></tr>')+'</table></div>');
+  if(st.tab==='conc'||st.tab==='todo') ex.push('<div><span class="lbl">Concavidad</span><table class="iv">'+(A.conc.map(o=>'<tr>'+ivCell(o)+'<td><span class="tag" style="--c:'+cName[o.kind][1]+'"><i></i>'+cName[o.kind][0]+'</span></td></tr>').join('')||'<tr><td>sin datos</td></tr>')+'</table></div>');
+  if(st.tab==='extremos') ex.push(absBlock());
   document.getElementById('tabExtra').innerHTML=ex.join('');
 }
 
+function numCell(v,p){ const d=dec(v,p); return d.indexOf('×')>=0 ? texHTML(texDec(v,p),d) : d; }
 function computeLimit(){
   const raw=document.getElementById('limC').value.trim();
   const out=document.getElementById('limOut');
@@ -1630,20 +1981,21 @@ function computeLimit(){
   let html='', say='';
   if(res.inf){
     const xs=[1,2,3,4,6,8].map(k=>Math.sign(c)*Math.pow(10,k));
-    html+='<div class="ltwrap"><table class="lt"><tr><th>x</th><th>f(x)</th></tr>'+xs.map(x=>'<tr><td>'+dec(x,0)+'</td><td>'+dec(f(x),6)+'</td></tr>').join('')+'</table></div>';
-    html+='<p class="facts"><span class="mono">lím x→'+(c>0?'+∞':MINUS+'∞')+' f(x) = '+esc(limTxt(res.L))+'</span>'+(res.oblique?'<span>Asíntota oblicua y = '+esc(linEq(res.oblique.m,res.oblique.n))+'</span>':'')+'</p>';
+    html+='<div class="ltwrap"><table class="lt"><tr><th>'+texHTML('x','x')+'</th><th>'+texHTML('f(x)','f(x)')+'</th></tr>'+xs.map(x=>'<tr><td>'+numCell(x,0)+'</td><td>'+numCell(f(x),6)+'</td></tr>').join('')+'</table></div>';
+    const si=c>0?'+':'-', ss=c>0?'+∞':MINUS+'∞';
+    html+='<p class="facts"><span>'+texHTML('\\displaystyle\\lim_{x\\to '+si+'\\infty} f(x)='+texLim(res.L),'lím x→'+ss+' f(x) = '+limTxt(res.L))+'</span>'+(res.oblique?'<span>Asíntota oblicua '+texHTML('y='+linEqTeX(res.oblique.m,res.oblique.n),'y = '+linEq(res.oblique.m,res.oblique.n))+'</span>':'')+'</p>';
     say=infSay({L:res.L,oblique:res.oblique},c>0?1:-1);
     st.limit=null;
   } else {
     const hs=[1e-1,1e-2,1e-3,1e-4,1e-5,1e-6].map(h=>h*Math.max(1,Math.abs(c)));
-    html+='<div class="ltwrap"><table class="lt"><tr><th>x → c⁻</th><th>f(x)</th><th>x → c⁺</th><th>f(x)</th></tr>'+hs.map(h=>'<tr><td>'+dec(c-h,6)+'</td><td>'+dec(f(c-h),6)+'</td><td>'+dec(c+h,6)+'</td><td>'+dec(f(c+h),6)+'</td></tr>').join('')+'</table></div>';
-    const ct=fmtS(c);
+    html+='<div class="ltwrap"><table class="lt"><tr><th>'+texHTML('x\\to c^{-}','x → c⁻')+'</th><th>'+texHTML('f(x)','f(x)')+'</th><th>'+texHTML('x\\to c^{+}','x → c⁺')+'</th><th>'+texHTML('f(x)','f(x)')+'</th></tr>'+hs.map(h=>'<tr><td>'+numCell(c-h,6)+'</td><td>'+numCell(f(c-h),6)+'</td><td>'+numCell(c+h,6)+'</td><td>'+numCell(f(c+h),6)+'</td></tr>').join('')+'</table></div>';
+    const ct=fmtS(c), tc=texNum(c);
     let concl, csay;
-    if(res.both && !res.both.onlyLeft && !res.both.onlyRight){ concl='lím x→'+ct+' f(x) = '+limTxt(res.both); csay='El límite existe y vale '+sayLim(res.both)+'.'; }
-    else if(res.both){ concl='Solo existe el límite lateral '+(res.both.onlyLeft?'izquierdo':'derecho')+', porque f no está definida al otro lado de '+ct+'.'; csay='Solo existe el límite por la '+(res.both.onlyLeft?'izquierda':'derecha')+'.'; }
+    if(res.both && !res.both.onlyLeft && !res.both.onlyRight){ concl=texHTML('\\displaystyle\\lim_{x\\to '+tc+'} f(x)='+texLim(res.both),'lím x→'+ct+' f(x) = '+limTxt(res.both)); csay='El límite existe y vale '+sayLim(res.both)+'.'; }
+    else if(res.both){ concl='Solo existe el límite lateral '+(res.both.onlyLeft?'izquierdo':'derecho')+', porque f no está definida al otro lado de '+texHTML('x='+tc,'x = '+ct)+'.'; csay='Solo existe el límite por la '+(res.both.onlyLeft?'izquierda':'derecha')+'.'; }
     else { concl='El límite no existe, porque los límites laterales no coinciden.'; csay='El límite no existe, porque los límites laterales no coinciden.'; }
     const fc=f(c);
-    html+='<div class="facts"><span class="mono">lím x→'+ct+'⁻ f(x) = '+esc(limTxt(res.L))+'</span><span class="mono">lím x→'+ct+'⁺ f(x) = '+esc(limTxt(res.R))+'</span><span>'+esc(concl)+'</span><span class="small">f('+esc(ct)+') '+(isFinite(fc)?'= '+esc(fmtS(fc)):'no está definida')+'.</span></div>';
+    html+='<div class="facts"><span>'+texHTML('\\displaystyle\\lim_{x\\to '+tc+'^{-}} f(x)='+texLim(res.L),'lím x→'+ct+'⁻ f(x) = '+limTxt(res.L))+'</span><span>'+texHTML('\\displaystyle\\lim_{x\\to '+tc+'^{+}} f(x)='+texLim(res.R),'lím x→'+ct+'⁺ f(x) = '+limTxt(res.R))+'</span><span>'+concl+'</span><span class="small">'+(isFinite(fc)?texHTML('f\\left('+tc+'\\right)='+texNum(fc),'f('+ct+') = '+fmtS(fc))+'.':texHTML('f\\left('+tc+'\\right)','f('+ct+')')+' no está definida.')+'</span></div>';
     say='Cuando x tiende a '+sayNum(c)+' por la izquierda, f tiende a '+sayLim(res.L)+'. Por la derecha, tiende a '+sayLim(res.R)+'. '+csay;
     st.limit={c,res};
   }
@@ -1706,7 +2058,7 @@ function updatePlayBtn(){ document.getElementById('bPlay').textContent = st.play
 function togglePlay(){
   st.playing=!st.playing;
   if(st.playing){ const pc=pieces[st.piece]; if(pc && st.s>=pc.L-1e-12 && st.piece===pieces.length-1){ st.piece=0; st.s=0; } st.pauseUntil=0; st.waitSpeech=false; }
-  else if(TTS.ok){ try{ speechSynthesis.cancel(); }catch(e){} }
+  else stopSpeech();
   updatePlayBtn();
 }
 document.getElementById('bPlay').addEventListener('click',togglePlay);
@@ -1715,6 +2067,8 @@ document.getElementById('bPrev').addEventListener('click',()=>stepStop(-1));
 document.getElementById('bRideTour').addEventListener('click',rideTour);
 document.getElementById('bSpeakTab').addEventListener('click',()=>speak(tabInfo(st.tab).say));
 document.getElementById('btnTTS').addEventListener('click',()=>{ setTTS(!TTS.on); if(TTS.on) speak('Narración activada.'); });
+document.getElementById('btnFn').addEventListener('click',()=>{ const inp=document.getElementById('fnInput'); const card=inp.closest('details'); card.open=true; card.scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(()=>{ inp.focus(); inp.select(); },350); });
+document.querySelectorAll('[data-thick]').forEach(b=>b.addEventListener('click',()=>setThick(+b.dataset.thick,false)));
 document.getElementById('btnHelp').addEventListener('click',()=>{ setMsg('Ayuda',[HELP_2D]); speak(HELP_2D); });
 document.getElementById('speed').addEventListener('input',e=>{ st.speed=+e.target.value; });
 document.getElementById('xslider').addEventListener('input',e=>{ const x=st.a+(st.b-st.a)*(+e.target.value)/1000; st.playing=false; updatePlayBtn(); moveTo(nearestReach(x),false); hudDirty=true; });
@@ -1731,8 +2085,6 @@ window.addEventListener('keydown',e=>{
   else if(e.key==='p'||e.key==='P'||e.key==='PageUp') stepStop(-1);
 });
 window.addEventListener('keyup',e=>{ keys[e.key]=false; });
-// la primera interacción habilita la voz en navegadores que la bloquean
-window.addEventListener('pointerdown',()=>{ TTS.unlocked=true; },{once:true});
 
 /* ================= WebXR ================= */
 const btnVR=document.getElementById('btnVR'), btnAR=document.getElementById('btnAR'), xrStatus=document.getElementById('xrStatus');
@@ -1762,10 +2114,10 @@ async function enterXR(kind){
     controls.enabled=false;
     savedCam={p:camera.position.clone(),q:camera.quaternion.clone()};
     camera.position.set(0,0,0); camera.quaternion.identity();
-    hudMesh.visible=st.hudVisible;
+    hudMesh.visible=st.hudVisible; st.vrPanel='main';
     placeGraph(); snapCam=true; hudDirty=true; vrDirty=true;
-    const intro=(kind==='ar'?'Realidad mixta. ':'Realidad virtual. ')+'La función f de x igual a '+sayExpr(st.F.node)+' está frente a usted. A su izquierda está el tablero con las pestañas. Apunte con el mando y pulse el gatillo para elegir. Pulse Subir y recorrer para montarse en la curva. Para escuchar todos los controles, haga clic con el stick derecho.';
-    setMsg(kind==='ar'?'Realidad mixta':'Realidad virtual',['La función está frente a usted. Apunte al tablero y pulse el gatillo para elegir una pestaña.','Clic del stick derecho: ayuda de controles.']);
+    const intro=(kind==='ar'?'Realidad mixta. ':'Realidad virtual. ')+'La función f de x igual a '+sayExpr(st.F.node)+' está frente a usted. A su izquierda está el tablero con las pestañas. Apunte con el mando y pulse el gatillo para elegir. Pulse Subir y recorrer para montarse en la curva. El botón Cambiar función abre un teclado para escribir otra función. Para escuchar todos los controles, haga clic con el stick derecho.';
+    setMsg(kind==='ar'?'Realidad mixta':'Realidad virtual',['La función está frente a usted. Apunte al tablero y pulse el gatillo para elegir una pestaña o un botón.','Cambiar función abre un teclado para escribir f(x). El clic del stick derecho repite la ayuda.']);
     speak(intro);
   }catch(e){
     xrStatus.textContent='No se pudo iniciar la sesión inmersiva ('+(e&&e.name?e.name:'error')+'). Si abrió la página dentro de otra aplicación, ábrala directamente en el navegador del Quest.';
@@ -1779,7 +2131,8 @@ function onXREnd(){
   ctrls.forEach(c=>{ c.userData.dot.visible=false; });
   if(savedCam){ camera.position.copy(savedCam.p); camera.quaternion.copy(savedCam.q); }
   controls.enabled = st.view==='orbit';
-  placeGraph(); snapCam=true;
+  st.vrPanel='main';
+  placeGraph(); snapCam=true; hudDirty=true;
 }
 btnVR.addEventListener('click',()=>enterXR('vr'));
 btnAR.addEventListener('click',()=>enterXR('ar'));
@@ -1909,11 +2262,13 @@ function loop(){
   if(st.tn>0 && t.ok && t.y0>=y0-1e-9 && t.y0<=y1+1e-9){
     let dx=1, dy=t.m; if(t.vertical){ dx=0; dy=1; }
     const cl=clipLine(t.x0,t.y0,dx,dy,st.a,st.b,y0,y1);
-    if(cl) setRod(G.tan,new THREE.Vector3(t.x0+dx*cl[0],t.y0+dy*cl[0],G.u*0.3),new THREE.Vector3(t.x0+dx*cl[1],t.y0+dy*cl[1],G.u*0.3)); else G.tan.visible=false;
-    G.tanPt.visible=true; G.tanPt.position.set(t.x0,t.y0,G.u*0.3);
-    if(st.tn>1){ const nx=-dy, ny=dx; const c2=clipLine(t.x0,t.y0,nx,ny,st.a,st.b,y0,y1); if(c2) setRod(G.nor,new THREE.Vector3(t.x0+nx*c2[0],t.y0+ny*c2[0],G.u*0.3),new THREE.Vector3(t.x0+nx*c2[1],t.y0+ny*c2[1],G.u*0.3)); else G.nor.visible=false; }
+    if(cl) setRod(G.tan,new THREE.Vector3(t.x0+dx*cl[0],t.y0+dy*cl[0],0),new THREE.Vector3(t.x0+dx*cl[1],t.y0+dy*cl[1],0)); else G.tan.visible=false;
+    G.tanPt.visible=true; G.tanPt.position.set(t.x0,t.y0,0);
+    if(st.tn>1){ const nx=-dy, ny=dx; const c2=clipLine(t.x0,t.y0,nx,ny,st.a,st.b,y0,y1); if(c2) setRod(G.nor,new THREE.Vector3(t.x0+nx*c2[0],t.y0+ny*c2[0],0),new THREE.Vector3(t.x0+nx*c2[1],t.y0+ny*c2[1],0)); else G.nor.visible=false; }
     else G.nor.visible=false;
   } else { G.tan.visible=false; G.nor.visible=false; G.tanPt.visible=false; }
+  // el vagón se vuelve translúcido cuando la tangente pasa por él, para que se aprecie el contacto
+  { const op=(st.tn>0 && st.tnFollow)?0.35:1; G.rider.children[0].material.opacity=op; G.rider.children[1].material.opacity=op; G.rider.children[0].material.depthWrite=op===1; }
   // cuentas del límite
   if(st.limit && isFinite(st.limit.c) && st.limit.c>=st.a && st.limit.c<=st.b){
     const ph=((now/1000)%3.2)/3.2, h=(st.b-st.a)*0.22*Math.pow(1-ph,2.2)+1e-9;
@@ -1924,7 +2279,7 @@ function loop(){
   if(G.markers){ G.markers.forEach((m,i)=>{ if(m){ const k = i===curStopIdx ? 1.35+0.15*Math.sin(now/180) : 1; m.scale.setScalar(k); } }); }
   if(!renderer.xr.isPresenting && st.view==='orbit') controls.update();
   hudT+=dt; vrT+=dt;
-  if((hudDirty||st.playing) && hudT>0.1){ hudT=0; hudDirty=false; updateHUD(); }
+  if((hudDirty||st.playing) && hudT>0.1 && !renderer.xr.isPresenting){ hudT=0; hudDirty=false; updateHUD(); }
   if(renderer.xr.isPresenting && hudMesh.visible && (vrDirty||st.playing) && vrT>0.1){ vrT=0; vrDirty=false; drawVRPanel(); }
   renderer.render(scene,camera);
 }
@@ -1933,9 +2288,10 @@ function resize(){ const r=renderer.domElement.getBoundingClientRect(); const w=
 new ResizeObserver(resize).observe(stage); window.addEventListener('resize',resize);
 resize();
 
-function start(){ renderTabBar(); updateTTSStatus(); loadFunction(PRESETS[0].f,PRESETS[0].a,PRESETS[0].b,null,null,false); renderer.setAnimationLoop(loop); }
+function start(){ renderTabBar(); updateTTSStatus(); if(IS_QUEST||!TTS.web) loadMeSpeak(); applyStaticTex(); setThick(st.thick); loadFunction(PRESETS[0].f,PRESETS[0].a,PRESETS[0].b,null,null,false); renderer.setAnimationLoop(loop); }
 const fontsReady = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]) : Promise.resolve();
 fontsReady.then(start);
+window.__fab={st,drawVRPanel,vrAction,hudCanvas,TTS,speak,MJ};
 })();
 </script>
 
