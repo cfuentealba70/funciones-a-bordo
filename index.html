@@ -1,0 +1,1503 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Funciones a bordo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#edf1f0; --surface:#ffffff; --ink:#15232a; --muted:#56686f; --line:#d2dbda;
+  --accent:#0d7480; --accent-ink:#ffffff; --soft:#e2eaea; --err:#b3261e;
+  --stage:#0b171c; --stage-ink:#e3ecec; --stage-muted:#94a8ae; --stage-panel:rgba(9,20,25,.84);
+  --c-cero:#8d8a7c; --c-max:#e5534b; --c-min:#3d9be0; --c-silla:#e8923f; --c-infl:#a879e6; --c-disc:#d49a12;
+  --c-crec:#2fae9b; --c-decr:#e27a3f; --c-up:#5b8def; --c-down:#cc5ea8; --c-tan:#f2c14e; --c-nor:#7fcf6a;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --sans:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e171b; --surface:#142127; --ink:#e2ebeb; --muted:#93a6ac; --line:#26363d;
+    --accent:#4cc2c9; --accent-ink:#06262a; --soft:#1b2c33; --err:#f2887f; --c-cero:#e9e4d4;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e171b; --surface:#142127; --ink:#e2ebeb; --muted:#93a6ac; --line:#26363d;
+  --accent:#4cc2c9; --accent-ink:#06262a; --soft:#1b2c33; --err:#f2887f; --c-cero:#e9e4d4;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#app{display:grid;grid-template-rows:auto 1fr;grid-template-columns:minmax(0,1fr);height:100%}
+header.top{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto;min-width:0}
+.brand h1{font-size:19px;margin:0;letter-spacing:.01em}
+.brand .fx{font-family:var(--mono);font-size:13.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+.xrbtns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;line-height:1.2}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+main{display:grid;grid-template-columns:minmax(0,1fr) 400px;min-height:0}
+#stage{position:relative;background:var(--stage);min-height:0;overflow:hidden;color:var(--stage-ink)}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:absolute;top:12px;left:12px;max-width:min(320px,calc(100% - 24px));background:var(--stage-panel);border:1px solid rgba(148,168,174,.25);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45;backdrop-filter:blur(4px)}
+#hud .row{display:grid;grid-template-columns:3.2em 1fr;gap:6px;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+#hud .row b{color:var(--stage-muted);font-weight:400}
+#hud .state{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 2px}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700;border:1px solid currentColor}
+#hud .msg{margin-top:6px;color:var(--stage-ink);font-size:13px}
+#hud .msg strong{display:block;font-size:13.5px}
+#hud .eq{font-family:var(--mono);font-size:12px;margin-top:4px}
+#viewbar{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.seg{display:inline-flex;background:var(--stage-panel);border:1px solid rgba(148,168,174,.3);border-radius:8px;overflow:hidden}
+.seg button{background:none;border:0;padding:6px 10px;font-size:12.5px;color:var(--stage-muted)}
+.seg button[aria-pressed="true"]{background:#1f3a42;color:var(--stage-ink);font-weight:700}
+#ridebar{position:absolute;left:12px;right:12px;bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--stage-panel);border:1px solid rgba(148,168,174,.25);border-radius:10px;padding:8px 10px}
+#ridebar .rb{background:#1a2f36;border:1px solid rgba(148,168,174,.3);color:var(--stage-ink);border-radius:7px;padding:5px 10px;font-size:13px;min-width:38px}
+#ridebar .rb.play{background:#0d7480;border-color:#0d7480;font-weight:700;min-width:96px}
+#ridebar label{font-size:12px;color:var(--stage-muted);display:flex;align-items:center;gap:6px}
+#xslider{flex:1 1 160px;min-width:120px;accent-color:#4cc2c9}
+#speed{width:80px;accent-color:#4cc2c9}
+#legend{position:absolute;right:12px;bottom:70px;background:var(--stage-panel);border-radius:8px;padding:6px 10px;font-size:11.5px;color:var(--stage-muted);display:flex;flex-direction:column;gap:2px}
+#legend span{display:flex;align-items:center;gap:6px}
+#legend i{width:14px;height:4px;border-radius:2px;display:inline-block}
+#panel>*{min-width:0}
+#panel{overflow-y:auto;padding:12px 16px 28px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+details.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 14px}
+details.card>summary{list-style:none;cursor:pointer;padding:11px 0;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:"+";color:var(--muted);font-weight:400;font-size:18px;line-height:1}
+details.card[open]>summary::after{content:"−"}
+details.card[open]>summary{border-bottom:1px solid var(--line);margin-bottom:10px}
+details.card .body{padding-bottom:14px;display:flex;flex-direction:column;gap:10px}
+.small{font-size:12.5px;color:var(--muted)}
+.fnrow{display:flex;gap:8px}
+.fnrow input{flex:1;min-width:0;font-family:var(--mono);font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.lbl{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.grid4 label{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted)}
+.grid4 input{width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-family:var(--mono);font-size:13px}
+.check{display:flex;align-items:center;gap:6px;font-size:13px}
+.err{color:var(--err);font-size:13px;margin:0}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 10px;font-family:var(--mono);font-size:12px}
+.presets button:hover{border-color:var(--accent)}
+.derivs{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-family:var(--mono);font-size:12.5px}
+.derivs dt{color:var(--muted)}
+.derivs dd{margin:0;word-break:break-word}
+ol.stops{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+ol.stops button{width:100%;text-align:left;display:grid;grid-template-columns:12px 1fr auto;align-items:center;gap:8px;border:1px solid transparent;background:var(--bg);border-radius:7px;padding:6px 8px}
+ol.stops button:hover,ol.stops button.cur{border-color:var(--accent)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--c);display:inline-block}
+ol.stops .k{font-size:13.5px}
+ol.stops .xy{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+table.iv{width:100%;border-collapse:collapse;font-size:13px}
+table.iv td{padding:4px 6px;border-top:1px solid var(--line)}
+table.iv td:first-child{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.tag{display:inline-flex;align-items:center;gap:6px}
+.tag i{width:14px;height:4px;border-radius:2px;background:var(--c)}
+.facts{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.facts .mono{font-family:var(--mono);font-size:12.5px}
+.radio{display:flex;flex-wrap:wrap;gap:10px;font-size:13.5px}
+.radio label{display:flex;gap:5px;align-items:center}
+.eqbox{background:var(--bg);border-radius:8px;padding:8px 10px;font-family:var(--mono);font-size:12.5px;display:flex;flex-direction:column;gap:3px}
+.eqbox .t{color:var(--c-tan)}
+:root:not([data-theme="dark"]) .eqbox .t{color:#9a6d00}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .eqbox .t{color:var(--c-tan)}}
+.eqbox .n{color:#3f8a2e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .eqbox .n{color:var(--c-nor)}}
+:root[data-theme="dark"] .eqbox .n{color:var(--c-nor)}
+.limrow{display:flex;gap:6px;align-items:center}
+.limrow input{flex:1;min-width:0;font-family:var(--mono);padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--bg)}
+.ltwrap{overflow-x:auto;max-width:100%}
+table.lt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;font-variant-numeric:tabular-nums}
+table.lt th{font-family:var(--sans);font-size:11.5px;color:var(--muted);text-align:left;font-weight:700;padding:3px 4px}
+table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
+.ctl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13px;margin:0}
+.ctl dt{font-weight:700;white-space:nowrap}
+.ctl dd{margin:0;color:var(--muted)}
+.note{background:var(--soft);border-radius:8px;padding:8px 10px;font-size:12.5px;color:var(--ink)}
+#xrStatus:empty{display:none}
+@media (max-width:900px){
+  html,body{height:auto}
+  #app{height:auto}
+  main{grid-template-columns:minmax(0,1fr)}
+  #stage{height:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:12px}
+  #stage canvas{height:56vh !important;min-height:300px}
+  #hud,#viewbar,#ridebar{position:static;margin:0 12px;max-width:none}
+  #viewbar{flex-direction:row;flex-wrap:wrap;align-items:center;order:1}
+  #ridebar{order:2}
+  #hud{order:3}
+  #panel{border-left:0;overflow:visible}
+  #legend{display:none}
+  .brand .fx{max-width:60vw}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><h1>Funciones a bordo</h1><span class="fx" id="fxTitle">f(x) = x³ − 3x</span></div>
+    <div class="xrbtns">
+      <button class="btn primary" id="btnVR" type="button">Entrar en VR</button>
+      <button class="btn" id="btnAR" type="button">Realidad mixta</button>
+    </div>
+  </header>
+  <main>
+    <section id="stage" aria-label="Gráfico tridimensional de la función">
+      <div id="hud" aria-live="polite">
+        <div class="row"><b>x</b><span id="hX">0</span></div>
+        <div class="row"><b>f(x)</b><span id="hY">0</span></div>
+        <div class="row"><b>f′(x)</b><span id="hD1">0</span></div>
+        <div class="row"><b>f″(x)</b><span id="hD2">0</span></div>
+        <div class="state" id="hState"></div>
+        <div class="eq" id="hEq"></div>
+        <div class="msg" id="hMsg"></div>
+      </div>
+      <div id="viewbar">
+        <div class="seg" role="group" aria-label="Cámara">
+          <button type="button" data-view="orbit" aria-pressed="true">Órbita</button>
+          <button type="button" data-view="board" aria-pressed="false">A bordo</button>
+        </div>
+        <div class="seg" role="group" aria-label="Color de la curva">
+          <button type="button" data-color="mono" aria-pressed="true">Monotonía</button>
+          <button type="button" data-color="conc" aria-pressed="false">Concavidad</button>
+          <button type="button" data-color="none" aria-pressed="false">Sin color</button>
+        </div>
+      </div>
+      <div id="legend"></div>
+      <div id="ridebar">
+        <button class="rb" id="bPrev" type="button" aria-label="Punto anterior">⏮</button>
+        <button class="rb play" id="bPlay" type="button">▶ Recorrer</button>
+        <button class="rb" id="bNext" type="button" aria-label="Punto siguiente">⏭</button>
+        <input type="range" id="xslider" min="0" max="1000" value="0" aria-label="Posición x del vagón">
+        <label for="speed">Velocidad <input type="range" id="speed" min="0.25" max="3" step="0.25" value="1"></label>
+      </div>
+    </section>
+
+    <aside id="panel">
+      <details class="card" open>
+        <summary>Función</summary>
+        <div class="body">
+          <form id="fnForm" autocomplete="off">
+            <div class="fnrow">
+              <input id="fnInput" aria-label="Expresión de f(x)" value="x^3 - 3x" spellcheck="false">
+              <button class="btn primary" type="submit">Graficar</button>
+            </div>
+          </form>
+          <p class="small">Acepta sen, cos, tg, ln, log10, e^x, sqrt, cbrt (raíz cúbica), |x|, pi y multiplicación implícita como 3x. Las potencias como x^(1/3) o x^(2/3) aceptan x negativo.</p>
+          <p class="err" id="fnError" hidden></p>
+          <div class="grid4">
+            <label for="xa">x mín<input id="xa" value="-3" inputmode="decimal"></label>
+            <label for="xb">x máx<input id="xb" value="3" inputmode="decimal"></label>
+            <label for="ya">y mín<input id="ya" value="" inputmode="decimal" placeholder="auto"></label>
+            <label for="yb">y máx<input id="yb" value="" inputmode="decimal" placeholder="auto"></label>
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:6px">Ejemplos</div>
+            <div class="presets" id="presets"></div>
+          </div>
+          <dl class="derivs">
+            <dt>f′(x)</dt><dd id="d1Txt"></dd>
+            <dt>f″(x)</dt><dd id="d2Txt"></dd>
+          </dl>
+        </div>
+      </details>
+
+      <details class="card" open>
+        <summary>Elementos característicos</summary>
+        <div class="body">
+          <p class="small">Toque un elemento para llevar el vagón hasta él.</p>
+          <ol class="stops" id="stopList"></ol>
+          <div class="facts" id="facts"></div>
+        </div>
+      </details>
+
+      <details class="card" open>
+        <summary>Intervalos</summary>
+        <div class="body">
+          <div class="lbl">Monotonía</div>
+          <table class="iv" id="monoTbl"></table>
+          <div class="lbl">Concavidad</div>
+          <table class="iv" id="concTbl"></table>
+          <p class="small">Intervalos abiertos, calculados dentro de la ventana [x mín, x máx].</p>
+        </div>
+      </details>
+
+      <details class="card" open>
+        <summary>Tangente y normal</summary>
+        <div class="body">
+          <div class="radio" role="radiogroup" aria-label="Rectas visibles">
+            <label><input type="radio" name="tn" value="0"> Ninguna</label>
+            <label><input type="radio" name="tn" value="1"> Tangente</label>
+            <label><input type="radio" name="tn" value="2" checked> Tangente y normal</label>
+          </div>
+          <div class="radio">
+            <label><input type="radio" name="tnsrc" value="follow" checked> En la posición del vagón</label>
+            <label><input type="radio" name="tnsrc" value="fixed"> En x₀ =</label>
+            <input id="tnX" value="1.5" style="width:84px;font-family:var(--mono);padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg)" aria-label="Valor de x cero">
+          </div>
+          <div class="eqbox" id="tnBox"></div>
+          <p class="small">Los ejes usan la misma escala en x e y, de modo que la normal se ve perpendicular a la tangente.</p>
+        </div>
+      </details>
+
+      <details class="card" open>
+        <summary>Límites</summary>
+        <div class="body">
+          <form class="limrow" id="limForm" autocomplete="off">
+            <label for="limC" class="small" style="white-space:nowrap">x tiende a</label>
+            <input id="limC" value="0" spellcheck="false" aria-label="Valor al que tiende x">
+            <button class="btn" type="submit">Calcular</button>
+          </form>
+          <p class="small">Escriba un número, una expresión como pi/2, o inf y -inf. El gráfico muestra dos cuentas que se acercan a c por la izquierda y por la derecha.</p>
+          <div id="limOut"></div>
+        </div>
+      </details>
+
+      <details class="card" open>
+        <summary>Meta Quest 3</summary>
+        <div class="body">
+          <p class="note" id="xrStatus"></p>
+          <p class="small">Abra esta página en el navegador del Quest y pulse Entrar en VR o Realidad mixta. En VR puede alternar entre montar la curva a escala de montaña rusa y verla como maqueta sobre la mesa.</p>
+          <dl class="ctl">
+            <dt>Stick (cualquiera)</dt><dd>Avanzar o retroceder sobre la curva</dd>
+            <dt>Gatillo derecho</dt><dd>Siguiente punto característico</dd>
+            <dt>Gatillo izquierdo</dt><dd>Punto anterior</dd>
+            <dt>A</dt><dd>Iniciar o pausar el recorrido guiado</dd>
+            <dt>B</dt><dd>Ninguna recta, tangente, tangente y normal</dd>
+            <dt>X</dt><dd>Montar la curva o ver maqueta</dd>
+            <dt>Y</dt><dd>Color por monotonía, concavidad o sin color</dd>
+            <dt>Grip derecho</dt><dd>Mostrar u ocultar el tablero</dd>
+            <dt>Clic stick izq.</dt><dd>Siguiente función de ejemplo</dd>
+          </dl>
+          <p class="small">La función se escribe fuera de la inmersión. Salga con el botón Meta, cambie f(x) y vuelva a entrar.</p>
+        </div>
+      </details>
+    </aside>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjs@11.11.0/lib/browser/math.js"></script>
+<script>
+(function(){
+"use strict";
+/*ANALYSIS-START*/
+const M = math.create(math.all, {predictable:true});
+// potencia real: x^(p/q) con q impar admite base negativa, como se enseña en cálculo
+M.import({rpow:function(a,b){
+  a=toNum(a); b=toNum(b);
+  if(!(isFinite(a)&&isFinite(b))) return Math.pow(a,b);
+  if(a>=0 || Number.isInteger(b)) return Math.pow(a,b);
+  for(let d=1; d<=99; d++){ const n=Math.round(b*d); if(Math.abs(b-n/d)<1e-12){ if(d%2===0) return NaN; return (Math.abs(n)%2===1?-1:1)*Math.pow(-a,b); } }
+  return NaN;
+}});
+function realPow(node){
+  if(node.isOperatorNode && node.op==='^' && node.args.length===2) return new M.FunctionNode(new M.SymbolNode('rpow'),[realPow(node.args[0]),realPow(node.args[1])]);
+  return node.map(ch=>realPow(ch));
+}
+const MINUS = '−';
+
+function toNum(v){
+  if(typeof v==='number') return v;
+  if(v==null) return NaN;
+  if(typeof v.re==='number') return Math.abs(v.im)<1e-12 ? v.re : NaN;
+  if(typeof v==='boolean') return v?1:0;
+  if(v.isBigNumber) return v.toNumber();
+  if(v.isFraction) return v.valueOf();
+  return NaN;
+}
+
+function preprocess(s){
+  s = String(s).trim();
+  s = s.replace(/^\s*(y|f\s*\(\s*x\s*\))\s*=\s*/i,'');
+  s = s.replace(/[−–—]/g,'-').replace(/[·×⋅]/g,'*').replace(/÷/g,'/').replace(/π/g,'pi');
+  s = s.replace(/√\s*\(/g,'sqrt(');
+  s = s.replace(/²/g,'^2').replace(/³/g,'^3');
+  s = s.replace(/\barcsen\s*\(/gi,'asin(').replace(/\barcsin\s*\(/gi,'asin(').replace(/\barccos\s*\(/gi,'acos(')
+       .replace(/\b(arctg|arctan)\s*\(/gi,'atan(').replace(/\bsen\s*\(/gi,'sin(').replace(/\btg\s*\(/gi,'tan(')
+       .replace(/\bln\s*\(/gi,'log(');
+  let prev; do{ prev=s; s=s.replace(/\|([^|]+)\|/,'abs($1)'); }while(s!==prev);
+  return s;
+}
+
+function pretty(node){
+  let t = (typeof node==='string') ? node : node.toString({implicit:'hide',parenthesis:'auto'});
+  const sup={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+  t = t.replace(/\blog\(/g,'ln(').replace(/\bsqrt\(/g,'√(').replace(/\bpi\b/g,'π');
+  t = t.replace(/ \^ /g,'^').replace(/\^(\d)(?![\d.(])/g,(m,d)=>sup[d]);
+  t = t.replace(/(\d) (?=[a-zA-Z\u03c0\u221a(])/g,'$1');
+  t = t.replace(/·-(\d+(?:\.\d+)?)/g,"·(−$1)").replace(/ \* /g,'·').replace(/\*/g,'·').replace(/ - /g,' '+MINUS+' ').replace(/^-/,MINUS).replace(/\(-/g,'('+MINUS);
+  return t;
+}
+
+function buildF(src){
+  const pre = preprocess(src);
+  if(!pre) throw new Error('Escriba una expresión en x.');
+  let node;
+  try{ node = M.parse(pre); }catch(e){ throw new Error('No se pudo leer la expresión. Revise paréntesis y operadores.'); }
+  const bad = new Set();
+  node.traverse((n,path,parent)=>{
+    if(n.isSymbolNode && !(parent && parent.isFunctionNode && path==='fn')){
+      if(n.name!=='x' && !(n.name in M)) bad.add(n.name);
+    }
+    if(n.isFunctionNode && n.fn && n.fn.isSymbolNode && !(n.fn.name in M)) bad.add(n.fn.name+'( )');
+  });
+  if(bad.size) throw new Error('No reconozco '+[...bad].join(', ')+'. Use x como variable.');
+  const cf = realPow(node).compile(); const sc={x:0};
+  const f = x=>{ sc.x=x; try{ return toNum(cf.evaluate(sc)); }catch(e){ return NaN; } };
+  let symbolic=true, d1n=null, d2n=null, g1, g2;
+  try{
+    d1n = M.derivative(node,'x'); d2n = M.derivative(d1n,'x');
+    const c1=realPow(d1n).compile(), c2=realPow(d2n).compile(); const s1={x:0}, s2={x:0};
+    g1 = x=>{ s1.x=x; try{ return toNum(c1.evaluate(s1)); }catch(e){ return NaN; } };
+    g2 = x=>{ s2.x=x; try{ return toNum(c2.evaluate(s2)); }catch(e){ return NaN; } };
+  }catch(e){
+    symbolic=false;
+    g1 = x=>{ const h=1e-5*Math.max(1,Math.abs(x)); return (f(x+h)-f(x-h))/(2*h); };
+    g2 = x=>{ const h=1e-4*Math.max(1,Math.abs(x)); return (f(x+h)-2*f(x)+f(x-h))/(h*h); };
+  }
+  const n1 = x=>{ const h=1e-6*Math.max(1,Math.abs(x)), p=f(x+h), m=f(x-h), c=f(x);
+    if(isFinite(p)&&isFinite(m)) return (p-m)/(2*h); if(isFinite(p)) return (p-c)/h; if(isFinite(m)) return (c-m)/h; return NaN; };
+  const n2 = x=>{ const h=1e-4*Math.max(1,Math.abs(x)), p=f(x+h), m=f(x-h), c=f(x); return (isFinite(p)&&isFinite(m))?(p-2*c+m)/(h*h):NaN; };
+  const f1 = x=>{ if(!isFinite(f(x))) return NaN; const v=g1(x); return isFinite(v)?v:n1(x); };
+  const f2 = x=>{ if(!isFinite(f(x))) return NaN; const v=g2(x); return isFinite(v)?v:n2(x); };
+  let t1='(derivada numérica)', t2='(derivada numérica)';
+  if(symbolic){
+    try{ t1 = pretty(M.simplify(d1n)); }catch(e){ t1 = pretty(d1n); }
+    try{ t2 = pretty(M.simplify(d2n)); }catch(e){ t2 = pretty(d2n); }
+  }
+  return {src, pre, txt:pretty(node), f, f1, f2, symbolic, t1, t2};
+}
+
+/* ---- reconocimiento de valores exactos ---- */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+function fracTxt(n,d){ const g=gcd(n,d)||1; n/=g; d/=g; const s=n<0?MINUS:''; n=Math.abs(n); return d===1? s+n : s+n+'/'+d; }
+function niceVal(v){
+  if(!isFinite(v)) return null;
+  const av=Math.abs(v), tol=1e-8*Math.max(1,av);
+  if(av<1e-10) return {v:0,t:'0',exact:true};
+  for(let d=1; d<=12; d++){ const n=Math.round(v*d); if(n!==0 && Math.abs(v-n/d)<tol && Math.abs(n)<1e6) return {v:n/d,t:fracTxt(n,d),exact:true}; }
+  for(let d=1; d<=12; d++){ const n=Math.round(v*d/Math.PI); if(n!==0 && Math.abs(n)<=48 && Math.abs(v-n*Math.PI/d)<tol){
+      const g=gcd(n,d), nn=n/g, dd=d/g, s=nn<0?MINUS:'', a=Math.abs(nn);
+      return {v:n*Math.PI/d, t:s+(a===1?'':a)+'π'+(dd===1?'':'/'+dd)}; } }
+  for(let d=1; d<=6; d++){ const w=av*d, q=Math.round(w*w);
+    if(q>1 && q<=300 && Math.abs(w-Math.sqrt(q))<tol*d && Math.round(Math.sqrt(q))**2!==q){
+      let co=1, rad=q; for(let k=Math.floor(Math.sqrt(q)); k>1; k--){ if(rad%(k*k)===0){ co*=k; rad/=k*k; } }
+      const g=gcd(co,d), c2=co/g, d2=d/g, s=v<0?MINUS:'';
+      return {v:Math.sign(v)*Math.sqrt(q)/d, t:s+(c2===1?'':c2)+'√'+rad+(d2===1?'':'/'+d2)}; } }
+  for(let d=1; d<=4; d++){ const n=Math.round(v*d/Math.E); if(n!==0 && Math.abs(n)<=8 && Math.abs(v-n*Math.E/d)<tol){ const s=n<0?MINUS:'', a=Math.abs(n); return {v:n*Math.E/d, t:s+(a===1?'':a)+'e'+(d===1?'':'/'+d)}; } }
+  for(let d=1; d<=4; d++){ const n=Math.round(v*d*Math.E); if(n!==0 && Math.abs(n)<=4 && Math.abs(v-n/(d*Math.E))<tol){ const s=n<0?MINUS:'', a=Math.abs(n); return {v:n/(d*Math.E), t:s+a+'/'+(d===1?'':d)+'e'}; } }
+  return null;
+}
+function dec(v,p){
+  if(v===Infinity) return '+∞'; if(v===-Infinity) return MINUS+'∞'; if(!isFinite(v)) return 'no definido';
+  p = p==null?3:p; const av=Math.abs(v);
+  let s;
+  if(av!==0 && (av>=1e6 || av<Math.pow(10,-p))) s = v.toExponential(2).replace('e+',' × 10^').replace('e-',' × 10^-');
+  else { s = v.toFixed(p); if(s.indexOf('.')>=0) s=s.replace(/0+$/,'').replace(/\.$/,''); if(s==='-0') s='0'; }
+  return s.replace(/-/g,MINUS);
+}
+function fmt(v,p){ const n=niceVal(v); if(n){ if(/^[−]?\d+$/.test(n.t)) return n.t; return n.t+' ≈ '+dec(v,p); } return dec(v,p); }
+function fmtS(v,p){ const n=niceVal(v); if(n) return n.t; return dec(v,p==null?2:p); }
+
+/* ---- límites numéricos ---- */
+function classifySeq(vals){
+  const n=vals.length;
+  const tail=vals.slice(-4);
+  if(tail.every(v=>v===Infinity)) return {type:'inf',sign:1};
+  if(tail.every(v=>v===-Infinity)) return {type:'inf',sign:-1};
+  if(!vals.slice(-3).every(v=>isFinite(v)||Math.abs(v)===Infinity)) return {type:'none'};
+  const v=vals.map(x=> x===Infinity?1e300: x===-Infinity?-1e300: x);
+  const fin=v.every(isFinite);
+  if(fin){
+    const d=[]; for(let i=1;i<n;i++) d.push(v[i]-v[i-1]);
+    const k=Math.min(5,d.length);
+    const td=d.slice(-k);
+    const sameSign = td.every(t=>t!==0 && Math.sign(t)===Math.sign(td[0]));
+    const absInc = v.slice(-(k+1)).every((t,i,a)=> i===0 || Math.abs(t)>Math.abs(a[i-1]));
+    const ad=td.map(Math.abs);
+    const notShrink = ad.every((t,i,a)=> i===0 || t>=0.45*a[i-1]);
+    const last=v[n-1];
+    if(sameSign && absInc && notShrink && Math.abs(last)>4 && Math.sign(td[0])===Math.sign(last)) return {type:'inf',sign:Math.sign(last)};
+    if(Math.abs(last)>1e12 && absInc) return {type:'inf',sign:Math.sign(last)};
+    let best=-1, bd=Infinity;
+    for(let i=0;i<d.length;i++){ const a=Math.abs(d[i]); if(a<bd){ bd=a; best=i; } }
+    let cand=v[best+1], err=bd;
+    for(let i=0;i+1<d.length;i++){ const s0=1e-6*(1+Math.abs(v[i+1])); if(Math.abs(d[i])<=s0 && Math.abs(d[i+1])<=10*s0){ cand=v[i+1]; err=Math.abs(d[i]); bd=err; break; } }
+    // convergencia geométrica lenta (p. ej. raíces): razones de diferencias < 0.7 en la cola
+    const ad2=d.map(Math.abs), m3=ad2.slice(-4);
+    const geo = m3.every((t,i,a)=> i===0 || (a[i-1]>0 && t<=0.7*a[i-1]));
+    if(geo && m3[m3.length-1]<1e-3*(1+Math.abs(v[n-1]))){ const r=m3[m3.length-1]/m3[m3.length-2]; cand=v[n-1]; err=m3[m3.length-1]*r/(1-r)+1e-15; bd=Math.min(bd,err); }
+    if(bd<=1e-4*(1+Math.abs(cand))){
+      let val=cand; const tolv=Math.max(3*err,1e-9);
+      if(Math.abs(val)<Math.max(1e-7,tolv)) val=0;
+      else { const nv=niceVal(val); if(nv && Math.abs(nv.v-val)<1e-5*(1+Math.abs(val))) val=nv.v;
+        else { for(let q=1;q<=12;q++){ const r2=Math.round(val*q)/q; if(Math.abs(r2-val)<tolv){ val=r2; break; } } } }
+      return {type:'fin',v:val};
+    }
+    return {type:'osc'};
+  }
+  return {type:'none'};
+}
+function lateral(f,c,side){
+  const sc=Math.max(1,Math.abs(c)), vals=[];
+  for(let k=1;k<=10;k++){ vals.push(f(c+side*sc*Math.pow(10,-k))); }
+  return classifySeq(vals);
+}
+function atInfinity(f,sign){
+  const xs=[], vals=[];
+  for(let k=1;k<=9;k++){ const x=sign*Math.SQRT2*Math.pow(10,k); xs.push(x); vals.push(f(x)); }
+  const L=classifySeq(vals);
+  const out={L};
+  if(L.type==='inf'){
+    const m=classifySeq(vals.map((v,i)=>v/xs[i]));
+    if(m.type==='fin' && Math.abs(m.v)>1e-9 && isFinite(m.v)){
+      const nn=classifySeq(vals.map((v,i)=>v-m.v*xs[i]).slice(0,7));
+      if(nn.type==='fin') out.oblique={m:m.v,n:nn.v};
+    }
+  }
+  return out;
+}
+function limitAt(f,c){
+  if(c===Infinity||c===-Infinity){ const r=atInfinity(f,c>0?1:-1); return {inf:true, L:r.L, oblique:r.oblique}; }
+  const L=lateral(f,c,-1), R=lateral(f,c,1);
+  let both=null;
+  if(L.type==='fin'&&R.type==='fin'&&Math.abs(L.v-R.v)<=1e-5*(1+Math.abs(L.v))) both={type:'fin',v:L.v};
+  else if(L.type==='inf'&&R.type==='inf'&&L.sign===R.sign) both={type:'inf',sign:L.sign};
+  else if(L.type==='none'&&R.type!=='none') both=Object.assign({onlyRight:true},R);
+  else if(R.type==='none'&&L.type!=='none') both=Object.assign({onlyLeft:true},L);
+  return {L,R,both};
+}
+function limTxt(r){
+  if(!r) return '?';
+  if(r.type==='fin') return fmt(r.v);
+  if(r.type==='inf') return r.sign>0?'+∞':MINUS+'∞';
+  if(r.type==='osc') return 'no existe (oscila)';
+  return 'no definido';
+}
+
+/* ---- análisis de la función en la ventana ---- */
+function bisectSign(g,l,r){
+  let gl=g(l);
+  for(let it=0; it<90; it++){
+    const m=(l+r)/2; if(m<=l||m>=r) break;
+    const gm=g(m);
+    if(gm===0) return m;
+    if(!isFinite(gm)) return m;
+    if(Math.sign(gm)===Math.sign(gl)){ l=m; gl=gm; } else r=m;
+  }
+  return (l+r)/2;
+}
+function bisectFinite(f,l,r){
+  const fl=isFinite(f(l));
+  for(let it=0; it<80; it++){ const m=(l+r)/2; if(m<=l||m>=r) break; if(isFinite(f(m))===fl) l=m; else r=m; }
+  return fl ? l : r;
+}
+function verifyJump(f,l,r,thr){
+  let fl=f(l), fr=f(r);
+  for(let k=0;k<80;k++){
+    const m=(l+r)/2; if(m<=l||m>=r) break;
+    const fm=f(m); if(!isFinite(fm)) return m;
+    if(Math.abs(fm-fl)>=Math.abs(fr-fm)){ r=m; fr=fm; } else { l=m; fl=fm; }
+  }
+  return Math.abs(fr-fl)>thr ? (l+r)/2 : null;
+}
+function goldenMinAbs(g,l,r){
+  const phi=(Math.sqrt(5)-1)/2; let c=r-phi*(r-l), d=l+phi*(r-l);
+  for(let i=0;i<80;i++){ if(Math.abs(g(c))<Math.abs(g(d))) r=d; else l=c; c=r-phi*(r-l); d=l+phi*(r-l); }
+  return (l+r)/2;
+}
+function snap(x,span){ const n=niceVal(x); if(n && Math.abs(n.v-x)<1e-7*Math.max(1,span)) return n.v; return x; }
+
+function analyze(F,a,b){
+  const f=F.f, f1=F.f1, f2=F.f2, W=b-a, N=2400;
+  let xs=[]; for(let i=0;i<=N;i++) xs.push(a+W*i/N);
+  const extra=[];
+  const hStep=W<=40?0.5:(W<=200?1:Math.pow(10,Math.floor(Math.log10(W))-1));
+  for(let k=Math.ceil(a/hStep); k<=Math.floor(b/hStep) && extra.length<500; k++) extra.push(k*hStep);
+  const q=Math.PI/4;
+  for(let k=Math.ceil(a/q); k<=Math.floor(b/q) && extra.length<900; k++) extra.push(k*q);
+  [Math.E,-Math.E,Math.SQRT2,-Math.SQRT2,Math.sqrt(3),-Math.sqrt(3)].forEach(v=>{ if(v>a&&v<b) extra.push(v); });
+  xs=xs.concat(extra).sort((p,q)=>p-q);
+  const X=[]; for(const x of xs){ if(!X.length || x-X[X.length-1]>1e-12*Math.max(1,W)) X.push(x); }
+  xs=X;
+  const fB=x=>{ const v=f(x); return Math.abs(v)>1e13?NaN:v; };
+  const n=xs.length, ys=xs.map(fB);
+  const finY=ys.filter(isFinite).slice().sort((p,q)=>p-q);
+  if(finY.length<10) return {empty:true, a, b};
+  const qa=finY[Math.floor(finY.length*0.05)], qb=finY[Math.floor(finY.length*0.95)];
+  const R=Math.max(qb-qa,1e-6);
+  const d1=xs.map((x,i)=>isFinite(ys[i])?f1(x):NaN);
+  const d2=xs.map((x,i)=>isFinite(ys[i])?f2(x):NaN);
+
+  // ---- tramos continuos
+  const segs=[], rawBreaks=[];
+  const slope=j=>Math.abs(ys[j+1]-ys[j])/(xs[j+1]-xs[j]);
+  const jumpThr=1e-4*(1+R);
+  let cur=null;
+  for(let i=0;i<n;i++){
+    const fin=isFinite(ys[i]);
+    if(fin){
+      if(!cur){
+        let x0=xs[i];
+        if(i>0){ x0=bisectFinite(fB,xs[i-1],xs[i]); rawBreaks.push(x0); }
+        cur={i0:i,i1:i,x0};
+      } else {
+        const j=i-1, dy=Math.abs(ys[i]-ys[j]), s=slope(j);
+        let nb=0; if(j>0&&isFinite(ys[j-1])) nb=Math.max(nb,slope(j-1)); if(i+1<n&&isFinite(ys[i+1])) nb=Math.max(nb,slope(i));
+        if((s>6*nb && dy>1e-7*(1+R)) || dy>0.35*R){
+          const J=verifyJump(f,xs[j],xs[i],jumpThr);
+          if(J!==null){ cur.i1=j; cur.x1=J; segs.push(cur); rawBreaks.push(J); cur={i0:i,i1:i,x0:J}; continue; }
+        }
+        cur.i1=i;
+      }
+    } else if(cur){
+      const c=bisectFinite(fB,xs[i-1],xs[i]); cur.x1=c; segs.push(cur); rawBreaks.push(c); cur=null;
+    }
+  }
+  if(cur){ cur.x1=xs[cur.i1]; segs.push(cur); }
+  for(let k=segs.length-1;k>=0;k--){ if(segs[k].x1-segs[k].x0<1e-9*W) segs.splice(k,1); }
+
+  // ---- clasificar rupturas
+  rawBreaks.sort((p,q)=>p-q);
+  const brX=[]; for(const c of rawBreaks){ if(!brX.length || Math.abs(c-brX[brX.length-1])>1e-6*W) brX.push(c); }
+  const breaks=[];
+  for(let c of brX){
+    c=snap(c,W);
+    const L=lateral(f,c,-1), Rr=lateral(f,c,1), fc=f(c);
+    const def = isFinite(fc) && Math.abs(fc)<1e12;
+    let kind;
+    if(L.type==='inf'||Rr.type==='inf') kind='asintota';
+    else if(L.type==='none'||Rr.type==='none') kind='borde';
+    else if(L.type==='fin'&&Rr.type==='fin'){
+      if(Math.abs(L.v-Rr.v)<=1e-5*(1+Math.abs(L.v))) kind = (def && Math.abs(fc-L.v)<=1e-6*(1+Math.abs(L.v))) ? null : 'evitable';
+      else kind='salto';
+    } else kind='esencial';
+    if(kind===null) continue;
+    if((c<a-1e-9*W||c>b+1e-9*W)) continue;
+    if(kind==='borde' && (Math.abs(c-a)<1e-9*W || Math.abs(c-b)<1e-9*W) && !(L.type==='inf'||Rr.type==='inf')) { /* frontera en el borde de la ventana: se informa en el dominio */ }
+    breaks.push({x:c, kind, L, R:Rr, fc:def?fc:NaN});
+  }
+
+  // ---- ceros, puntos críticos, inflexiones
+  const zeros=[], crit=[], infl=[];
+  const tol1=1e-10*(1+R/W), tol2=1e-9*(1+R/(W*W))*(F.symbolic?1:1e4);
+  const sg=(v,t)=> !isFinite(v)?NaN:(Math.abs(v)<=t?0:Math.sign(v));
+  const addUnique=(arr,x,obj)=>{ if(arr.some(o=>Math.abs(o.x-x)<1e-7*W)) return; arr.push(Object.assign({x},obj||{})); };
+  for(const s of segs){
+    for(let i=s.i0;i<=s.i1;i++){
+      if(ys[i]===0 && !(i>s.i0 && ys[i-1]===0) && !(i<s.i1 && ys[i+1]===0)) addUnique(zeros,xs[i]);
+      if(i<s.i1 && ys[i]*ys[i+1]<0) addUnique(zeros, snap(bisectSign(f,xs[i],xs[i+1]),W));
+    }
+    // f' cambia de signo
+    let j=-1;
+    for(let i=s.i0;i<=s.i1;i++){
+      const si=sg(d1[i],tol1); if(isNaN(si)||si===0) continue;
+      if(j>=0){ const sj=sg(d1[j],tol1); if(sj!==si){ addUnique(crit, snap(bisectSign(f1,xs[j],xs[i]),W)); } }
+      j=i;
+    }
+    // f' = 0 sin cambio de signo (candidatos)
+    for(let i=Math.max(s.i0+1,1); i<s.i1; i++){
+      const a0=Math.abs(d1[i-1]), a1=Math.abs(d1[i]), a2=Math.abs(d1[i+1]);
+      if(!(isFinite(a0)&&isFinite(a1)&&isFinite(a2))) continue;
+      if(a1<=a0 && a1<=a2 && Math.sign(d1[i-1])===Math.sign(d1[i+1]) && d1[i-1]!==0){
+        const c=goldenMinAbs(f1,xs[i-1],xs[i+1]);
+        if(Math.abs(f1(c))<1e-6*(1+R/W)) addUnique(crit, snap(c,W), {flat:true});
+      }
+    }
+    // f'' cambia de signo
+    j=-1;
+    for(let i=s.i0;i<=s.i1;i++){
+      const si=sg(d2[i],tol2); if(isNaN(si)||si===0) continue;
+      if(j>=0){ const sj=sg(d2[j],tol2); if(sj!==si){ addUnique(infl, snap(bisectSign(f2,xs[j],xs[i]),W)); } }
+      j=i;
+    }
+  }
+  const dlt=1e-6*W;
+  const isVert=x=>{ const a1=Math.abs(f1(x+dlt)), a2=Math.abs(f1(x+dlt/1000)), b1=Math.abs(f1(x-dlt)), b2=Math.abs(f1(x-dlt/1000));
+    return (isFinite(a2)&&a2>8*a1&&a2>1) || (isFinite(b2)&&b2>8*b1&&b2>1); };
+  const isCorner=x=>{ const l=f1(x-dlt), r=f1(x+dlt); return isFinite(l)&&isFinite(r)&&Math.abs(l-r)>0.05*(1+Math.abs(l)+Math.abs(r)); };
+  for(const c of crit){
+    c.y=f(c.x);
+    const l=f1(c.x-dlt), r=f1(c.x+dlt);
+    const sl=Math.sign(l), sr=Math.sign(r);
+    if(sl>0&&sr<0) c.kind='max'; else if(sl<0&&sr>0) c.kind='min'; else c.kind='silla';
+    c.vertical = isVert(c.x);
+    c.corner = c.vertical || isCorner(c.x);
+    if(Math.abs(c.y)<1e-9*(1+R)) { c.y=0; addUnique(zeros,c.x); }
+  }
+  for(const z of zeros) z.y=0;
+  for(const p of infl){ p.y=f(p.x); p.vertical=isVert(p.x); p.noTangent=!p.vertical && isCorner(p.x); }
+  // descartar inflexiones que coinciden con esquinas (f'' no cambia en un tramo suave)
+  const inflF=infl.filter(p=>isFinite(p.y));
+  zeros.sort((p,q)=>p.x-q.x); crit.sort((p,q)=>p.x-q.x); inflF.sort((p,q)=>p.x-q.x);
+
+  // ---- intervalos de monotonía y concavidad
+  function intervals(points,g,labels){
+    const out=[];
+    for(const s of segs){
+      const cuts=[s.x0].concat(points.filter(p=>p.x>s.x0+1e-9*W && p.x<s.x1-1e-9*W).map(p=>p.x)).concat([s.x1]);
+      for(let k=0;k<cuts.length-1;k++){
+        const p=cuts[k], q=cuts[k+1]; if(q-p<1e-9*W) continue;
+        let sgn=0, cnt=0;
+        for(const t of [0.25,0.5,0.75]){ const v=g(p+(q-p)*t); if(isFinite(v)){ sgn+= Math.abs(v)<1e-12?0:Math.sign(v); cnt++; } }
+        const kind = !cnt?null : sgn>0?labels[0]: sgn<0?labels[1]: labels[2];
+        if(!kind) continue;
+        const last=out[out.length-1];
+        if(last && last.kind===kind && Math.abs(last.q-p)<1e-9*W && last.seg===s) last.q=q;
+        else out.push({p,q,kind,seg:s});
+      }
+    }
+    return out.map(o=>({p:o.p,q:o.q,kind:o.kind}));
+  }
+  const mono=intervals(crit,f1,['crec','decr','const']);
+  const conc=intervals(inflF,f2,['up','down','lin']);
+
+  // ---- dominio en la ventana
+  const inDom=x=>{ const v=f(x); return isFinite(v)&&Math.abs(v)<1e12; };
+  const dom=[];
+  for(const s of segs){
+    const lo=snap(s.x0,W), hi=snap(s.x1,W);
+    const last=dom[dom.length-1];
+    if(last && Math.abs(last.q-lo)<1e-6*W && inDom(lo)){ last.q=hi; last.qc=inDom(hi); continue; }
+    dom.push({p:lo,q:hi,pc:inDom(lo),qc:inDom(hi)});
+  }
+  const domTxt = dom.length? dom.map(d=>(d.pc?'[':'(')+fmtS(d.p)+', '+fmtS(d.q)+(d.qc?']':')')).join(' ∪ ') : '∅';
+
+  // ---- extremos absolutos en la ventana
+  let mx={v:-Infinity}, mn={v:Infinity};
+  for(let i=0;i<n;i++){ const y=ys[i]; if(!isFinite(y)||Math.abs(y)>1e12) continue; if(y>mx.v) mx={v:y,x:xs[i]}; if(y<mn.v) mn={v:y,x:xs[i]}; }
+  for(const c of crit){ if(isFinite(c.y)){ if(c.y>=mx.v) mx={v:c.y,x:c.x}; if(c.y<=mn.v) mn={v:c.y,x:c.x}; } }
+  mx.attained=true; mn.attained=true;
+  for(const br of breaks){
+    for(const s of [br.L,br.R]){
+      if(s.type==='inf'){ if(s.sign>0) mx={none:true,x:br.x}; else mn={none:true,x:br.x}; }
+      else if(s.type==='fin'){
+        const tl=1e-9*(1+Math.abs(s.v));
+        if(!mx.none){ const att=isFinite(br.fc)&&br.fc>=s.v-tl;
+          if(s.v>mx.v+tl) mx={v:s.v,x:br.x,attained:att}; else if(Math.abs(s.v-mx.v)<=tl && !mx.attained && att) mx={v:s.v,x:br.x,attained:true}; }
+        if(!mn.none){ const att=isFinite(br.fc)&&br.fc<=s.v+tl;
+          if(s.v<mn.v-tl) mn={v:s.v,x:br.x,attained:att}; else if(Math.abs(s.v-mn.v)<=tl && !mn.attained && att) mn={v:s.v,x:br.x,attained:true}; }
+      }
+    }
+  }
+  if(!mx.none){ const sm=niceVal(mx.v); if(sm&&Math.abs(sm.v-mx.v)<1e-6*(1+R)) mx.v=sm.v; const sx=niceVal(mx.x); if(sx&&Math.abs(sx.v-mx.x)<1e-6*W) mx.x=sx.v; }
+  if(!mn.none){ const sm=niceVal(mn.v); if(sm&&Math.abs(sm.v-mn.v)<1e-6*(1+R)) mn.v=sm.v; const sx=niceVal(mn.x); if(sx&&Math.abs(sx.v-mn.x)<1e-6*W) mn.x=sx.v; }
+
+  // ---- comportamiento en ±∞
+  const infPos=atInfinity(f,1), infNeg=atInfinity(f,-1);
+
+  // ---- paradas del recorrido
+  const raw=[];
+  zeros.forEach(z=>raw.push({x:z.x,y:0,kind:'cero'}));
+  crit.forEach(c=>raw.push({x:c.x,y:c.y,kind:c.kind,corner:c.corner,vertical:c.vertical}));
+  inflF.forEach(p=>raw.push({x:p.x,y:p.y,kind:'infl',vertical:p.vertical,noTangent:p.noTangent}));
+  breaks.forEach(b=>raw.push({x:b.x,y:(b.L.type==='fin'?b.L.v:(b.R.type==='fin'?b.R.v:NaN)),kind:'disc',br:b}));
+  raw.sort((p,q)=>p.x-q.x);
+  const stops=[];
+  for(const r of raw){
+    const last=stops[stops.length-1];
+    if(last && Math.abs(last.x-r.x)<1e-6*W){ last.items.push(r); if(r.kind!=='cero' && r.kind!=='disc' && isFinite(r.y)) last.y=r.y; continue; }
+    stops.push({x:r.x,y:r.y,items:[r]});
+  }
+  const order={disc:0,max:1,min:1,silla:2,infl:3,cero:4};
+  for(const s of stops){ s.items.sort((p,q)=>order[p.kind]-order[q.kind]); s.kind=s.items[0].kind; describeStop(s,f); }
+
+  return {a,b,W,R,xs,ys,segs,breaks,zeros,crit,infl:inflF,mono,conc,domTxt,dom,absMax:mx,absMin:mn,infPos,infNeg,stops};
+}
+
+const KIND_NAME={cero:'Cero',max:'Máximo local',min:'Mínimo local',silla:'Punto crítico sin extremo',infl:'Punto de inflexión',disc:'Discontinuidad'};
+function describeStop(s,f){
+  const names=[], lines=[];
+  const pt='('+fmtS(s.x)+', '+(isFinite(s.y)?fmtS(s.y):'?')+')';
+  for(const it of s.items){
+    if(it.kind==='cero'){
+      names.push('Cero');
+      const dbl=s.items.some(o=>o.kind==='max'||o.kind==='min');
+      const edge=s.items.some(o=>o.kind==='disc');
+      if(edge){ lines.push('f('+fmtS(s.x)+') = 0.'); continue; }
+      lines.push(dbl? 'f('+fmtS(s.x)+') = 0 y la curva toca el eje x sin cruzarlo.' : 'f('+fmtS(s.x)+') = 0. La curva cruza el eje x.');
+    } else if(it.kind==='max'||it.kind==='min'){
+      names.push(KIND_NAME[it.kind]);
+      lines.push(it.kind==='max' ? 'f′ pasa de positiva a negativa.' : 'f′ pasa de negativa a positiva.');
+      lines.push(it.corner ? (it.vertical?'f′ no existe aquí (punto de retroceso, tangente vertical).':'f′ no existe aquí (punto anguloso, las derivadas laterales difieren).') : 'f′('+fmtS(s.x)+') = 0, tangente horizontal.');
+    } else if(it.kind==='silla'){
+      names.push(KIND_NAME.silla);
+      lines.push('f′('+fmtS(s.x)+') = 0 pero f′ no cambia de signo. No hay extremo.');
+    } else if(it.kind==='infl'){
+      if(it.noTangent){ names.push('Cambio de concavidad'); lines.push('La concavidad cambia, pero no hay recta tangente. No se considera punto de inflexión.'); }
+      else { names.push(KIND_NAME.infl); lines.push('f″ cambia de signo y la concavidad se invierte'+(it.vertical?'. La tangente es vertical.':'.')); }
+    } else if(it.kind==='disc'){
+      const b=it.br;
+      const lt='lím x→'+fmtS(b.x)+'⁻ f(x) = '+limTxt(b.L), rt='lím x→'+fmtS(b.x)+'⁺ f(x) = '+limTxt(b.R);
+      if(b.kind==='asintota'){ names.push('Asíntota vertical x = '+fmtS(b.x)); }
+      else if(b.kind==='evitable'){ names.push('Discontinuidad evitable'); lines.push(isFinite(b.fc)?'f('+fmtS(b.x)+') = '+fmtS(b.fc)+' no coincide con el límite.':'f('+fmtS(b.x)+') no está definida, pero el límite existe.'); }
+      else if(b.kind==='salto'){ names.push('Discontinuidad de salto'); lines.push('Los límites laterales existen y son distintos.'); }
+      else if(b.kind==='borde'){ names.push('Frontera del dominio'); }
+      else { names.push('Discontinuidad esencial'); }
+      if(b.L.type!=='none') lines.push(lt);
+      if(b.R.type!=='none') lines.push(rt);
+    }
+  }
+  s.title=[...new Set(names)].join(' · ');
+  s.pt = s.kind==='disc' ? 'x = '+fmtS(s.x) : pt;
+  s.lines=lines;
+}
+/*ANALYSIS-END*/
+
+if(typeof THREE==='undefined'){ document.getElementById('hMsg').textContent='No se pudo cargar la biblioteca 3D. Revise la conexión y recargue.'; return; }
+
+if(THREE.ColorManagement) THREE.ColorManagement.legacyMode=false;
+/* ================= estado ================= */
+const PRESETS=[
+  {f:'x^3 - 3x', a:-3, b:3},
+  {f:'(x^2 - 1)/(x - 2)', a:-6, b:9},
+  {f:'sen(x)/x', a:-14, b:14},
+  {f:'ln(x)/x', a:0, b:12},
+  {f:'|x^2 - 4|', a:-4, b:4},
+  {f:'1/(1 + e^(-x))', a:-8, b:8},
+  {f:'x^2 e^(-x)', a:-1, b:10},
+  {f:'cbrt(x)', a:-4, b:4},
+  {f:'tg(x)', a:-4, b:4},
+  {f:'x^4 - 4x^3', a:-2, b:5}
+];
+const COL={cero:0xeae6d6,max:0xe5534b,min:0x3d9be0,silla:0xe8923f,infl:0xa879e6,disc:0xe0a526,
+  crec:0x2fae9b,decr:0xe27a3f,up:0x5b8def,down:0xcc5ea8,neutral:0xd9e4e4,tan:0xf2c14e,nor:0x7fcf6a,rider:0x4cc2c9};
+const CSSCOL={cero:'var(--c-cero)',max:'var(--c-max)',min:'var(--c-min)',silla:'var(--c-silla)',infl:'var(--c-infl)',disc:'var(--c-disc)',
+  crec:'var(--c-crec)',decr:'var(--c-decr)',up:'var(--c-up)',down:'var(--c-down)'};
+const hex=c=>'#'+c.toString(16).padStart(6,'0');
+
+const st={F:null,A:null,a:-3,b:3,ymin:-3,ymax:3,color:'mono',tn:2,tnFollow:true,tnX:1.5,view:'orbit',xrMode:'ride',
+  playing:false,speed:1,piece:0,s:0,pauseUntil:0,msgTitle:'',msgLines:[],limit:null,xrKind:null,hudVisible:true};
+
+/* ================= escena ================= */
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.xr.enabled=true;
+renderer.xr.setReferenceSpaceType('local-floor');
+stage.insertBefore(renderer.domElement,stage.firstChild);
+const scene=new THREE.Scene();
+const BG=new THREE.Color(0x0b171c);
+scene.background=BG;
+scene.fog=null;
+const camera=new THREE.PerspectiveCamera(50,1,0.01,600);
+const rig=new THREE.Group(); scene.add(rig); rig.add(camera);
+camera.position.set(0,1.4,0.55);
+scene.add(new THREE.HemisphereLight(0xdfeeee,0x1a2a30,0.9));
+const dl=new THREE.DirectionalLight(0xffffff,0.8); dl.position.set(2,5,4); scene.add(dl);
+const graph=new THREE.Group(); scene.add(graph);
+const floor=new THREE.GridHelper(20,40,0x2c4a54,0x1b2f36); floor.visible=false; scene.add(floor);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.08;
+
+// fundido para saltos en VR
+const fade=new THREE.Mesh(new THREE.SphereGeometry(0.2,16,12),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0,side:THREE.BackSide,depthTest:false,depthWrite:false}));
+fade.renderOrder=9999; camera.add(fade);
+let fadeAnim=null;
+
+// tablero para VR
+const hudCanvas=document.createElement('canvas'); hudCanvas.width=1024; hudCanvas.height=620;
+const hudTex=new THREE.CanvasTexture(hudCanvas); hudTex.encoding=THREE.sRGBEncoding;
+const hudMesh=new THREE.Mesh(new THREE.PlaneGeometry(0.62,0.62*620/1024),new THREE.MeshBasicMaterial({map:hudTex,transparent:true,depthTest:false,depthWrite:false}));
+hudMesh.renderOrder=500; hudMesh.visible=false; rig.add(hudMesh);
+
+// controladores
+const ctrls=[0,1].map(i=>{ const c=renderer.xr.getController(i);
+  const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,-0.35)]);
+  c.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:0x4cc2c9})));
+  rig.add(c); return c; });
+
+function disposeTree(o){ o.traverse(n=>{ if(n.geometry) n.geometry.dispose(); if(n.material){ const ms=Array.isArray(n.material)?n.material:[n.material]; ms.forEach(m=>{ if(m.map) m.map.dispose(); m.dispose(); }); } }); }
+
+function makeLabel(text,color,h,opts){
+  opts=opts||{};
+  const c=document.createElement('canvas'), ctx=c.getContext('2d'), fs=56;
+  const font=(opts.bold===false?'400 ':'700 ')+fs+'px "Atkinson Hyperlegible", system-ui, sans-serif';
+  ctx.font=font; const w=Math.ceil(ctx.measureText(text).width)+fs*0.7;
+  c.width=w; c.height=Math.round(fs*1.45);
+  ctx.font=font;
+  if(opts.bg!==false){ ctx.fillStyle='rgba(8,18,22,0.78)'; const r=fs*0.35; ctx.beginPath(); ctx.moveTo(r,0); ctx.lineTo(w-r,0); ctx.quadraticCurveTo(w,0,w,r); ctx.lineTo(w,c.height-r); ctx.quadraticCurveTo(w,c.height,w-r,c.height); ctx.lineTo(r,c.height); ctx.quadraticCurveTo(0,c.height,0,c.height-r); ctx.lineTo(0,r); ctx.quadraticCurveTo(0,0,r,0); ctx.fill(); }
+  ctx.fillStyle=color; ctx.textBaseline='middle'; ctx.fillText(text,fs*0.35,c.height/2+2);
+  const tex=new THREE.CanvasTexture(c); tex.encoding=THREE.sRGBEncoding;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false}));
+  sp.scale.set(h*c.width/c.height,h,1);
+  if(opts.center) sp.center.set(opts.center[0],opts.center[1]);
+  return sp;
+}
+const UP=new THREE.Vector3(0,1,0);
+const cylGeo=new THREE.CylinderGeometry(1,1,1,10,1);
+function makeRod(color,r){ const m=new THREE.Mesh(cylGeo,new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:0.35,roughness:0.5})); m.userData.r=r; return m; }
+function setRod(m,p,q){ const d=new THREE.Vector3().subVectors(q,p), L=d.length(); if(L<1e-9){ m.visible=false; return; } m.visible=true; m.position.copy(p).addScaledVector(d,0.5); m.scale.set(m.userData.r,L,m.userData.r); m.quaternion.setFromUnitVectors(UP,d.normalize()); }
+function dashed(points,color,dash){ const g=new THREE.BufferGeometry().setFromPoints(points); const l=new THREE.Line(g,new THREE.LineDashedMaterial({color,dashSize:dash,gapSize:dash*0.7,transparent:true,opacity:0.9})); l.computeLineDistances(); return l; }
+function clipLine(px,py,dx,dy,x0,x1,y0,y1){
+  let t0=-Infinity,t1=Infinity;
+  const chk=(p,q)=>{ if(Math.abs(p)<1e-15){ return q>=0; } const r=q/p; if(p<0){ if(r>t1) return false; if(r>t0) t0=r; } else { if(r<t0) return false; if(r<t1) t1=r; } return true; };
+  if(!chk(-dx,px-x0)||!chk(dx,x1-px)||!chk(-dy,py-y0)||!chk(dy,y1-py)) return null;
+  if(!isFinite(t0)||!isFinite(t1)||t1<=t0) return null;
+  return [t0,t1];
+}
+function niceStep(span){ const raw=span/8, p=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/p; return (m<1.5?1:m<3.5?2:m<7.5?5:10)*p; }
+
+/* ---- curva por longitud de arco ---- */
+class PieceCurve extends THREE.Curve{
+  constructor(pc){ super(); this.pc=pc; }
+  getPoint(t,target){ target=target||new THREE.Vector3(); const p=posAt(this.pc,t*this.pc.L); return target.set(p.x,p.y,0); }
+}
+function posAt(pc,s){
+  const S=pc.S; if(s<=0) return {x:pc.X[0],y:pc.Y[0],i:0}; const L=S[S.length-1]; if(s>=L){ const k=S.length-1; return {x:pc.X[k],y:pc.Y[k],i:k-1}; }
+  let lo=0,hi=S.length-1; while(hi-lo>1){ const m=(lo+hi)>>1; if(S[m]<=s) lo=m; else hi=m; }
+  const t=(s-S[lo])/(S[hi]-S[lo]||1);
+  return {x:pc.X[lo]+(pc.X[hi]-pc.X[lo])*t, y:pc.Y[lo]+(pc.Y[hi]-pc.Y[lo])*t, i:lo};
+}
+function sAtX(pc,x){
+  const X=pc.X; if(x<=X[0]) return 0; if(x>=X[X.length-1]) return pc.L;
+  let lo=0,hi=X.length-1; while(hi-lo>1){ const m=(lo+hi)>>1; if(X[m]<=x) lo=m; else hi=m; }
+  const t=(x-X[lo])/(X[hi]-X[lo]||1); return pc.S[lo]+(pc.S[hi]-pc.S[lo])*t;
+}
+
+/* ================= construcción del gráfico ================= */
+let pieces=[], tubes=[], G={};
+function autoY(A){
+  const ys=[]; for(const s of A.segs) for(let i=s.i0;i<=s.i1;i++) ys.push(A.ys[i]);
+  const imp=[]; A.crit.forEach(c=>imp.push(c.y)); A.infl.forEach(p=>imp.push(p.y)); A.breaks.forEach(b=>{ if(b.L.type==='fin') imp.push(b.L.v); if(b.R.type==='fin') imp.push(b.R.v); });
+  ys.sort((p,q)=>p-q);
+  let lo=ys[Math.floor(ys.length*0.03)], hi=ys[Math.floor(ys.length*0.97)];
+  imp.filter(isFinite).forEach(v=>{ lo=Math.min(lo,v); hi=Math.max(hi,v); });
+  lo=Math.min(lo,0); hi=Math.max(hi,0);
+  const pad=Math.max((hi-lo)*0.12, A.W*0.05); lo-=pad; hi+=pad;
+  const maxH=2.2*A.W;
+  if(hi-lo>maxH){ const mid=(imp.length? (Math.max(...imp.filter(isFinite).concat([0]))+Math.min(...imp.filter(isFinite).concat([0])))/2 : (lo+hi)/2); lo=mid-maxH/2; hi=mid+maxH/2; }
+  const step=niceStep(hi-lo)/2; lo=Math.floor(lo/step)*step; hi=Math.ceil(hi/step)*step;
+  return [lo,hi];
+}
+
+function buildPieces(){
+  const A=st.A, F=st.F, y0=st.ymin, y1=st.ymax;
+  pieces=[];
+  for(const s of A.segs){
+    let cur=null;
+    const push=(x,y)=>{ if(!cur){ cur={X:[],Y:[]}; } const k=cur.X.length; if(k && x<=cur.X[k-1]) return; cur.X.push(x); cur.Y.push(y); };
+    const close=()=>{ if(cur && cur.X.length>=2) pieces.push(cur); cur=null; };
+    let prevIn=null, px=0, py=0;
+    for(let i=s.i0;i<=s.i1;i++){
+      const x=A.xs[i], y=A.ys[i], inside=(y>=y0&&y<=y1);
+      if(prevIn!==null && inside!==prevIn){
+        const yb = (inside? (py>y1?y1:y0) : (y>y1?y1:y0));
+        const t=(yb-py)/(y-py); const xb=px+(x-px)*t;
+        if(inside){ push(xb,yb); } else { push(xb,yb); close(); }
+      }
+      if(inside) push(x,y);
+      prevIn=inside; px=x; py=y;
+    }
+    close();
+  }
+  for(const pc of pieces){ pc.S=[0]; for(let i=1;i<pc.X.length;i++){ pc.S.push(pc.S[i-1]+Math.hypot(pc.X[i]-pc.X[i-1],pc.Y[i]-pc.Y[i-1])); } pc.L=pc.S[pc.S.length-1]; }
+  pieces=pieces.filter(p=>p.L>1e-9);
+}
+
+function colorFor(x){
+  const F=st.F;
+  if(st.color==='mono'){ const v=F.f1(x); if(!isFinite(v)) return COL.neutral; return Math.abs(v)<1e-12?COL.neutral:(v>0?COL.crec:COL.decr); }
+  if(st.color==='conc'){ const v=F.f2(x); if(!isFinite(v)) return COL.neutral; return Math.abs(v)<1e-12?COL.neutral:(v>0?COL.up:COL.down); }
+  return COL.neutral;
+}
+function recolor(){
+  const c=new THREE.Color();
+  for(const t of tubes){
+    const col=t.geometry.attributes.color, rs=t.userData.radial+1;
+    t.userData.ringX.forEach((x,i)=>{ c.setHex(colorFor(x)); for(let j=0;j<rs;j++) col.setXYZ(i*rs+j,c.r,c.g,c.b); });
+    col.needsUpdate=true;
+  }
+  updateLegend();
+}
+
+function buildGraph(){
+  disposeTree(graph); while(graph.children.length) graph.remove(graph.children[0]);
+  tubes=[]; G={};
+  const A=st.A, a=st.a, b=st.b, y0=st.ymin, y1=st.ymax, W=b-a, H=y1-y0;
+  const u=Math.max(W,H*0.6)/100;
+  G.u=u;
+  // tablero de fondo
+  const board=new THREE.Mesh(new THREE.PlaneGeometry(W*1.04,H*1.04),new THREE.MeshBasicMaterial({color:0x0f2229,transparent:true,opacity:0.88,side:THREE.DoubleSide}));
+  board.position.set((a+b)/2,(y0+y1)/2,-u*1.2); graph.add(board); G.board=board;
+  // cuadrícula
+  const step=niceStep(Math.max(W,H)*0.9), gp=[];
+  for(let x=Math.ceil(a/step)*step; x<=b+1e-9; x+=step){ gp.push(new THREE.Vector3(x,y0,-u*0.6),new THREE.Vector3(x,y1,-u*0.6)); }
+  for(let y=Math.ceil(y0/step)*step; y<=y1+1e-9; y+=step){ gp.push(new THREE.Vector3(a,y,-u*0.6),new THREE.Vector3(b,y,-u*0.6)); }
+  graph.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gp),new THREE.LineBasicMaterial({color:0x26434d,transparent:true,opacity:0.75})));
+  // ejes
+  const axCol=0x9fb6bc;
+  const xAxY = (y0<=0&&y1>=0)?0:y0, yAxX=(a<=0&&b>=0)?0:a;
+  const ax=makeRod(axCol,u*0.22); setRod(ax,new THREE.Vector3(a,xAxY,0),new THREE.Vector3(b,xAxY,0)); graph.add(ax);
+  const ay=makeRod(axCol,u*0.22); setRod(ay,new THREE.Vector3(yAxX,y0,0),new THREE.Vector3(yAxX,y1,0)); graph.add(ay);
+  const cone=new THREE.ConeGeometry(u*0.9,u*2.6,12);
+  const cx=new THREE.Mesh(cone,new THREE.MeshStandardMaterial({color:axCol})); cx.position.set(b+u*1.2,xAxY,0); cx.rotation.z=-Math.PI/2; graph.add(cx);
+  const cy=new THREE.Mesh(cone,new THREE.MeshStandardMaterial({color:axCol})); cy.position.set(yAxX,y1+u*1.2,0); graph.add(cy);
+  const lx=makeLabel('x','#cfe0e3',u*3.2,{bg:false,center:[0,0.5]}); lx.position.set(b+u*3,xAxY,0); graph.add(lx);
+  const ly=makeLabel('y','#cfe0e3',u*3.2,{bg:false,center:[0.5,0]}); ly.position.set(yAxX,y1+u*3,0); graph.add(ly);
+  const tickH=u*2.4;
+  for(let x=Math.ceil(a/step)*step; x<=b+1e-9; x+=step){ if(Math.abs(x)<step*1e-6 && yAxX===0) continue; const t=makeLabel(fmtS(x,2),'#9fb6bc',tickH,{bg:false,bold:false,center:[0.5,1]}); t.position.set(x,xAxY-u*1.1,0); graph.add(t); }
+  for(let y=Math.ceil(y0/step)*step; y<=y1+1e-9; y+=step){ if(Math.abs(y)<step*1e-6 && xAxY===0) continue; const t=makeLabel(fmtS(y,2),'#9fb6bc',tickH,{bg:false,bold:false,center:[1,0.5]}); t.position.set(yAxX-u*1.1,y,0); graph.add(t); }
+
+  // curva
+  buildPieces();
+  const radial=8;
+  for(const pc of pieces){
+    const segsN=Math.max(8,Math.min(1600,Math.round(pc.L/(u*0.35))));
+    const curve=new PieceCurve(pc);
+    const geo=new THREE.TubeGeometry(curve,segsN,u*0.75,radial,false);
+    const ringX=[]; for(let i=0;i<=segsN;i++) ringX.push(curve.getPointAt(i/segsN).x);
+    geo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count*3),3));
+    const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.45,metalness:0.05,emissive:0x0b1a1f}));
+    m.userData={ringX,radial}; graph.add(m); tubes.push(m);
+  }
+  recolor();
+
+  // asíntotas verticales y discontinuidades
+  const inWin=(x,y)=>x>=a-1e-9&&x<=b+1e-9&&y>=y0&&y<=y1;
+  for(const br of A.breaks){
+    if(br.kind==='asintota'){
+      graph.add(dashed([new THREE.Vector3(br.x,y0,0),new THREE.Vector3(br.x,y1,0)],COL.disc,u*1.4));
+      const l=makeLabel('x = '+fmtS(br.x),hex(COL.disc),u*3,{center:[0,1]}); l.position.set(br.x+u*1.2,y1-u,u); graph.add(l);
+    }
+    const ring=(y,filled)=>{ if(!inWin(br.x,y)) return; const m=filled? new THREE.Mesh(new THREE.SphereGeometry(u*1.3,16,12),new THREE.MeshStandardMaterial({color:COL.disc,emissive:COL.disc,emissiveIntensity:0.3}))
+        : new THREE.Mesh(new THREE.TorusGeometry(u*1.3,u*0.35,10,28),new THREE.MeshStandardMaterial({color:COL.disc,emissive:COL.disc,emissiveIntensity:0.4})); m.position.set(br.x,y,0); graph.add(m); };
+    if(br.kind==='evitable'||br.kind==='salto'||br.kind==='borde'){
+      if(br.L.type==='fin') ring(br.L.v, isFinite(br.fc)&&Math.abs(br.fc-br.L.v)<1e-6*(1+Math.abs(br.fc)));
+      if(br.R.type==='fin' && !(br.L.type==='fin'&&Math.abs(br.L.v-br.R.v)<1e-9)) ring(br.R.v, isFinite(br.fc)&&Math.abs(br.fc-br.R.v)<1e-6*(1+Math.abs(br.fc)));
+      if(isFinite(br.fc) && !(br.L.type==='fin'&&Math.abs(br.fc-br.L.v)<1e-6*(1+Math.abs(br.fc))) && !(br.R.type==='fin'&&Math.abs(br.fc-br.R.v)<1e-6*(1+Math.abs(br.fc)))) ring(br.fc,true);
+    }
+  }
+  // asíntotas en ±∞
+  G.asy=[];
+  const addAsy=(inf,side)=>{
+    let m=null,n=null,txt='';
+    if(inf.L.type==='fin'){ m=0; n=inf.L.v; txt='y = '+fmtS(n); }
+    else if(inf.oblique){ m=inf.oblique.m; n=inf.oblique.n; txt='y = '+linEq(m,n); }
+    if(m===null) return;
+    if(G.asy.some(o=>Math.abs(o.m-m)<1e-9&&Math.abs(o.n-n)<1e-9)) return;
+    G.asy.push({m,n});
+    const cl=clipLine(0,n,1,m,a,b,y0,y1); if(!cl) return;
+    const p=new THREE.Vector3(cl[0],n+m*cl[0],0), q=new THREE.Vector3(cl[1],n+m*cl[1],0);
+    graph.add(dashed([p,q],0xbfa2f0,u*1.4));
+    const at = side>0? q : p;
+    const l=makeLabel(txt,'#cdb6f5',u*3,{center:[side>0?1:0,0]}); l.position.set(at.x,at.y+u,u); graph.add(l);
+  };
+  addAsy(A.infPos,1); addAsy(A.infNeg,-1);
+
+  // marcadores de puntos característicos
+  G.markers=[];
+  A.stops.forEach((s,i)=>{
+    if(s.kind==='disc' || !isFinite(s.y) || !inWin(s.x,s.y)) { G.markers.push(null); return; }
+    const col=COL[s.kind];
+    const mk=new THREE.Mesh(new THREE.SphereGeometry(u*1.55,20,14),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.35,roughness:0.35}));
+    mk.position.set(s.x,s.y,0); graph.add(mk);
+    const short={cero:'cero',max:'máx',min:'mín',silla:'f′ = 0',infl:'inflexión'};
+    const names=[...new Set(s.items.map(it=>it.noTangent?'cambio de concavidad':short[it.kind]))].join(' · ');
+    const above = s.kind!=='min';
+    const l=makeLabel(names+'  '+s.pt,hex(col),u*2.5,{center:[0.5,above?0:1]});
+    l.position.set(s.x,s.y+(above?u*2.4:-u*2.4),u*1.5); graph.add(l);
+    G.markers.push(mk);
+  });
+
+  // vagón
+  const rider=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.SphereGeometry(u*1.9,24,16),new THREE.MeshStandardMaterial({color:COL.rider,emissive:COL.rider,emissiveIntensity:0.45,roughness:0.3}));
+  const halo=new THREE.Mesh(new THREE.TorusGeometry(u*2.8,u*0.28,10,36),new THREE.MeshBasicMaterial({color:0xe3ecec}));
+  rider.add(body); rider.add(halo); graph.add(rider); G.rider=rider;
+  // tangente y normal
+  G.tan=makeRod(COL.tan,u*0.3); G.nor=makeRod(COL.nor,u*0.3); graph.add(G.tan); graph.add(G.nor);
+  G.tanPt=new THREE.Mesh(new THREE.SphereGeometry(u*1.1,14,10),new THREE.MeshBasicMaterial({color:COL.tan})); graph.add(G.tanPt);
+  // límites
+  G.lim=new THREE.Group(); graph.add(G.lim);
+  G.beadL=new THREE.Mesh(new THREE.SphereGeometry(u*1.2,14,10),new THREE.MeshBasicMaterial({color:0xffffff}));
+  G.beadR=new THREE.Mesh(new THREE.SphereGeometry(u*1.2,14,10),new THREE.MeshBasicMaterial({color:0xffffff}));
+  graph.add(G.beadL); graph.add(G.beadR);
+  buildLimitVisual();
+  placeGraph();
+}
+
+function buildLimitVisual(){
+  if(!G.lim) return;
+  disposeTree(G.lim); while(G.lim.children.length) G.lim.remove(G.lim.children[0]);
+  const L=st.limit, a=st.a,b=st.b,y0=st.ymin,y1=st.ymax,u=G.u;
+  G.beadL.visible=G.beadR.visible=false;
+  if(!L || !isFinite(L.c) || L.c<a || L.c>b) return;
+  G.lim.add(dashed([new THREE.Vector3(L.c,y0,u*0.5),new THREE.Vector3(L.c,y1,u*0.5)],0xffffff,u*1.1));
+  const vals=[L.res.L,L.res.R].filter(r=>r.type==='fin').map(r=>r.v);
+  [...new Set(vals)].forEach(v=>{ if(v>=y0&&v<=y1) G.lim.add(dashed([new THREE.Vector3(a,v,u*0.5),new THREE.Vector3(b,v,u*0.5)],0xffffff,u*1.1)); });
+}
+
+/* ---- colocación en el mundo ---- */
+function placeGraph(){
+  const W=st.b-st.a, H=st.ymax-st.ymin, xc=(st.a+st.b)/2, yc=(st.ymin+st.ymax)/2;
+  let S, pos;
+  const inXR=renderer.xr.isPresenting;
+  if(inXR && st.xrMode==='ride' && st.xrKind!=='ar'){
+    S=14/W; pos=new THREE.Vector3(-xc*S,1.2-yc*S,-2);
+    floor.visible=false;
+  } else {
+    S=Math.min(1.25/W,0.95/H); pos=new THREE.Vector3(-xc*S,1.3-yc*S,-0.95);
+    floor.visible = inXR && st.xrKind!=='ar';
+  }
+  graph.scale.setScalar(S); graph.position.copy(pos); G.S=S;
+  graph.updateMatrixWorld(true);
+  if(!inXR){
+    const c=new THREE.Vector3(0,1.3,-0.95);
+    controls.target.copy(c);
+    if(st.view==='orbit'){ camera.position.set(0.1,1.38,0.38); controls.update(); }
+  }
+}
+
+/* ================= recorrido ================= */
+function curPos(){ const pc=pieces[st.piece]; if(!pc) return null; return posAt(pc,st.s); }
+function curX(){ const p=curPos(); return p?p.x:st.a; }
+function setMsg(title,lines){ st.msgTitle=title||''; st.msgLines=lines||[]; hudDirty=true; }
+function stopReach(s){
+  for(let k=0;k<pieces.length;k++){ const pc=pieces[k]; if(s.x>=pc.X[0]-1e-9 && s.x<=pc.X[pc.X.length-1]+1e-9) return {piece:k,s:sAtX(pc,s.x)}; }
+  return null;
+}
+function nearestReach(x){
+  let best=null,bd=Infinity;
+  pieces.forEach((pc,k)=>{ const x0=pc.X[0], x1=pc.X[pc.X.length-1]; const cx=Math.min(Math.max(x,x0),x1), d=Math.abs(cx-x); if(d<bd){ bd=d; best={piece:k,s:sAtX(pc,cx)}; } });
+  return best;
+}
+function moveTo(r,withFade){
+  if(!r) return;
+  const doIt=()=>{ st.piece=r.piece; st.s=r.s; snapCam=true; };
+  if(withFade && renderer.xr.isPresenting && st.xrMode==='ride' && st.xrKind!=='ar'){ fadeAnim={t:0,dur:0.45,mid:doIt,done:false}; }
+  else doIt();
+}
+function announceStop(s){ setMsg(s.title+'  '+s.pt, s.lines); markStop(s); }
+let curStopIdx=-1;
+function markStop(s){ curStopIdx=st.A.stops.indexOf(s); document.querySelectorAll('#stopList button').forEach((b,i)=>b.classList.toggle('cur',i===curStopIdx)); }
+function jumpToStop(i){
+  const s=st.A.stops[i]; if(!s) return;
+  st.playing=false; updatePlayBtn();
+  let r=stopReach(s);
+  if(!r){ r=nearestReach(s.x - (s.kind==='disc'?1e-3*(st.b-st.a):0)); }
+  moveTo(r,true); announceStop(s);
+}
+function stepStop(dir){
+  const x=curX(), eps=1e-5*(st.b-st.a), S=st.A.stops;
+  if(dir>0){ const i=S.findIndex(s=>s.x>x+eps); if(i>=0) jumpToStop(i); else setMsg('Último punto','No hay más puntos característicos hacia la derecha en la ventana.'.split('|')); }
+  else { let i=-1; S.forEach((s,k)=>{ if(s.x<x-eps) i=k; }); if(i>=0) jumpToStop(i); else setMsg('Primer punto',['No hay puntos característicos a la izquierda en la ventana.']); }
+}
+function speedUnits(){ return (st.b-st.a)/9*st.speed; }
+function advance(dt,dir,manual){
+  const pc=pieces[st.piece]; if(!pc) return;
+  const prevS=st.s; let ns=st.s+dir*speedUnits()*dt;
+  // paradas en el tramo
+  const lo=Math.min(prevS,ns), hi=Math.max(prevS,ns);
+  if(!manual){
+    for(const s of st.A.stops){ const r=stopReach(s); if(!r||r.piece!==st.piece) continue; if(r.s>lo+1e-12 && r.s<=hi){ st.s=r.s; announceStop(s); st.pauseUntil=performance.now()+2600; return; } }
+  } else {
+    for(const s of st.A.stops){ const r=stopReach(s); if(!r||r.piece!==st.piece) continue; if(r.s>lo && r.s<=hi) announceStop(s); }
+  }
+  if(ns>pc.L){
+    const nx=st.piece+1;
+    if(nx<pieces.length){
+      const x1=pc.X[pc.X.length-1], x2=pieces[nx].X[0];
+      const brs=st.A.stops.filter(s=>s.kind==='disc'&&s.x>=x1-1e-9&&s.x<=x2+1e-9);
+      if(brs.length) announceStop(brs[0]); else setMsg('La curva sale de la ventana',['Continúa por arriba o por abajo del rango y visible. El vagón salta al siguiente tramo visible.']);
+      st.s=pc.L;
+      if(!manual) st.pauseUntil=performance.now()+2000;
+      pendingJump={piece:nx,s:0};
+      if(manual){ moveTo(pendingJump,true); pendingJump=null; }
+      return;
+    }
+    st.s=pc.L; if(!manual){ st.playing=false; updatePlayBtn(); setMsg('Fin del recorrido',['El vagón llegó al borde derecho de la ventana.']); }
+    return;
+  }
+  if(ns<0){
+    const pv=st.piece-1;
+    if(pv>=0 && manual){ const p2=pieces[pv]; moveTo({piece:pv,s:p2.L},true); return; }
+    ns=0;
+  }
+  st.s=ns;
+}
+let pendingJump=null, snapCam=true;
+
+/* ================= HUD ================= */
+let hudDirty=true, hudT=0;
+function tangentInfo(){
+  const F=st.F; const x0 = st.tnFollow? curX() : st.tnX;
+  const y0=F.f(x0), m=F.f1(x0);
+  if(!isFinite(y0)) return {x0,ok:false};
+  return {x0,y0,m,ok:true,vertical:!isFinite(m)||Math.abs(m)>1e7};
+}
+function linEq(m,b){
+  let s='';
+  const nm=niceVal(m), mt=nm?nm.t:dec(m,3);
+  if(Math.abs(m)>1e-12){ s = (Math.abs(m-1)<1e-12?'':Math.abs(m+1)<1e-12?MINUS:mt)+'x'; }
+  if(Math.abs(b)>1e-12 || !s){ const bt=fmtS(Math.abs(b),3); s += s ? (b<0?' '+MINUS+' ':' + ')+bt : (b<0?MINUS:'')+bt; }
+  return s;
+}
+function tnEquations(t){
+  if(!t.ok) return {tan:'f no está definida en x₀ = '+fmtS(t.x0),nor:''};
+  const x0=fmtS(t.x0), y0=fmtS(t.y0);
+  if(t.vertical) return {tan:'x = '+x0+'  (tangente vertical)', nor:'y = '+y0};
+  const m=t.m, bT=t.y0-m*t.x0;
+  const tan='y = '+linEq(m,bT);
+  let nor;
+  if(Math.abs(m)<1e-12) nor='x = '+x0;
+  else { const mn=-1/m; nor='y = '+linEq(mn,t.y0-mn*t.x0); }
+  return {tan,nor,m};
+}
+function shiftTxt(v,varName){ if(Math.abs(v)<1e-12) return varName; return varName+(v<0?' + ':' '+MINUS+' ')+fmtS(Math.abs(v),3); }
+function pointSlope(t){ const L=shiftTxt(t.y0,'y'), R=shiftTxt(t.x0,'x'); const m=fmtS(t.m,3); return L+' = '+(Math.abs(t.x0)<1e-12? m+'x' : m+'('+R+')'); }
+function stateAt(x){
+  const F=st.F, d1=F.f1(x), d2=F.f2(x);
+  const out=[];
+  if(isFinite(d1)){ if(Math.abs(d1)<1e-9) out.push(['f′ = 0','#e3ecec']); else out.push(d1>0?['creciente',hex(COL.crec)]:['decreciente',hex(COL.decr)]); }
+  if(isFinite(d2)){ if(Math.abs(d2)<1e-9) out.push(['f″ = 0','#e3ecec']); else out.push(d2>0?['cóncava hacia arriba',hex(COL.up)]:['cóncava hacia abajo',hex(COL.down)]); }
+  return out;
+}
+function updateHUD(){
+  const F=st.F; if(!F) return;
+  const x=curX(), y=F.f(x), d1=F.f1(x), d2=F.f2(x);
+  document.getElementById('hX').textContent=fmtS(x,3);
+  document.getElementById('hY').textContent=fmtS(y,3);
+  document.getElementById('hD1').textContent=fmtS(d1,3);
+  document.getElementById('hD2').textContent=fmtS(d2,3);
+  document.getElementById('hState').innerHTML=stateAt(x).map(([t,c])=>'<span class="pill" style="color:'+c+'">'+t+'</span>').join('');
+  const t=tangentInfo(), e=tnEquations(t);
+  document.getElementById('hEq').innerHTML = st.tn>0 ? '<span style="color:'+hex(COL.tan)+'">tangente '+e.tan+'</span>'+(st.tn>1&&e.nor?'<br><span style="color:'+hex(COL.nor)+'">normal '+e.nor+'</span>':'') : '';
+  document.getElementById('hMsg').innerHTML = st.msgTitle? '<strong>'+esc(st.msgTitle)+'</strong>'+st.msgLines.map(esc).join('<br>') : '<span style="color:var(--stage-muted)">Pulse Recorrer o toque un elemento de la lista.</span>';
+  // tabla de tangente del panel
+  const x0t=fmtS(t.x0);
+  document.getElementById('tnBox').innerHTML = t.ok ?
+    '<div>x₀ = '+x0t+'   f(x₀) = '+fmtS(t.y0,3)+'   f′(x₀) = '+(t.vertical?'no existe':fmtS(t.m,3))+'</div>'+
+    '<div class="t">Tangente  '+e.tan+'</div>'+(t.vertical||Math.abs(t.m)<1e-12?'':'<div class="t">          '+pointSlope(t)+'</div>')+
+    '<div class="n">Normal    '+e.nor+'</div>' : '<div>'+esc(e.tan)+'</div>';
+  const sl=document.getElementById('xslider'); if(document.activeElement!==sl) sl.value=Math.round((x-st.a)/(st.b-st.a)*1000);
+  if(renderer.xr.isPresenting) drawHudCanvas(x,y,d1,d2,e);
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function drawHudCanvas(x,y,d1,d2,e){
+  const c=hudCanvas, g=c.getContext('2d'); const W=c.width,H=c.height;
+  g.clearRect(0,0,W,H);
+  g.fillStyle='rgba(9,20,25,0.92)'; roundRect(g,0,0,W,H,28); g.fill();
+  g.strokeStyle='rgba(148,168,174,0.35)'; g.lineWidth=3; roundRect(g,1.5,1.5,W-3,H-3,27); g.stroke();
+  g.fillStyle='#94a8ae'; g.font='700 30px "Atkinson Hyperlegible", sans-serif'; g.fillText('f(x) = '+st.F.txt,32,52);
+  g.font='600 36px "JetBrains Mono", monospace'; g.fillStyle='#e3ecec';
+  const rows=[['x',fmtS(x,3)],['f(x)',fmtS(y,3)],['f′(x)',fmtS(d1,3)],['f″(x)',fmtS(d2,3)]];
+  rows.forEach((r,i)=>{ const cx=32+(i%2)*480, cy=112+Math.floor(i/2)*52; g.fillStyle='#94a8ae'; g.fillText(r[0],cx,cy); g.fillStyle='#e3ecec'; g.fillText(r[1],cx+130,cy); });
+  let px=32; g.font='700 28px "Atkinson Hyperlegible", sans-serif';
+  stateAt(x).forEach(([t,col])=>{ const w=g.measureText(t).width+32; g.strokeStyle=col; g.lineWidth=3; roundRect(g,px,196,w,44,22); g.stroke(); g.fillStyle=col; g.fillText(t,px+16,228); px+=w+12; });
+  let yy=290;
+  g.font='600 27px "JetBrains Mono", monospace';
+  if(st.tn>0){ g.fillStyle=hex(COL.tan); g.fillText('tangente  '+e.tan,32,yy); yy+=40; }
+  if(st.tn>1&&e.nor){ g.fillStyle=hex(COL.nor); g.fillText('normal    '+e.nor,32,yy); yy+=40; }
+  yy+=12;
+  if(st.msgTitle){ g.fillStyle='#e3ecec'; g.font='700 31px "Atkinson Hyperlegible", sans-serif'; g.fillText(st.msgTitle,32,yy); yy+=40;
+    g.font='400 27px "Atkinson Hyperlegible", sans-serif'; g.fillStyle='#c9d6d8'; st.msgLines.slice(0,4).forEach(l=>{ g.fillText(l,32,yy); yy+=36; }); }
+  g.font='400 22px "Atkinson Hyperlegible", sans-serif'; g.fillStyle='#7f959b';
+  g.fillText('Stick avanzar · Gatillos saltar · A recorrer · B rectas · X modo · Y color',32,H-24);
+  hudTex.needsUpdate=true;
+}
+function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r); g.lineTo(x+w,y+h-r); g.quadraticCurveTo(x+w,y+h,x+w-r,y+h); g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r); g.lineTo(x,y+r); g.quadraticCurveTo(x,y,x+r,y); g.closePath(); }
+
+/* ================= panel lateral ================= */
+function updateLegend(){
+  const el=document.getElementById('legend');
+  const L = st.color==='mono'? [['creciente',COL.crec],['decreciente',COL.decr]] : st.color==='conc'? [['cóncava hacia arriba',COL.up],['cóncava hacia abajo',COL.down]] : [];
+  el.hidden=!L.length;
+  el.innerHTML=L.map(([t,c])=>'<span><i style="background:'+hex(c)+'"></i>'+t+'</span>').join('');
+}
+function ivTxt(p,q){ return '('+fmtS(p)+', '+fmtS(q)+')'; }
+function renderPanel(){
+  const A=st.A, F=st.F;
+  document.getElementById('fxTitle').textContent='f(x) = '+F.txt;
+  document.getElementById('d1Txt').textContent=F.t1;
+  document.getElementById('d2Txt').textContent=F.t2;
+  const ol=document.getElementById('stopList');
+  ol.innerHTML = A.stops.length ? A.stops.map((s,i)=>'<li><button type="button" data-i="'+i+'"><span class="dot" style="--c:'+CSSCOL[s.kind]+'"></span><span class="k">'+esc(s.title)+'</span><span class="xy">'+esc(s.pt)+'</span></button></li>').join('')
+    : '<li class="small">No se encontraron ceros, extremos, inflexiones ni discontinuidades en la ventana.</li>';
+  ol.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>jumpToStop(+b.dataset.i)));
+  const facts=[];
+  facts.push('<div><span class="lbl">Dominio en la ventana</span><div class="mono">'+esc(A.domTxt)+'</div></div>');
+  const mx=A.absMax, mn=A.absMin;
+  const ext=(o,word)=> o.none ? 'No tiene '+word+' absoluto en la ventana (f no está acotada cerca de x = '+fmtS(o.x)+').'
+    : (o.attained ? word.charAt(0).toUpperCase()+word.slice(1)+' absoluto '+fmtS(o.v)+' en x = '+fmtS(o.x)+(Math.abs(o.x-st.a)<1e-9||Math.abs(o.x-st.b)<1e-9?' (extremo de la ventana)':'')+'.'
+      : (word==='máximo'?'Supremo ':'Ínfimo ')+fmtS(o.v)+' cerca de x = '+fmtS(o.x)+', no alcanzado.');
+  facts.push('<div><span class="lbl">Extremos absolutos en [' +fmtS(st.a)+', '+fmtS(st.b)+']</span><div>'+esc(ext(mx,'máximo'))+'<br>'+esc(ext(mn,'mínimo'))+'</div></div>');
+  const infLine=(r,sgn)=>{ const s=sgn>0?'+∞':MINUS+'∞'; let t='x → '+s+'   f(x) → '+limTxt(r.L);
+    if(r.L.type==='fin') t+='   asíntota horizontal y = '+fmtS(r.L.v);
+    else if(r.oblique) t+='   asíntota oblicua y = '+linEq(r.oblique.m,r.oblique.n);
+    return t; };
+  facts.push('<div><span class="lbl">Comportamiento en los extremos</span><div class="mono">'+esc(infLine(A.infNeg,-1))+'<br>'+esc(infLine(A.infPos,1))+'</div><div class="small">Estimado evaluando f en x = ±√2·10ᵏ con k = 1, …, 9.</div></div>');
+  document.getElementById('facts').innerHTML=facts.join('');
+  const mName={crec:['creciente',CSSCOL.crec],decr:['decreciente',CSSCOL.decr],const:['constante','var(--muted)']};
+  const cName={up:['cóncava hacia arriba',CSSCOL.up],down:['cóncava hacia abajo',CSSCOL.down],lin:['lineal','var(--muted)']};
+  document.getElementById('monoTbl').innerHTML = A.mono.map(o=>'<tr><td>'+ivTxt(o.p,o.q)+'</td><td><span class="tag" style="--c:'+mName[o.kind][1]+'"><i></i>'+mName[o.kind][0]+'</span></td></tr>').join('') || '<tr><td>sin datos</td></tr>';
+  document.getElementById('concTbl').innerHTML = A.conc.map(o=>'<tr><td>'+ivTxt(o.p,o.q)+'</td><td><span class="tag" style="--c:'+cName[o.kind][1]+'"><i></i>'+cName[o.kind][0]+'</span></td></tr>').join('') || '<tr><td>sin datos</td></tr>';
+}
+
+function computeLimit(){
+  const raw=document.getElementById('limC').value.trim();
+  const out=document.getElementById('limOut');
+  let c;
+  const r=raw.replace(/∞/g,'inf').toLowerCase().replace(/\s/g,'');
+  if(r==='inf'||r==='+inf'||r==='infinito'||r==='+infinito') c=Infinity;
+  else if(r==='-inf'||r==='-infinito') c=-Infinity;
+  else { try{ c=toNum(M.evaluate(preprocess(raw))); }catch(e){ c=NaN; } }
+  if(!(isFinite(c)||Math.abs(c)===Infinity)){ out.innerHTML='<p class="err">No reconozco ese valor. Pruebe 2, pi/2, inf o -inf.</p>'; st.limit=null; buildLimitVisual(); return; }
+  const f=st.F.f, res=limitAt(f,c);
+  let html='';
+  if(res.inf){
+    const xs=[1,2,3,4,6,8].map(k=>Math.sign(c)*Math.pow(10,k));
+    html+='<div class="ltwrap"><table class="lt"><tr><th>x</th><th>f(x)</th></tr>'+xs.map(x=>'<tr><td>'+dec(x,0)+'</td><td>'+dec(f(x),6)+'</td></tr>').join('')+'</table></div>';
+    html+='<p class="facts"><span class="mono">lím x→'+(c>0?'+∞':MINUS+'∞')+' f(x) = '+esc(limTxt(res.L))+'</span>'+(res.oblique?'<span>Asíntota oblicua y = '+esc(linEq(res.oblique.m,res.oblique.n))+'</span>':'')+'</p>';
+    st.limit=null;
+  } else {
+    const hs=[1e-1,1e-2,1e-3,1e-4,1e-5,1e-6].map(h=>h*Math.max(1,Math.abs(c)));
+    html+='<div class="ltwrap"><table class="lt"><tr><th>x → c⁻</th><th>f(x)</th><th>x → c⁺</th><th>f(x)</th></tr>'+hs.map(h=>'<tr><td>'+dec(c-h,6)+'</td><td>'+dec(f(c-h),6)+'</td><td>'+dec(c+h,6)+'</td><td>'+dec(f(c+h),6)+'</td></tr>').join('')+'</table></div>';
+    const ct=fmtS(c);
+    let concl;
+    if(res.both && !res.both.onlyLeft && !res.both.onlyRight) concl='lím x→'+ct+' f(x) = '+limTxt(res.both);
+    else if(res.both) concl='Solo existe el límite lateral '+(res.both.onlyLeft?'izquierdo':'derecho')+', porque f no está definida al otro lado de '+ct+'.';
+    else concl='El límite no existe, porque los límites laterales no coinciden.';
+    const fc=f(c);
+    html+='<div class="facts"><span class="mono">lím x→'+ct+'⁻ f(x) = '+esc(limTxt(res.L))+'</span><span class="mono">lím x→'+ct+'⁺ f(x) = '+esc(limTxt(res.R))+'</span><span>'+esc(concl)+'</span><span class="small">f('+esc(ct)+') '+(isFinite(fc)?'= '+esc(fmtS(fc)):'no está definida')+'.</span></div>';
+    st.limit={c,res};
+  }
+  out.innerHTML=html;
+  buildLimitVisual();
+}
+
+/* ================= carga de funciones ================= */
+function num(id){ const v=document.getElementById(id).value.trim(); if(v==='') return null; try{ const r=toNum(M.evaluate(preprocess(v))); return isFinite(r)?r:null; }catch(e){ return null; } }
+function loadFunction(src,a,b,ymin,ymax){
+  const err=document.getElementById('fnError');
+  let F;
+  try{ F=buildF(src); }catch(e){ err.textContent=e.message; err.hidden=false; return false; }
+  if(!(b>a)){ err.textContent='La ventana necesita x mín menor que x máx.'; err.hidden=false; return false; }
+  const A=analyze(F,a,b);
+  if(A.empty){ err.textContent='La función no toma valores reales en esta ventana. Cambie x mín y x máx.'; err.hidden=false; return false; }
+  err.hidden=true;
+  st.F=F; st.A=A; st.a=a; st.b=b;
+  let lo=ymin, hi=ymax;
+  if(lo===null||hi===null||!(hi>lo)){ const r=autoY(A); if(lo===null||!(hi>lo)) lo=r[0]; if(hi===null||!(hi>lo)) hi=r[1]; }
+  st.ymin=lo; st.ymax=hi;
+  document.getElementById('xa').value=fmtNum(a); document.getElementById('xb').value=fmtNum(b);
+  document.getElementById('ya').placeholder='auto '+fmtNum(lo); document.getElementById('yb').placeholder='auto '+fmtNum(hi);
+  st.limit=null; document.getElementById('limOut').innerHTML='';
+  buildGraph();
+  renderPanel();
+  st.piece=0; st.s=0; st.playing=false; updatePlayBtn(); curStopIdx=-1; snapCam=true; pendingJump=null;
+  setMsg('Listo para recorrer f(x) = '+F.txt,[A.stops.length+' puntos característicos en la ventana.']);
+  computeLimit();
+  hudDirty=true;
+  return true;
+}
+function fmtNum(v){ return String(Math.round(v*1e6)/1e6); }
+
+document.getElementById('fnForm').addEventListener('submit',e=>{ e.preventDefault();
+  const a=num('xa'), b=num('xb');
+  loadFunction(document.getElementById('fnInput').value, a===null?-5:a, b===null?5:b, num('ya'), num('yb'));
+});
+['xa','xb','ya','yb'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); document.getElementById('fnForm').requestSubmit(); } }));
+const presetBox=document.getElementById('presets');
+PRESETS.forEach((p,i)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=p.f; b.addEventListener('click',()=>applyPreset(i)); presetBox.appendChild(b); });
+let presetIdx=0;
+function applyPreset(i){ presetIdx=i; const p=PRESETS[i]; document.getElementById('fnInput').value=p.f; document.getElementById('ya').value=''; document.getElementById('yb').value=''; loadFunction(p.f,p.a,p.b,null,null); }
+document.getElementById('limForm').addEventListener('submit',e=>{ e.preventDefault(); computeLimit(); });
+document.querySelectorAll('input[name="tn"]').forEach(r=>r.addEventListener('change',()=>{ st.tn=+r.value; hudDirty=true; }));
+document.querySelectorAll('input[name="tnsrc"]').forEach(r=>r.addEventListener('change',()=>{ st.tnFollow=r.value==='follow'; readTnX(); hudDirty=true; }));
+function readTnX(){ const v=num('tnX'); if(v!==null) st.tnX=v; }
+document.getElementById('tnX').addEventListener('input',()=>{ readTnX(); if(!st.tnFollow) hudDirty=true; });
+document.getElementById('tnX').addEventListener('focus',()=>{ document.querySelector('input[name="tnsrc"][value="fixed"]').checked=true; st.tnFollow=false; });
+
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+document.querySelectorAll('[data-color]').forEach(b=>b.addEventListener('click',()=>setColor(b.dataset.color)));
+function setView(v){ st.view=v; document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v)); controls.enabled=(v==='orbit'); if(v==='orbit') placeGraph(); snapCam=true; }
+function setColor(c){ st.color=c; document.querySelectorAll('[data-color]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.color===c)); recolor(); }
+function updatePlayBtn(){ document.getElementById('bPlay').textContent = st.playing?'❚❚ Pausa':'▶ Recorrer'; }
+function togglePlay(){ st.playing=!st.playing; if(st.playing){ const pc=pieces[st.piece]; if(pc && st.s>=pc.L-1e-12 && st.piece===pieces.length-1){ st.piece=0; st.s=0; } st.pauseUntil=0; } updatePlayBtn(); }
+document.getElementById('bPlay').addEventListener('click',togglePlay);
+document.getElementById('bNext').addEventListener('click',()=>stepStop(1));
+document.getElementById('bPrev').addEventListener('click',()=>stepStop(-1));
+document.getElementById('speed').addEventListener('input',e=>{ st.speed=+e.target.value; });
+document.getElementById('xslider').addEventListener('input',e=>{ const x=st.a+(st.b-st.a)*(+e.target.value)/1000; st.playing=false; updatePlayBtn(); moveTo(nearestReach(x),false); hudDirty=true; });
+const keys={};
+window.addEventListener('keydown',e=>{
+  if(e.target.closest('input,textarea,select')) return;
+  if(e.key===' '){ e.preventDefault(); togglePlay(); }
+  else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){ keys[e.key]=true; e.preventDefault(); }
+  else if(e.key==='n'||e.key==='N'||e.key==='PageDown') stepStop(1);
+  else if(e.key==='p'||e.key==='P'||e.key==='PageUp') stepStop(-1);
+});
+window.addEventListener('keyup',e=>{ keys[e.key]=false; });
+
+/* ================= WebXR ================= */
+const btnVR=document.getElementById('btnVR'), btnAR=document.getElementById('btnAR'), xrStatus=document.getElementById('xrStatus');
+async function checkXR(){
+  if(!('xr' in navigator)){ btnVR.disabled=true; btnAR.disabled=true; xrStatus.textContent='Este navegador no ofrece WebXR. En el Quest 3 use el navegador Meta Quest Browser. Aquí puede explorar el gráfico en modo Órbita o A bordo.'; return; }
+  let vr=false, ar=false;
+  try{ vr=await navigator.xr.isSessionSupported('immersive-vr'); }catch(e){}
+  try{ ar=await navigator.xr.isSessionSupported('immersive-ar'); }catch(e){}
+  let framed=false; try{ framed = window.self!==window.top; }catch(e){ framed=true; }
+  if(!vr && framed){
+    btnVR.disabled=false; btnAR.disabled=false;
+    xrStatus.textContent='Esta vista está incrustada en otra página, que puede bloquear la realidad virtual. Si al pulsar Entrar en VR aparece un error, abra la versión independiente del archivo en el navegador del Quest.';
+    return;
+  }
+  btnVR.disabled=!vr; btnAR.disabled=!ar;
+  xrStatus.textContent = vr ? (ar?'Visor compatible con VR y realidad mixta.':'Visor compatible con VR.') : 'No se detectan gafas de realidad virtual en este dispositivo. Abra esta misma página en el navegador del Quest 3.';
+}
+checkXR();
+async function enterXR(kind){
+  if(renderer.xr.isPresenting){ renderer.xr.getSession().end(); return; }
+  try{
+    const session=await navigator.xr.requestSession(kind==='ar'?'immersive-ar':'immersive-vr',{optionalFeatures:['local-floor','bounded-floor']});
+    st.xrKind=kind; st.xrMode = kind==='ar' ? 'maqueta' : 'ride';
+    session.addEventListener('end',onXREnd);
+    if(kind==='ar'){ scene.background=null; renderer.setClearAlpha(0); }
+    await renderer.xr.setSession(session);
+    controls.enabled=false;
+    savedCam={p:camera.position.clone(),q:camera.quaternion.clone()};
+    camera.position.set(0,0,0); camera.quaternion.identity();
+    hudMesh.visible=st.hudVisible;
+    placeGraph(); snapCam=true; hudDirty=true;
+    setMsg(kind==='ar'?'Realidad mixta':'Realidad virtual',[st.xrMode==='ride'?'Está sentado sobre la curva. Mueva el stick para avanzar.':'La maqueta está frente a usted.']);
+  }catch(e){
+    xrStatus.textContent='No se pudo iniciar la sesión inmersiva ('+(e&&e.name?e.name:'error')+'). Si abrió la página dentro de otra aplicación, ábrala directamente en el navegador del Quest mediante el archivo independiente.';
+  }
+}
+let savedCam=null;
+function onXREnd(){
+  scene.background=BG; renderer.setClearAlpha(1);
+  rig.position.set(0,0,0); rig.rotation.set(0,0,0);
+  hudMesh.visible=false; floor.visible=false; st.xrKind=null;
+  if(savedCam){ camera.position.copy(savedCam.p); camera.quaternion.copy(savedCam.q); }
+  controls.enabled = st.view==='orbit';
+  placeGraph(); snapCam=true;
+}
+btnVR.addEventListener('click',()=>enterXR('vr'));
+btnAR.addEventListener('click',()=>enterXR('ar'));
+const prevBtns={};
+function pollXR(dt){
+  const s=renderer.xr.getSession(); if(!s) return;
+  let move=0;
+  for(const src of s.inputSources){
+    const gp=src.gamepad; if(!gp) continue;
+    const h=src.handedness||'none';
+    const pr=gp.buttons.map(b=>b&&b.pressed); const was=prevBtns[h]||[];
+    const edge=i=>pr[i]&&!was[i];
+    const ay=gp.axes.length>=4?gp.axes[3]:(gp.axes[1]||0);
+    if(Math.abs(ay)>0.2) move+=-ay;
+    if(h==='right'){
+      if(edge(0)) stepStop(1);
+      if(edge(1)){ st.hudVisible=!st.hudVisible; hudMesh.visible=st.hudVisible; }
+      if(edge(4)) togglePlay();
+      if(edge(5)){ st.tn=(st.tn+1)%3; document.querySelector('input[name="tn"][value="'+st.tn+'"]').checked=true; hudDirty=true; }
+    } else if(h==='left'){
+      if(edge(0)) stepStop(-1);
+      if(edge(4) && st.xrKind!=='ar'){ st.xrMode = st.xrMode==='ride'?'maqueta':'ride'; placeGraph(); snapCam=true; setMsg(st.xrMode==='ride'?'Modo montar':'Modo maqueta',[st.xrMode==='ride'?'Está sobre la curva.':'La curva está frente a usted a escala de mesa.']); }
+      if(edge(5)){ const order=['mono','conc','none']; setColor(order[(order.indexOf(st.color)+1)%3]); hudDirty=true; }
+      if(edge(3)){ applyPreset((presetIdx+1)%PRESETS.length); placeGraph(); }
+    }
+    prevBtns[h]=pr;
+  }
+  if(move!==0){ st.playing=false; updatePlayBtn(); advance(dt,Math.max(-1.5,Math.min(1.5,move)),true); hudDirty=true; }
+}
+
+/* ================= bucle ================= */
+const clock=new THREE.Clock();
+const tmpV=new THREE.Vector3(), tmpT=new THREE.Vector3();
+function worldOf(x,y,z,out){ return graph.localToWorld((out||new THREE.Vector3()).set(x,y,z||0)); }
+function loop(){
+  const dt=Math.min(clock.getDelta(),0.05), now=performance.now();
+  if(!st.A){ renderer.render(scene,camera); return; }
+  if(renderer.xr.isPresenting) pollXR(dt);
+  else {
+    const kd=(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0);
+    if(kd){ st.playing=false; updatePlayBtn(); advance(dt,kd,true); hudDirty=true; }
+  }
+  if(fadeAnim){ fadeAnim.t+=dt; const h=fadeAnim.dur/2; if(fadeAnim.t>=h && !fadeAnim.done){ fadeAnim.mid(); fadeAnim.done=true; }
+    fade.material.opacity = fadeAnim.t<h ? fadeAnim.t/h : Math.max(0,1-(fadeAnim.t-h)/h);
+    if(fadeAnim.t>=fadeAnim.dur){ fadeAnim=null; fade.material.opacity=0; } }
+  if(st.playing && now>=st.pauseUntil){
+    if(pendingJump){ moveTo(pendingJump,true); pendingJump=null; st.pauseUntil=now+400; }
+    else { advance(dt,1,false); hudDirty=true; }
+  }
+  // posición del vagón
+  const pc=pieces[st.piece];
+  if(pc){
+    const p=posAt(pc,st.s), p2=posAt(pc,Math.min(pc.L,st.s+pc.L*1e-3+G.u*0.5)), p1=posAt(pc,Math.max(0,st.s-G.u*0.5));
+    G.rider.position.set(p.x,p.y,0);
+    tmpT.set(p2.x-p1.x,p2.y-p1.y,0); if(tmpT.lengthSq()<1e-20) tmpT.set(1,0,0); tmpT.normalize();
+    G.rider.children[1].rotation.set(0,Math.PI/2,Math.atan2(tmpT.y,tmpT.x));
+    G.rider.children[1].quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),tmpT);
+    const pw=worldOf(p.x,p.y,0,tmpV);
+    if(renderer.xr.isPresenting){
+      if(st.xrMode==='ride' && st.xrKind!=='ar'){
+        const target=new THREE.Vector3(pw.x,pw.y-1.15,pw.z);
+        rig.rotation.set(0,-Math.PI/2,0);
+        if(snapCam) rig.position.copy(target); else rig.position.lerp(target,Math.min(1,dt*10));
+        G.rider.visible=true;
+      } else { rig.position.set(0,0,0); rig.rotation.set(0,0,0); }
+      hudMesh.position.set(-0.42,1.05,-0.62); hudMesh.rotation.set(-0.35,0.55,0,'YXZ');
+    } else if(st.view==='board'){
+      const S=G.S, tw=new THREE.Vector3(tmpT.x,tmpT.y,0);
+      const desired=pw.clone().addScaledVector(tw,-G.u*26*S).add(new THREE.Vector3(0,G.u*9*S,G.u*20*S));
+      const look=pw.clone().addScaledVector(tw,G.u*16*S);
+      if(snapCam) camera.position.copy(desired); else camera.position.lerp(desired,Math.min(1,dt*6));
+      camera.lookAt(look);
+    }
+    snapCam=false;
+  }
+  // tangente y normal
+  const t=tangentInfo(), y0=st.ymin, y1=st.ymax;
+  if(st.tn>0 && t.ok && t.y0>=y0-1e-9 && t.y0<=y1+1e-9){
+    let dx=1, dy=t.m; if(t.vertical){ dx=0; dy=1; }
+    const cl=clipLine(t.x0,t.y0,dx,dy,st.a,st.b,y0,y1);
+    if(cl) setRod(G.tan,new THREE.Vector3(t.x0+dx*cl[0],t.y0+dy*cl[0],G.u*0.3),new THREE.Vector3(t.x0+dx*cl[1],t.y0+dy*cl[1],G.u*0.3)); else G.tan.visible=false;
+    G.tanPt.visible=true; G.tanPt.position.set(t.x0,t.y0,G.u*0.3);
+    if(st.tn>1){ const nx=-dy, ny=dx; const c2=clipLine(t.x0,t.y0,nx,ny,st.a,st.b,y0,y1); if(c2) setRod(G.nor,new THREE.Vector3(t.x0+nx*c2[0],t.y0+ny*c2[0],G.u*0.3),new THREE.Vector3(t.x0+nx*c2[1],t.y0+ny*c2[1],G.u*0.3)); else G.nor.visible=false; }
+    else G.nor.visible=false;
+  } else { G.tan.visible=false; G.nor.visible=false; G.tanPt.visible=false; }
+  // cuentas del límite
+  if(st.limit && isFinite(st.limit.c) && st.limit.c>=st.a && st.limit.c<=st.b){
+    const ph=((now/1000)%3.2)/3.2, h=(st.b-st.a)*0.22*Math.pow(1-ph,2.2)+1e-9;
+    const put=(m,x)=>{ const y=st.F.f(x); if(isFinite(y)&&y>=y0&&y<=y1&&x>=st.a&&x<=st.b){ m.visible=true; m.position.set(x,y,G.u*0.8); } else m.visible=false; };
+    put(G.beadL,st.limit.c-h); put(G.beadR,st.limit.c+h);
+  } else { G.beadL.visible=G.beadR.visible=false; }
+  // marcador activo
+  if(G.markers){ G.markers.forEach((m,i)=>{ if(m){ const k = i===curStopIdx ? 1.35+0.15*Math.sin(now/180) : 1; m.scale.setScalar(k); } }); }
+  if(!renderer.xr.isPresenting && st.view==='orbit') controls.update();
+  hudT+=dt;
+  if(hudDirty && hudT>0.1){ hudT=0; hudDirty=false; updateHUD(); }
+  else if(st.playing && hudT>0.1){ hudT=0; updateHUD(); }
+  renderer.render(scene,camera);
+}
+
+function resize(){ const r=renderer.domElement.getBoundingClientRect(); const w=Math.max(1,r.width), h=Math.max(1,r.height); if(!renderer.xr.isPresenting){ renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); } }
+new ResizeObserver(resize).observe(stage); window.addEventListener('resize',resize);
+resize();
+
+function start(){ loadFunction(PRESETS[0].f,PRESETS[0].a,PRESETS[0].b,null,null); renderer.setAnimationLoop(loop); }
+const fontsReady = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]) : Promise.resolve();
+fontsReady.then(start);
+})();
+</script>
+
+</body>
+</html>
