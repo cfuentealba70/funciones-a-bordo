@@ -80,8 +80,6 @@ details.card[open]>summary::after{content:"−"}
 details.card[open]>summary{border-bottom:1px solid var(--line);margin-bottom:10px}
 details.card .body{padding-bottom:14px;display:flex;flex-direction:column;gap:10px}
 .small{font-size:12.5px;color:var(--muted)}
-.fnrow{display:flex;gap:8px}
-.fnrow input{flex:1;min-width:0;font-family:var(--mono);font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
 .lbl{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .grid4 label{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted)}
@@ -137,12 +135,36 @@ table.lt td{padding:2px 4px;border-top:1px solid var(--line)}
 .mj svg{overflow:visible;max-width:none}
 .mjf{font-family:var(--mono)}
 .tnv{display:flex;flex-wrap:wrap;gap:4px 18px}
+#fnList{display:flex;flex-direction:column;gap:6px}
+.fnrow{display:flex;gap:6px;align-items:center}
+.fnrow .act{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.fnrow .fname{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--c)}
+.fnrow .fnin{flex:1;min-width:0;font-family:var(--mono);font-size:14.5px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.fnrow .vis{display:flex;align-items:center}
+.fnrow .frm{border:1px solid var(--line);background:var(--bg);border-radius:6px;width:28px;height:28px;line-height:1}
+.fnactions{display:flex;gap:8px;justify-content:space-between;margin-top:8px}
+.fnprev{min-height:1.6em;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.fnprev .mj{font-size:118%}
+details.kbd{border:1px solid var(--line);border-radius:8px;padding:0 8px}
+details.kbd>summary{cursor:pointer;padding:6px 0;font-size:13px;font-weight:700;color:var(--muted)}
+.kbtabs{display:flex;gap:6px;margin-bottom:6px}
+.kbtabs button{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:3px 9px;font-size:12.5px}
+.kbtabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.kbkeys{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding-bottom:8px}
+.kbkeys button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 2px;font-size:13px;font-family:var(--mono);white-space:nowrap;overflow:hidden}
+.kbkeys button:hover{border-color:var(--accent)}
+.grid2{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.grid2 label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.grid2 select{padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-size:13px}
+#hud .vstat{color:#f2c14e;font-size:12px}
+#hud .vstat:empty{display:none}
 .brand .fx .mj{font-size:125%}
 .derivs dd{overflow-x:auto;overflow-y:hidden;padding:2px 0}
 .derivs dd .mj,.derivs dt .mj{font-size:118%}
 #hud .row b .mj{font-size:105%}
 #hud .msg .mj,#hud .eq .mj{font-size:110%}
 ol.stops .xy .mj{font-size:108%}
+#viewbar .seg{flex-wrap:wrap;justify-content:flex-end}
 @media (max-width:900px){
   html,body{height:auto}
   #app{height:auto}
@@ -176,12 +198,13 @@ ol.stops .xy .mj{font-size:108%}
     <section id="stage" aria-label="Gráfico tridimensional de la función">
       <div id="hud" aria-live="polite">
         <div class="row"><b data-tex="x">x</b><span id="hX">0</span></div>
-        <div class="row"><b data-tex="f(x)">f(x)</b><span id="hY">0</span></div>
-        <div class="row"><b data-tex="f'(x)">f′(x)</b><span id="hD1">0</span></div>
-        <div class="row"><b data-tex="f''(x)">f″(x)</b><span id="hD2">0</span></div>
+        <div class="row"><b id="hLy">f(x)</b><span id="hY">0</span></div>
+        <div class="row"><b id="hLd1">f′(x)</b><span id="hD1">0</span></div>
+        <div class="row"><b id="hLd2">f″(x)</b><span id="hD2">0</span></div>
         <div class="state" id="hState"></div>
         <div class="eq" id="hEq"></div>
         <div class="msg" id="hMsg"></div>
+        <div class="vstat" id="hVoice"></div>
       </div>
       <div id="viewbar">
         <div class="seg" role="group" aria-label="Cámara">
@@ -193,12 +216,15 @@ ol.stops .xy .mj{font-size:108%}
           <button type="button" data-color="conc" aria-pressed="false">Concavidad</button>
           <button type="button" data-color="none" aria-pressed="false">Sin color</button>
         </div>
-        <div class="seg" role="group" aria-label="Mover y acercar la función">
-          <button type="button" data-move="in" aria-label="Acercar">+</button>
-          <button type="button" data-move="out" aria-label="Alejar">−</button>
-          <button type="button" data-move="up" aria-label="Subir la función">↑</button>
-          <button type="button" data-move="down" aria-label="Bajar la función">↓</button>
-          <button type="button" data-move="reset">Centrar</button>
+        <div class="seg" role="group" aria-label="Ventana visible">
+          <button type="button" data-win="left" aria-label="Desplazar la ventana a la izquierda" title="Mayúsculas + ←">←</button>
+          <button type="button" data-win="right" aria-label="Desplazar la ventana a la derecha" title="Mayúsculas + →">→</button>
+          <button type="button" data-win="up" aria-label="Desplazar la ventana hacia arriba" title="Mayúsculas + ↑">↑</button>
+          <button type="button" data-win="down" aria-label="Desplazar la ventana hacia abajo" title="Mayúsculas + ↓">↓</button>
+          <button type="button" data-win="out" title="Tecla −">Ver más</button>
+          <button type="button" data-win="in" title="Tecla +">Ver menos</button>
+          <button type="button" data-win="fit">Ajustar y</button>
+          <button type="button" data-win="reset">Centrar</button>
         </div>
         <div class="seg" role="group" aria-label="Grosor de las líneas">
           <button type="button" data-thick="0" aria-pressed="true">Fino</button>
@@ -221,12 +247,15 @@ ol.stops .xy .mj{font-size:108%}
         <summary>Función</summary>
         <div class="body">
           <form id="fnForm" autocomplete="off">
-            <div class="fnrow">
-              <input id="fnInput" aria-label="Expresión de f(x)" value="x^3 - 3x" spellcheck="false">
+            <div id="fnList"></div>
+            <div class="fnactions">
+              <button class="btn" id="bAddFn" type="button">+ Agregar función</button>
               <button class="btn primary" type="submit">Graficar</button>
             </div>
           </form>
-          <p class="small">Acepta sen, cos, tg, ln, log10, e^x, sqrt, cbrt (raíz cúbica), |x|, pi y multiplicación implícita como 3x. Las potencias como x^(1/3) o x^(2/3) aceptan x negativo.</p>
+          <div class="fnprev" id="fnPreview" aria-live="polite"></div>
+          <details class="kbd" open><summary>Teclado matemático</summary><div id="kbd2d"></div></details>
+          <p class="small">Además de sen, cos, tg, ln, e^x y |x|, acepta log(x) decimal, log_b(x) en base b, raiz(x, n) para la raíz n-ésima, arcsen, arccos, arctg, sec, cosec, cotg, senh, cosh, tgh, ent(x) (parte entera), sgn(x) y funciones por tramos como x &lt; 1 ? x^2 : 2x + 1. El círculo de la izquierda elige la función que recorre el vagón.</p>
           <p class="err" id="fnError" hidden></p>
           <div class="grid4">
             <label for="xa">x mín<input id="xa" value="-3" inputmode="decimal"></label>
@@ -239,9 +268,13 @@ ol.stops .xy .mj{font-size:108%}
             <div class="presets" id="presets"></div>
           </div>
           <dl class="derivs">
-            <dt data-tex="f'(x)=">f′(x) =</dt><dd id="d1Txt"></dd>
-            <dt data-tex="f''(x)=">f″(x) =</dt><dd id="d2Txt"></dd>
+            <dt id="d1Lbl">f′(x) =</dt><dd id="d1Txt"></dd>
+            <dt id="d2Lbl">f″(x) =</dt><dd id="d2Txt"></dd>
           </dl>
+          <div class="radio">
+            <label><input type="checkbox" id="chkD1"> <span id="lblD1">Gráfica de f′</span></label>
+            <label><input type="checkbox" id="chkD2"> <span id="lblD2">Gráfica de f″</span></label>
+          </div>
         </div>
       </details>
 
@@ -265,8 +298,9 @@ ol.stops .xy .mj{font-size:108%}
         <div class="body">
           <div class="radio" role="radiogroup" aria-label="Rectas visibles">
             <label><input type="radio" name="tn" value="0"> Ninguna</label>
-            <label><input type="radio" name="tn" value="1"> Tangente</label>
-            <label><input type="radio" name="tn" value="2" checked> Tangente y normal</label>
+            <label><input type="radio" name="tn" value="1" checked> Tangente</label>
+            <label><input type="radio" name="tn" value="2"> Normal</label>
+            <label><input type="radio" name="tn" value="3"> Ambas</label>
           </div>
           <div class="radio">
             <label><input type="radio" name="tnsrc" value="follow" checked> En la posición del vagón</label>
@@ -274,7 +308,8 @@ ol.stops .xy .mj{font-size:108%}
             <input id="tnX" value="1.5" style="width:84px;font-family:var(--mono);padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg)" aria-label="Valor de x cero">
           </div>
           <div class="eqbox" id="tnBox"></div>
-          <div><button class="btn" id="bSpeakTn" type="button">Escuchar pendientes</button></div>
+          <div class="tabactions"><button class="btn" id="bSpeakTn" type="button">Escuchar pendientes</button><button class="btn" id="bLupa" type="button">Lupa en el punto</button></div>
+          <p class="small">La lupa acerca la ventana al punto de tangencia (tecla L). Cada nivel amplía cinco veces y muestra cómo la curva se confunde con su tangente.</p>
           <p class="small">Los ejes usan la misma escala en x e y, de modo que la normal se ve perpendicular a la tangente.</p>
         </div>
       </details>
@@ -293,6 +328,33 @@ ol.stops .xy .mj{font-size:108%}
       </details>
 
       <details class="card" open>
+        <summary>Narración</summary>
+        <div class="body">
+          <div class="grid2">
+            <label for="ttsEngine">Voz<select id="ttsEngine">
+              <option value="auto">Automática</option>
+              <option value="neural">Natural (neuronal)</option>
+              <option value="web">Del sistema</option>
+              <option value="mespeak">Básica</option>
+            </select></label>
+            <label for="ttsVoice">Voz natural<select id="ttsVoice">
+              <option value="ald">México, masculina</option>
+              <option value="davefx">España, masculina</option>
+              <option value="sharvard">España, femenina</option>
+            </select></label>
+            <label for="ttsRate">Velocidad<select id="ttsRate">
+              <option value="0.85">Lenta</option>
+              <option value="0.95">Pausada</option>
+              <option value="1">Normal</option>
+              <option value="1.12">Rápida</option>
+            </select></label>
+          </div>
+          <p class="small" id="ttsStatus"></p>
+          <p class="small">La voz natural se genera en el propio navegador con un modelo neuronal en español. La primera vez descarga unos 80 MB y luego queda guardada. En el Quest es la opción recomendada.</p>
+        </div>
+      </details>
+
+      <details class="card" open>
         <summary>Meta Quest 3</summary>
         <div class="body">
           <p class="note" id="xrStatus"></p>
@@ -300,20 +362,21 @@ ol.stops .xy .mj{font-size:108%}
           <dl class="ctl">
             <dt>Apuntar y gatillo</dt><dd>Elegir una pestaña o un botón del tablero</dd>
             <dt>Stick derecho</dt><dd>Avanzar o retroceder sobre la curva</dd>
-            <dt>Stick izquierdo</dt><dd>Acercar o alejar la función (zoom)</dd>
+            <dt>Stick izquierdo ↕</dt><dd>Tamaño de la maqueta</dd>
+            <dt>Stick izquierdo ↔</dt><dd>Desplazar la ventana por el dominio</dd>
             <dt>Grip y mover la mano</dt><dd>Agarrar la función y subirla, bajarla o desplazarla</dd>
             <dt>Ambos grips</dt><dd>Estirar o encoger la función con las dos manos</dd>
             <dt>Gatillos fuera del tablero</dt><dd>Siguiente punto (derecho) o anterior (izquierdo)</dd>
             <dt>A</dt><dd>Subir y recorrer, o pausar</dd>
-            <dt>B</dt><dd>Ninguna recta, tangente, tangente y normal</dd>
+            <dt>B</dt><dd>Tangente, normal, ambas o ninguna</dd>
             <dt>X</dt><dd>Montar la curva o ver maqueta</dd>
             <dt>Y</dt><dd>Mostrar u ocultar el tablero</dd>
             <dt>Clic stick derecho</dt><dd>Escuchar la ayuda de controles</dd>
             <dt>Clic stick izquierdo</dt><dd>Siguiente función de ejemplo</dd>
             <dt>Tablero, Cambiar función</dt><dd>Teclado para escribir f(x), elegir ejemplos y ajustar la ventana en x</dd>
             <dt>Tablero, Grosor</dt><dd>Líneas finas, medias o gruesas</dd>
+            <dt>Tablero, Ventana</dt><dd>Mover, ampliar o reducir la región visible; Lupa en la tangencia</dd>
           </dl>
-          <p class="small" id="ttsStatus"></p>
           <p class="small">Dentro de la inmersión, el botón Cambiar función del tablero abre un teclado para escribir f(x) sin salir de VR. La narración usa la voz del sistema si hay una en español y, en el Quest, una voz sintética integrada que se descarga la primera vez.</p>
         </div>
       </details>
@@ -323,6 +386,11 @@ ol.stops .xy .mj{font-size:108%}
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/LineSegmentsGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/LineGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/LineMaterial.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/LineSegments2.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/Line2.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mathjs@11.11.0/lib/browser/math.js"></script>
 <script>
 (function(){
@@ -353,24 +421,94 @@ function toNum(v){
   return NaN;
 }
 
+// busca el paréntesis que cierra al que abre en la posición i
+function matchParen(s,i){ let d=0; for(let k=i;k<s.length;k++){ if(s[k]==='(') d++; else if(s[k]===')'){ d--; if(d===0) return k; } } return -1; }
 function preprocess(s){
   s = String(s).trim();
-  s = s.replace(/^\s*(y|f\s*\(\s*x\s*\))\s*=\s*/i,'');
-  s = s.replace(/[−–—]/g,'-').replace(/[·×⋅]/g,'*').replace(/÷/g,'/').replace(/π/g,'pi');
-  s = s.replace(/√\s*\(/g,'sqrt(');
-  s = s.replace(/²/g,'^2').replace(/³/g,'^3');
-  // sin \b: así 3sen(2x) o 2ln(x) también se reconocen
-  s = s.replace(/(^|[^a-zA-Z])arcsen\s*\(/gi,'$1asin(').replace(/(^|[^a-zA-Z])arcsin\s*\(/gi,'$1asin(').replace(/(^|[^a-zA-Z])arccos\s*\(/gi,'$1acos(')
-       .replace(/(^|[^a-zA-Z])(arctg|arctan)\s*\(/gi,'$1atan(').replace(/(^|[^a-zA-Z])sen\s*\(/gi,'$1sin(').replace(/(^|[^a-zA-Z])tg\s*\(/gi,'$1tan(')
-       .replace(/(^|[^a-zA-Z])ln\s*\(/gi,'$1log(');
+  s = s.replace(/^\s*(y|[fghk]\s*\(\s*x\s*\))\s*=\s*/i,'');
+  s = s.replace(/[−–—]/g,'-').replace(/[·×⋅]/g,'*').replace(/÷/g,'/').replace(/π/g,'pi').replace(/≤/g,'<=').replace(/≥/g,'>=').replace(/≠/g,'!=');
+  s = s.replace(/∛\s*\(/g,'cbrt(').replace(/√\s*\(/g,'sqrt(');
+  s = s.replace(/²/g,'^2').replace(/³/g,'^3').replace(/⁻¹/g,'^(-1)');
+  const L='(^|[^a-zA-Z_])';
+  const fn=(from,to)=>{ s=s.replace(new RegExp(L+'('+from+')\\s*\\(','gi'),'$1'+to+'('); };
+  // logaritmos: log_b(x) en base b, log(x) decimal, ln(x) natural
+  let guard=0;
+  while(guard++<20){
+    const m=/log_\{?\s*([0-9.]+|e|pi)\s*\}?\s*\(/i.exec(s); if(!m) break;
+    const open=m.index+m[0].length-1, close=matchParen(s,open);
+    if(close<0) break;
+    s=s.slice(0,m.index)+'log('+s.slice(open+1,close)+', '+m[1]+')'+s.slice(close+1);
+  }
+  fn('ln','lnat');
+  // trigonométricas, inversas e hiperbólicas con nombres en español
+  fn('arcsen|arcsin|asen','asin'); fn('arccos','acos'); fn('arctg|arctan|atg','atan');
+  fn('arcsec','asec'); fn('arccosec|arccsc','acsc'); fn('arccotg|arccot|arcctg','acot');
+  fn('senh|sinh','sinh'); fn('tgh|tanh','tanh'); fn('cotgh|coth','coth');
+  fn('sen','sin'); fn('tg','tan'); fn('cosec|csc','csc'); fn('cotg|ctg|cot','cot');
+  fn('raiz|raíz|root','nroot'); fn('sgn|signo','sign'); fn('ent|piso','floor'); fn('techo','ceil');
   let prev; do{ prev=s; s=s.replace(/\|([^|]+)\|/,'abs($1)'); }while(s!==prev);
   return s;
 }
-
+// ln es el logaritmo natural, log con un argumento es decimal, log(x, b) usa base b,
+// raiz(x, n) es la raíz n-ésima real, escrita como potencia 1/n para derivar
+function normalizeNode(node){
+  return node.transform(function T(n){
+    if(n.isFunctionNode && n.fn && n.fn.isSymbolNode){
+      const nm=n.fn.name, A=n.args.map(a=>a.transform(T));
+      if(nm==='lnat') return new M.FunctionNode(new M.SymbolNode('log'),A.slice(0,1));
+      if(nm==='log' && A.length===1) return new M.FunctionNode(new M.SymbolNode('log10'),A);
+      if(nm==='nroot'){ const k=A[1]||new M.ConstantNode(2);
+        return new M.OperatorNode('^','pow',[new M.ParenthesisNode(A[0]),new M.ParenthesisNode(new M.OperatorNode('/','divide',[new M.ConstantNode(1),k]))]); }
+      if(A.some((a,i)=>a!==n.args[i])) return new M.FunctionNode(n.fn,A);
+    }
+    return n;
+  });
+}
+const unP=n=>{ while(n && n.isParenthesisNode) n=n.content; return n; };
+function hasCond(n){ let f=false; n.traverse(c=>{ if(c.isConditionalNode) f=true; }); return f; }
+// para derivar logaritmos de otra base sin que ln(b) se convierta en decimal:
+// log_b(u) = ln(u)/LNBk, con LNBk un símbolo constante que luego se reemplaza por ln(b)
+function hideLogBases(node,bases){
+  return node.transform(function T(n){
+    if(n.isFunctionNode && n.fn && n.fn.isSymbolNode){
+      const nm=n.fn.name, A=n.args.map(a=>a.transform(T));
+      let b=null;
+      if(nm==='log10' && A.length===1) b=new M.ConstantNode(10);
+      else if(nm==='log2' && A.length===1) b=new M.ConstantNode(2);
+      else if(nm==='log' && A.length===2) b=A[1];
+      if(b){ const k='LNB'+bases.length; bases.push(b); return new M.OperatorNode('/','divide',[new M.FunctionNode(new M.SymbolNode('log'),[A[0]]),new M.SymbolNode(k)]); }
+      if(A.some((a,i)=>a!==n.args[i])) return new M.FunctionNode(n.fn,A);
+    }
+    return n;
+  });
+}
+function showLogBases(node,bases){
+  return node.transform(n=>{ if(n.isSymbolNode && /^LNB\d+$/.test(n.name)){ return new M.FunctionNode(new M.SymbolNode('log'),[bases[+n.name.slice(3)]]); } return n; });
+}
+// (a/b)/c = a/(b·c) y a/(b/c) = a·c/b, para no mostrar fracciones anidadas
+function flattenDiv(node){
+  return node.transform(function T(n){
+    if(n.isOperatorNode && n.op==='/' && n.args.length===2){
+      const a=unP(n.args[0]).transform(T), b=unP(n.args[1]).transform(T);
+      if(a.isOperatorNode && a.op==='/' && a.args.length===2) return T(new M.OperatorNode('/','divide',[a.args[0],new M.OperatorNode('*','multiply',[wrapP(a.args[1]),wrapP(b)])]));
+      if(b.isOperatorNode && b.op==='/' && b.args.length===2) return T(new M.OperatorNode('/','divide',[new M.OperatorNode('*','multiply',[wrapP(a),wrapP(b.args[1])]),b.args[0]]));
+      return new M.OperatorNode('/','divide',[a,b]);
+    }
+    return n;
+  });
+}
+function wrapP(n){ return (n.isOperatorNode && (n.op==='+'||n.op==='-') && n.args.length===2) ? new M.ParenthesisNode(n) : n; }
+// derivada simbólica, también para funciones por tramos escritas con ?:
+function deriv(node){
+  const n=unP(node);
+  if(n.isConditionalNode) return new M.ConditionalNode(n.condition,deriv(n.trueExpr),deriv(n.falseExpr));
+  if(hasCond(n)) throw new Error('tramos anidados');
+  return M.derivative(n,'x');
+}
 function pretty(node){
   let t = (typeof node==='string') ? node : node.toString({implicit:'hide',parenthesis:'auto'});
   const sup={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
-  t = t.replace(/\blog\(/g,'ln(').replace(/\bsqrt\(/g,'√(').replace(/\bpi\b/g,'π');
+  t = t.replace(/\blog\(/g,'ln(').replace(/\blog10\(/g,'log(').replace(/\bsqrt\(/g,'√(').replace(/\bpi\b/g,'π');
   t = t.replace(/ \^ /g,'^').replace(/\^(\d)(?![\d.(])/g,(m,d)=>sup[d]);
   t = t.replace(/(\d) (?=[a-zA-Z\u03c0\u221a(])/g,'$1');
   t = t.replace(/·-(\d+(?:\.\d+)?)/g,"·(−$1)").replace(/ \* /g,'·').replace(/\*/g,'·').replace(/ - /g,' '+MINUS+' ').replace(/^-/,MINUS).replace(/\(-/g,'('+MINUS);
@@ -381,7 +519,7 @@ function buildF(src){
   const pre = preprocess(src);
   if(!pre) throw new Error('Escriba una expresión en x.');
   let node;
-  try{ node = M.parse(pre); }catch(e){ throw new Error('No se pudo leer la expresión. Revise paréntesis y operadores.'); }
+  try{ node = normalizeNode(M.parse(pre)); }catch(e){ throw new Error('No se pudo leer la expresión. Revise paréntesis y operadores.'); }
   const bad = new Set();
   node.traverse((n,path,parent)=>{
     if(n.isSymbolNode && !(parent && parent.isFunctionNode && path==='fn')){
@@ -394,7 +532,10 @@ function buildF(src){
   const f = x=>{ sc.x=x; try{ return toNum(cf.evaluate(sc)); }catch(e){ return NaN; } };
   let symbolic=true, d1n=null, d2n=null, g1, g2;
   try{
-    d1n = M.derivative(node,'x'); d2n = M.derivative(d1n,'x');
+    const bases=[], hn=hideLogBases(node,bases);
+    const e1=deriv(hn), e2=deriv(e1);
+    let q1=e1, q2=e2; try{ q1=M.simplify(e1); }catch(e){} try{ q2=M.simplify(e2); }catch(e){}
+    d1n=flattenDiv(showLogBases(q1,bases)); d2n=flattenDiv(showLogBases(q2,bases));
     const c1=realPow(d1n).compile(), c2=realPow(d2n).compile(); const s1={x:0}, s2={x:0};
     g1 = x=>{ s1.x=x; try{ return toNum(c1.evaluate(s1)); }catch(e){ return NaN; } };
     g2 = x=>{ s2.x=x; try{ return toNum(c2.evaluate(s2)); }catch(e){ return NaN; } };
@@ -410,10 +551,7 @@ function buildF(src){
   const f2 = x=>{ if(!isFinite(f(x))) return NaN; const v=g2(x); return isFinite(v)?v:n2(x); };
   let t1='(derivada numérica)', t2='(derivada numérica)', x1='\\text{(derivada numérica)}', x2=x1;
   if(symbolic){
-    let s1=d1n, s2=d2n;
-    try{ s1=M.simplify(d1n); }catch(e){}
-    try{ s2=M.simplify(d2n); }catch(e){}
-    t1=pretty(s1); t2=pretty(s2); x1=nodeTex(s1)||t1; x2=nodeTex(s2)||t2;
+    t1=pretty(d1n); t2=pretty(d2n); x1=nodeTex(d1n)||t1; x2=nodeTex(d2n)||t2;
   }
   return {src, pre, node, txt:pretty(node), tex:nodeTex(node)||pretty(node), f, f1, f2, symbolic, t1, t2, x1, x2};
 }
@@ -466,11 +604,40 @@ function texNum(v,p){ if(v===Infinity) return '+\\infty'; if(v===-Infinity) retu
 function texPt(x,y){ return '\\left('+texNum(x)+',\\ '+(isFinite(y)?texNum(y):'?')+'\\right)'; }
 function texLim(r){ if(!r) return '?'; if(r.type==='fin') return texNum(r.v); if(r.type==='inf') return r.sign>0?'+\\infty':'-\\infty'; if(r.type==='osc') return '\\nexists'; return '\\text{no def.}'; }
 function texIv(p,q){ return '\\left('+texNum(p)+',\\ '+texNum(q)+'\\right)'; }
+const TEXFN={sin:'\\operatorname{sen}',cos:'\\cos',tan:'\\operatorname{tg}',sec:'\\sec',csc:'\\operatorname{cosec}',cot:'\\operatorname{cotg}',
+  asin:'\\operatorname{arcsen}',acos:'\\arccos',atan:'\\operatorname{arctg}',asec:'\\operatorname{arcsec}',acsc:'\\operatorname{arccosec}',acot:'\\operatorname{arccotg}',
+  sinh:'\\operatorname{senh}',cosh:'\\cosh',tanh:'\\operatorname{tgh}',coth:'\\operatorname{cotgh}',log:'\\ln',log10:'\\log',log2:'\\log_{2}',sign:'\\operatorname{sgn}',exp:'\\exp'};
+function texHandler(node,options){
+  if(node.isConditionalNode){
+    const rows=[]; let c=node;
+    while(c && unP(c).isConditionalNode){ c=unP(c); rows.push(c.trueExpr.toTex(options)+' & \\text{si } '+condTex(c.condition,options)); c=c.falseExpr; }
+    rows.push(c.toTex(options)+' & \\text{en otro caso}');
+    return '\\begin{cases}'+rows.join('\\\\')+'\\end{cases}';
+  }
+  if(node.isFunctionNode && node.fn && node.fn.isSymbolNode){
+    const nm=node.fn.name, A=node.args;
+    if(nm==='log' && A.length===2) return '\\log_{'+A[1].toTex(options)+'}\\left('+A[0].toTex(options)+'\\right)';
+    if(nm==='abs') return '\\left|'+A[0].toTex(options)+'\\right|';
+    if(nm==='floor') return '\\left\\lfloor '+A[0].toTex(options)+'\\right\\rfloor';
+    if(nm==='ceil') return '\\left\\lceil '+A[0].toTex(options)+'\\right\\rceil';
+    if(nm==='sqrt') return '\\sqrt{'+A[0].toTex(options)+'}';
+    if(nm==='cbrt') return '\\sqrt[3]{'+A[0].toTex(options)+'}';
+    if(TEXFN[nm] && A.length===1) return TEXFN[nm]+'\\left('+A[0].toTex(options)+'\\right)';
+  }
+  if(node.isOperatorNode && node.op==='^' && node.args.length===2){
+    const e=unP(node.args[1]);
+    if(e.isOperatorNode && e.op==='/' && unP(e.args[0]).isConstantNode && Number(unP(e.args[0]).value)===1){
+      const k=unP(e.args[1]), b=unP(node.args[0]).toTex(options);
+      if(k.isConstantNode && Number(k.value)===2) return '\\sqrt{'+b+'}';
+      return '\\sqrt['+k.toTex(options)+']{'+b+'}';
+    }
+  }
+  return undefined;
+}
+function condTex(c,options){ return c.toTex(options).replace(/\\wedge/g,'\\ \\text{y}\\ ').replace(/\\vee/g,'\\ \\text{o}\\ ').replace(/\\leq/g,'\\le').replace(/\\geq/g,'\\ge'); }
 function nodeTex(node){
-  let t; try{ t=node.toTex({implicit:'hide',parenthesis:'auto'}); }catch(e){ return ''; }
-  t=t.replace(/\\sin\^\{-1\}/g,'\\operatorname{arcsen}').replace(/\\cos\^\{-1\}/g,'\\arccos').replace(/\\tan\^\{-1\}/g,'\\operatorname{arctg}')
-     .replace(/\\frac\{-(\d+)\}\{/g,'-\\frac{$1}{').replace(/(\\pi|\\infty)\s*\\cdot\s*(?=[a-zA-Z{])/g,'$1 ').replace(/^\s+/,'')
-     .replace(/\\sin\b/g,'\\operatorname{sen}').replace(/\\tan\b/g,'\\operatorname{tg}').replace(/\\arcsin\b/g,'\\operatorname{arcsen}').replace(/\\arctan\b/g,'\\operatorname{arctg}')
+  let t; try{ t=node.toTex({implicit:'hide',parenthesis:'auto',handler:texHandler}); }catch(e){ return ''; }
+  t=t.replace(/\\frac\{-(\d+)\}\{/g,'-\\frac{$1}{').replace(/(\\pi|\\infty)\s*\\cdot\s*(?=[a-zA-Z{])/g,'$1 ').replace(/^\s+/,'')
      .replace(/\\cdot\s*-\s*(\d+(?:\.\d+)?)/g,'\\cdot\\left(-$1\\right)')
      .replace(/(\d)\s*\\cdot\s*(?=[{a-zA-Z(]|\\(?!frac|cdot|left\(\s*-))/g,'$1').replace(/(\d)~\s*/g,'$1').replace(/~/g,'\\,')
      .replace(/\d+\.\d{5,}/g,m=>String(+(+m).toFixed(4))).replace(/\{\s+/g,'{');
@@ -806,12 +973,18 @@ function sayExpr(n){
       case '*': return n.implicit? L+' '+R : L+' por '+R;
       case '/': { const un=x=>{ while(x&&x.isParenthesisNode) x=x.content; return x; }; const cmp=x=>{ x=un(x); return x&&x.isOperatorNode&&x.args.length===2&&(x.op==='+'||x.op==='-'); };
         return (cmp(A[0])||cmp(A[1])) ? 'el cociente entre '+L+' y '+R : L+' dividido por '+R; }
-      case '^': { const e=A[1].isConstantNode?Number(A[1].value):null; if(e===2) return L+' al cuadrado'; if(e===3) return L+' al cubo'; return L+' elevado a '+R; }
+      case '^': { const ex=unP(A[1]);
+        if(ex.isOperatorNode && ex.op==='/' && unP(ex.args[0]).isConstantNode && Number(unP(ex.args[0]).value)===1){ const k=unP(ex.args[1]); const kv=k.isConstantNode?Number(k.value):null;
+          return (kv===2?'raíz cuadrada':kv===3?'raíz cúbica':kv===4?'raíz cuarta':'raíz de índice '+sayExpr(k))+' de '+sayExpr(A[0]); }
+        const e=A[1].isConstantNode?Number(A[1].value):null; if(e===2) return L+' al cuadrado'; if(e===3) return L+' al cubo'; return L+' elevado a '+R; }
+      case '<': return L+' menor que '+R; case '>': return L+' mayor que '+R; case '<=': return L+' menor o igual que '+R; case '>=': return L+' mayor o igual que '+R;
+      case '==': return L+' igual a '+R; case 'and': return L+' y '+R; case 'or': return L+' o '+R;
     }
     return L+' '+n.op+' '+R;
   }
+  if(n.isConditionalNode) return 'igual a '+sayExpr(n.trueExpr)+' si '+sayExpr(n.condition)+', y en otro caso '+sayExpr(n.falseExpr);
   if(n.isFunctionNode){
-    const nm={sin:'seno',cos:'coseno',tan:'tangente',log:'logaritmo natural',log10:'logaritmo en base diez',sqrt:'raíz cuadrada',cbrt:'raíz cúbica',abs:'valor absoluto',exp:'exponencial',asin:'arcoseno',acos:'arcocoseno',atan:'arcotangente',floor:'parte entera',sinh:'seno hiperbólico',cosh:'coseno hiperbólico',tanh:'tangente hiperbólica'}[n.fn.name]||n.fn.name;
+    const nm={sec:'secante',csc:'cosecante',cot:'cotangente',asec:'arcosecante',acsc:'arcocosecante',acot:'arcocotangente',coth:'cotangente hiperbólica',sign:'signo',ceil:'parte entera superior',log2:'logaritmo en base dos',sin:'seno',cos:'coseno',tan:'tangente',log:'logaritmo natural',log10:'logaritmo',sqrt:'raíz cuadrada',cbrt:'raíz cúbica',abs:'valor absoluto',exp:'exponencial',asin:'arcoseno',acos:'arcocoseno',atan:'arcotangente',floor:'parte entera',sinh:'seno hiperbólico',cosh:'coseno hiperbólico',tanh:'tangente hiperbólica'}[n.fn.name]||n.fn.name;
     if(n.fn.name==='log' && n.args.length===2) return 'logaritmo en base '+sayExpr(n.args[1])+' de '+sayExpr(n.args[0]);
     return nm+' de '+n.args.map(sayExpr).join(' y ');
   }
@@ -891,14 +1064,15 @@ const PRESETS=[
 ];
 const COL={cero:0xeae6d6,max:0xe5534b,min:0x3d9be0,silla:0xe8923f,infl:0xa879e6,disc:0xe0a526,
   crec:0x2fae9b,decr:0xe27a3f,up:0x5b8def,down:0xcc5ea8,neutral:0xd9e4e4,tan:0xf2c14e,nor:0x7fcf6a,rider:0x4cc2c9};
-const CSSCOL={cero:'var(--c-cero)',max:'var(--c-max)',min:'var(--c-min)',silla:'var(--c-silla)',infl:'var(--c-infl)',disc:'var(--c-disc)',
+const CSSCOL={inter:'var(--ink)',cero:'var(--c-cero)',max:'var(--c-max)',min:'var(--c-min)',silla:'var(--c-silla)',infl:'var(--c-infl)',disc:'var(--c-disc)',
   crec:'var(--c-crec)',decr:'var(--c-decr)',up:'var(--c-up)',down:'var(--c-down)'};
 const hex=c=>'#'+c.toString(16).padStart(6,'0');
 
-const st={F:null,A:null,a:-3,b:3,ymin:-3,ymax:3,color:'mono',tn:2,tnFollow:true,tnX:1.5,view:'orbit',xrMode:'ride',
+const st={F:null,A:null,a:-3,b:3,ymin:-3,ymax:3,color:'mono',tn:1,tnFollow:true,tnX:1.5,view:'orbit',xrMode:'ride',
   playing:false,speed:1,piece:0,s:0,pauseUntil:0,msgTitle:'',msgLines:[],limit:null,xrKind:null,hudVisible:true,
   tab:'todo',tour:[],zoom:1,zoomRide:1,offset:new THREE.Vector3(),seat:0,waitSpeech:false,
-  thick:0,vrPanel:'main',fnDraft:'',fnErr:'',fnA:-3,fnB:3,fnPreset:0};
+  thick:0,vrPanel:'main',fnDraft:'',fnCur:0,fnErr:'',fnA:-3,fnB:3,fnPreset:0,fnSlot:0,kbPage:0,
+  funcs:[],act:0,inter:[],deriv:0,lupa:[],jump:null,follow:0};
 const THICK=[0.35,0.6,1], THICK_NAME=['fino','medio','grueso'];
 const TK=()=>THICK[st.thick];
 
@@ -930,7 +1104,7 @@ fade.renderOrder=9999; camera.add(fade);
 let fadeAnim=null;
 
 // tablero interactivo para VR
-const PW=1200, PH=880;
+const PW=1200, PH=960;
 const hudCanvas=document.createElement('canvas'); hudCanvas.width=PW; hudCanvas.height=PH;
 const hudTex=new THREE.CanvasTexture(hudCanvas); hudTex.encoding=THREE.sRGBEncoding;
 const hudMesh=new THREE.Mesh(new THREE.PlaneGeometry(0.74,0.74*PH/PW),new THREE.MeshBasicMaterial({map:hudTex,transparent:true,depthTest:false,depthWrite:false}));
@@ -1098,9 +1272,15 @@ function sAtX(pc,x){
 }
 
 /* ================= construcción del gráfico ================= */
-let pieces=[], tubes=[], G={};
+let pieces=[], G={};
+const lineMats=new Set(), RES=new THREE.Vector2(1000,700);
+const FSLOT=['f','g','h','k'];
+const FCOL=[0xd9e4e4,0xb8a1ff,0xffc46b,0x6fd6e8];
+function emptyA(a,b){ const none={type:'none'}; return {empty:true,a,b,W:b-a,R:1,xs:[],ys:[],segs:[],breaks:[],zeros:[],crit:[],infl:[],mono:[],conc:[],dom:[],domTxt:'∅',absMax:{empty:true},absMin:{empty:true},infPos:{L:none},infNeg:{L:none},stops:[]}; }
 function autoY(A){
+  if(!A || A.empty) return [-5,5];
   const ys=[]; for(const s of A.segs) for(let i=s.i0;i<=s.i1;i++) ys.push(A.ys[i]);
+  if(!ys.length) return [-5,5];
   const imp=[]; A.crit.forEach(c=>imp.push(c.y)); A.infl.forEach(p=>imp.push(p.y)); A.breaks.forEach(b=>{ if(b.L.type==='fin') imp.push(b.L.v); if(b.R.type==='fin') imp.push(b.R.v); });
   ys.sort((p,q)=>p-q);
   let lo=ys[Math.floor(ys.length*0.03)], hi=ys[Math.floor(ys.length*0.97)];
@@ -1108,156 +1288,250 @@ function autoY(A){
   lo=Math.min(lo,0); hi=Math.max(hi,0);
   const pad=Math.max((hi-lo)*0.12, A.W*0.05); lo-=pad; hi+=pad;
   const maxH=2.2*A.W;
-  if(hi-lo>maxH){ const mid=(imp.length? (Math.max(...imp.filter(isFinite).concat([0]))+Math.min(...imp.filter(isFinite).concat([0])))/2 : (lo+hi)/2); lo=mid-maxH/2; hi=mid+maxH/2; }
+  if(hi-lo>maxH){ const fi=imp.filter(isFinite).concat([0]); const mid=(imp.length? (Math.max(...fi)+Math.min(...fi))/2 : (lo+hi)/2); lo=mid-maxH/2; hi=mid+maxH/2; }
   const step=niceStep(hi-lo)/2; lo=Math.floor(lo/step)*step; hi=Math.ceil(hi/step)*step;
   return [lo,hi];
 }
-
-function buildPieces(){
-  const A=st.A, F=st.F, y0=st.ymin, y1=st.ymax;
-  pieces=[];
-  for(const s of A.segs){
-    let cur=null;
-    const push=(x,y)=>{ if(!cur){ cur={X:[],Y:[]}; } const k=cur.X.length; if(k && x<=cur.X[k-1]) return; cur.X.push(x); cur.Y.push(y); };
-    const close=()=>{ if(cur && cur.X.length>=2) pieces.push(cur); cur=null; };
-    let prevIn=null, px=0, py=0;
-    for(let i=s.i0;i<=s.i1;i++){
-      const x=A.xs[i], y=A.ys[i], inside=(y>=y0&&y<=y1);
-      if(prevIn!==null && inside!==prevIn){
-        const yb = (inside? (py>y1?y1:y0) : (y>y1?y1:y0));
-        const t=(yb-py)/(y-py); const xb=px+(x-px)*t;
-        if(inside){ push(xb,yb); } else { push(xb,yb); close(); }
-      }
-      if(inside) push(x,y);
-      prevIn=inside; px=x; py=y;
+// recorta una poligonal a la franja y0 ≤ y ≤ y1; devuelve tramos {X,Y}
+function clipRuns(X,Y,y0,y1,out){
+  let cur=null;
+  const push=(x,y)=>{ if(!cur) cur={X:[],Y:[]}; const k=cur.X.length; if(k && x<=cur.X[k-1]) return; cur.X.push(x); cur.Y.push(y); };
+  const close=()=>{ if(cur && cur.X.length>=2) out.push(cur); cur=null; };
+  let prevIn=null, px=0, py=0;
+  for(let i=0;i<X.length;i++){
+    const x=X[i], y=Y[i];
+    if(!isFinite(y)){ close(); prevIn=null; continue; }
+    const inside=(y>=y0&&y<=y1);
+    if(prevIn!==null && inside!==prevIn){
+      const yb=(inside? (py>y1?y1:y0) : (y>y1?y1:y0));
+      const t=(yb-py)/(y-py), xb=px+(x-px)*t;
+      push(xb,yb); if(!inside) close();
     }
-    close();
+    if(inside) push(x,y);
+    prevIn=inside; px=x; py=y;
   }
-  for(const pc of pieces){ pc.S=[0]; for(let i=1;i<pc.X.length;i++){ pc.S.push(pc.S[i-1]+Math.hypot(pc.X[i]-pc.X[i-1],pc.Y[i]-pc.Y[i-1])); } pc.L=pc.S[pc.S.length-1]; }
-  pieces=pieces.filter(p=>p.L>1e-9);
+  close(); return out;
 }
-
+function piecesOf(A,y0,y1){
+  const out=[];
+  for(const s of A.segs){ const X=[],Y=[]; for(let i=s.i0;i<=s.i1;i++){ X.push(A.xs[i]); Y.push(A.ys[i]); } clipRuns(X,Y,y0,y1,out); }
+  for(const pc of out){ pc.S=[0]; for(let i=1;i<pc.X.length;i++) pc.S.push(pc.S[i-1]+Math.hypot(pc.X[i]-pc.X[i-1],pc.Y[i]-pc.Y[i-1])); pc.L=pc.S[pc.S.length-1]; }
+  return out.filter(p=>p.L>1e-9);
+}
+function buildPieces(){ pieces = st.A && !st.A.empty ? piecesOf(st.A,st.ymin,st.ymax) : []; }
+function LW(){ return [2.2,3.4,5.5][st.thick]*(renderer.xr.isPresenting?1.7:1); }
+// línea de ancho constante en píxeles (no engruesa al acercarse)
+function line2(pos,o){
+  o=o||{};
+  const g=new THREE.LineGeometry(); g.setPositions(pos); if(o.colors) g.setColors(o.colors);
+  const m=new THREE.LineMaterial({color:o.color===undefined?0xffffff:o.color, linewidth:1, vertexColors:!!o.colors, dashed:!!o.dash, dashSize:o.dash||1, gapSize:(o.dash||1)*(o.gap||0.7), transparent:(o.opacity||1)<1, opacity:o.opacity||1, worldUnits:false});
+  m.userData.w=o.w||1; m.linewidth=m.userData.w*(renderer.xr.isPresenting?1.7:1); m.resolution.copy(RES); lineMats.add(m);
+  const l=new THREE.Line2(g,m); l.computeLineDistances(); if(o.dash) m.dashScale=1;
+  return l;
+}
+function setLine2(l,pos){ const a=l.geometry.attributes.instanceStart.data; a.array.set(pos.length===6?pos:pos.slice(0,6)); a.needsUpdate=true; l.geometry.computeBoundingSphere(); l.computeLineDistances(); }
+function refreshLineMats(){ const k=renderer.xr.isPresenting?1.7:1; lineMats.forEach(m=>{ m.linewidth=m.userData.w*k; m.resolution.copy(RES); }); }
 function colorFor(x){
   const F=st.F;
   if(st.color==='mono'){ const v=F.f1(x); if(!isFinite(v)) return COL.neutral; return Math.abs(v)<1e-12?COL.neutral:(v>0?COL.crec:COL.decr); }
   if(st.color==='conc'){ const v=F.f2(x); if(!isFinite(v)) return COL.neutral; return Math.abs(v)<1e-12?COL.neutral:(v>0?COL.up:COL.down); }
   return COL.neutral;
 }
+function curveColors(X){ const c=new THREE.Color(), out=new Float32Array(X.length*3); X.forEach((x,i)=>{ c.setHex(colorFor(x)); out[i*3]=c.r; out[i*3+1]=c.g; out[i*3+2]=c.b; }); return out; }
 function recolor(){
-  const c=new THREE.Color();
-  for(const t of tubes){
-    const col=t.geometry.attributes.color, rs=t.userData.radial+1;
-    t.userData.ringX.forEach((x,i)=>{ c.setHex(colorFor(x)); for(let j=0;j<rs;j++) col.setXYZ(i*rs+j,c.r,c.g,c.b); });
-    col.needsUpdate=true;
-  }
+  (G.curves||[]).forEach(l=>{ l.geometry.setColors(curveColors(l.userData.X)); });
+  if(G.holes) G.holes.forEach(h=>{ if(h.userData.side){ const x=h.userData.x+h.userData.side*1e-4*(st.b-st.a); const c=h.userData.fixed!==undefined?h.userData.fixed:colorFor(x); h.userData.ring.material.color.setHex(c); if(!h.userData.open) h.userData.disc.material.color.setHex(c); } });
   updateLegend();
 }
-
+// orificio (límite lateral no alcanzado) o punto lleno (valor de la función)
+function makeHole(x,y,open,side,fixed){
+  const u=G.u, r=u*1.15*G.ks, grp=new THREE.Group();
+  const ring=new THREE.Mesh(new THREE.RingGeometry(r*0.58,r,32),new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide}));
+  const disc=new THREE.Mesh(new THREE.CircleGeometry(r*0.6,32),new THREE.MeshBasicMaterial({color:open?0x0b1a20:0xffffff,side:THREE.DoubleSide}));
+  grp.add(disc); grp.add(ring); grp.position.set(x,y,u*0.12);
+  grp.userData={x,side:side||0,open,ring,disc,fixed};
+  if(fixed!==undefined){ ring.material.color.setHex(fixed); if(!open) disc.material.color.setHex(fixed); }
+  return grp;
+}
+function addHoles(A,parent,fixed){
+  const a=st.a,b=st.b,y0=st.ymin,y1=st.ymax, inWin=(x,y)=>x>=a-1e-9&&x<=b+1e-9&&y>=y0&&y<=y1, u=G.u;
+  const same=(p,q)=>Math.abs(p-q)<1e-6*(1+Math.abs(p));
+  for(const br of A.breaks){
+    if(!(br.kind==='evitable'||br.kind==='salto'||br.kind==='borde')) continue;
+    const fc=isFinite(br.fc)?br.fc:NaN, L=br.L.type==='fin'?br.L.v:NaN, R=br.R.type==='fin'?br.R.v:NaN;
+    if(isFinite(L) && inWin(br.x,L)) G.holes.push(parent.add(makeHole(br.x,L,!(isFinite(fc)&&same(fc,L)),-1,fixed)).children.at(-1));
+    if(isFinite(R) && !(isFinite(L)&&same(L,R)) && inWin(br.x,R)) G.holes.push(parent.add(makeHole(br.x,R,!(isFinite(fc)&&same(fc,R)),1,fixed)).children.at(-1));
+    if(isFinite(fc) && !(isFinite(L)&&same(fc,L)) && !(isFinite(R)&&same(fc,R)) && inWin(br.x,fc)) G.holes.push(parent.add(makeHole(br.x,fc,false,0,fixed===undefined?0xffffff:fixed)).children.at(-1));
+    // guía del salto entre los dos límites laterales
+    if(br.kind==='salto' && isFinite(L) && isFinite(R)){
+      const p=Math.max(Math.min(L,R),y0), q=Math.min(Math.max(L,R),y1);
+      if(q>p) parent.add(line2([br.x,p,u*0.05,br.x,q,u*0.05],{color:fixed===undefined?COL.disc:fixed,w:1.4,dash:(y1-y0)/90,opacity:0.8}));
+    }
+  }
+}
+// intersecciones de la función activa con las demás visibles
+function computeIntersections(){
+  st.inter=[];
+  const act=st.funcs[st.act], A=st.A; if(!act||!A||A.empty) return;
+  const f=act.F.f, W=st.b-st.a;
+  st.funcs.forEach((fn,k)=>{
+    if(k===st.act||!fn.F||!fn.visible) return;
+    const g=fn.F.f, h=x=>{ const u=f(x), v=g(x); return (isFinite(u)&&isFinite(v)&&Math.abs(u)<1e12&&Math.abs(v)<1e12)?u-v:NaN; };
+    const xs=A.xs; let px=xs[0], ph=h(px);
+    const found=[];
+    const add=x=>{ if(found.some(z=>Math.abs(z-x)<1e-6*W)) return; const y=f(x); if(isFinite(y)) found.push(x); };
+    for(let i=1;i<xs.length;i++){
+      const x=xs[i], v=h(x);
+      if(isFinite(v)&&isFinite(ph)){
+        if(v===0) add(x);
+        else if(ph*v<0){
+          let l=px,r=x,hl=ph; for(let it=0;it<60;it++){ const m=(l+r)/2, hm=h(m); if(!isFinite(hm)) break; if(hl*hm<=0) r=m; else { l=m; hl=hm; } }
+          const xm=(l+r)/2, fm=f(xm), gm=g(xm), sc=1+Math.abs(fm);
+          if(isFinite(fm)&&isFinite(gm)&&Math.abs(fm-gm)<1e-6*sc && Math.abs(f(l)-f(r))<1e-3*sc && Math.abs(g(l)-g(r))<1e-3*sc) add(xm);
+        }
+      }
+      px=x; ph=v;
+    }
+    found.forEach(x=>{ const nv=niceVal(x); const xx=(nv&&Math.abs(nv.v-x)<1e-7*(1+Math.abs(x)))?nv.v:x; st.inter.push({x:xx,y:f(xx),slot:k}); });
+  });
+  st.inter.sort((p,q)=>p.x-q.x);
+}
+function derivRuns(fd){
+  const A=st.A, H=st.ymax-st.ymin, out=[];
+  for(const s of A.segs){
+    const X=[],Y=[];
+    for(let i=s.i0;i<=s.i1;i++){ const x=A.xs[i]; let v=fd(x); if(!isFinite(v)||Math.abs(v)>1e6*(1+H)) v=NaN;
+      if(Y.length && isFinite(v)&&isFinite(Y[Y.length-1]) && Math.abs(v-Y[Y.length-1])>H*2){ X.push(x); Y.push(NaN); }
+      X.push(x); Y.push(v); }
+    clipRuns(X,Y,st.ymin,st.ymax,out);
+  }
+  return out;
+}
 function buildGraph(resetCam){
   disposeTree(graph); while(graph.children.length) graph.remove(graph.children[0]);
-  tubes=[]; G={};
+  lineMats.clear(); G={};
   const A=st.A, a=st.a, b=st.b, y0=st.ymin, y1=st.ymax, W=b-a, H=y1-y0;
-  const u=Math.max(W,H*0.6)/100;
-  G.u=u;
-  const tk=TK(), ks=0.45+0.55*tk;
+  const u=Math.max(W,H*0.6)/100, tk=TK(), ks=0.45+0.55*tk, lw=LW()/(renderer.xr.isPresenting?1.7:1);
+  G.u=u; G.ks=ks; G.holes=[];
   // tablero de fondo
-  const board=new THREE.Mesh(new THREE.PlaneGeometry(W*1.04,H*1.04),new THREE.MeshBasicMaterial({color:0x0f2229,transparent:true,opacity:0.88,side:THREE.DoubleSide}));
+  const board=new THREE.Mesh(new THREE.PlaneGeometry(W*1.04,H*1.04),new THREE.MeshBasicMaterial({color:0x0f2229,transparent:true,opacity:0.9,side:THREE.DoubleSide}));
   board.position.set((a+b)/2,(y0+y1)/2,-u*1.2); graph.add(board); G.board=board;
   // cuadrícula
   const step=niceStep(Math.max(W,H)*0.9), gp=[];
   for(let x=Math.ceil(a/step)*step; x<=b+1e-9; x+=step){ gp.push(new THREE.Vector3(x,y0,-u*0.6),new THREE.Vector3(x,y1,-u*0.6)); }
   for(let y=Math.ceil(y0/step)*step; y<=y1+1e-9; y+=step){ gp.push(new THREE.Vector3(a,y,-u*0.6),new THREE.Vector3(b,y,-u*0.6)); }
-  graph.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gp),new THREE.LineBasicMaterial({color:0x26434d,transparent:true,opacity:0.75})));
+  graph.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gp),new THREE.LineBasicMaterial({color:0x2a4852,transparent:true,opacity:0.8})));
   // ejes
   const axCol=0x9fb6bc;
-  const xAxY = (y0<=0&&y1>=0)?0:y0, yAxX=(a<=0&&b>=0)?0:a;
-  const ax=makeRod(axCol,u*0.22*Math.max(tk,0.5)); setRod(ax,new THREE.Vector3(a,xAxY,0),new THREE.Vector3(b,xAxY,0)); graph.add(ax);
-  const ay=makeRod(axCol,u*0.22*Math.max(tk,0.5)); setRod(ay,new THREE.Vector3(yAxX,y0,0),new THREE.Vector3(yAxX,y1,0)); graph.add(ay);
-  const cone=new THREE.ConeGeometry(u*0.9*ks,u*2.6*ks,12);
-  const cx=new THREE.Mesh(cone,new THREE.MeshStandardMaterial({color:axCol})); cx.position.set(b+u*1.2,xAxY,0); cx.rotation.z=-Math.PI/2; graph.add(cx);
-  const cy=new THREE.Mesh(cone,new THREE.MeshStandardMaterial({color:axCol})); cy.position.set(yAxX,y1+u*1.2,0); graph.add(cy);
+  const xAxY=(y0<=0&&y1>=0)?0:y0, yAxX=(a<=0&&b>=0)?0:a;
+  graph.add(line2([a,xAxY,-u*0.1,b,xAxY,-u*0.1],{color:axCol,w:1.5}));
+  graph.add(line2([yAxX,y0,-u*0.1,yAxX,y1,-u*0.1],{color:axCol,w:1.5}));
+  const cone=new THREE.ConeGeometry(u*0.7,u*2.2,12);
+  const cx=new THREE.Mesh(cone,new THREE.MeshBasicMaterial({color:axCol})); cx.position.set(b+u*1.1,xAxY,-u*0.1); cx.rotation.z=-Math.PI/2; graph.add(cx);
+  const cy=new THREE.Mesh(cone,new THREE.MeshBasicMaterial({color:axCol})); cy.position.set(yAxX,y1+u*1.1,-u*0.1); graph.add(cy);
   const lx=makeRichLabel([Mx('x')],'#cfe0e3',u*3.2,{bg:false,center:[0,0.5]}); lx.position.set(b+u*3,xAxY,0); graph.add(lx);
   const ly=makeRichLabel([Mx('y')],'#cfe0e3',u*3.2,{bg:false,center:[0.5,0]}); ly.position.set(yAxX,y1+u*3,0); graph.add(ly);
   const tickH=u*2.4;
   for(let x=Math.ceil(a/step)*step; x<=b+1e-9; x+=step){ if(Math.abs(x)<step*1e-6 && yAxX===0) continue; const t=makeLabel(fmtS(x,2),'#9fb6bc',tickH,{bg:false,bold:false,center:[0.5,1]}); t.position.set(x,xAxY-u*1.1,0); graph.add(t); }
   for(let y=Math.ceil(y0/step)*step; y<=y1+1e-9; y+=step){ if(Math.abs(y)<step*1e-6 && xAxY===0) continue; const t=makeLabel(fmtS(y,2),'#9fb6bc',tickH,{bg:false,bold:false,center:[1,0.5]}); t.position.set(yAxX-u*1.1,y,0); graph.add(t); }
 
-  // curva
-  buildPieces();
-  const radial=8;
-  for(const pc of pieces){
-    const segsN=Math.max(8,Math.min(2400,Math.round(pc.L/(u*0.3))));
-    const curve=new PieceCurve(pc);
-    const geo=new THREE.TubeGeometry(curve,segsN,u*0.75*tk,radial,false);
-    const ringX=[]; for(let i=0;i<=segsN;i++) ringX.push(curve.getPointAt(i/segsN).x);
-    geo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count*3),3));
-    const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.45,metalness:0.05,emissive:0x0b1a1f}));
-    m.userData={ringX,radial}; graph.add(m); tubes.push(m);
+  // otras funciones visibles, cada una con su color
+  G.others=new THREE.Group(); graph.add(G.others);
+  st.funcs.forEach((fn,k)=>{
+    if(k===st.act||!fn.visible||!fn.A||fn.A.empty) return;
+    const col=FCOL[k];
+    piecesOf(fn.A,y0,y1).forEach(pc=>{ const pos=[]; pc.X.forEach((x,i)=>pos.push(x,pc.Y[i],-u*0.02)); G.others.add(line2(pos,{color:col,w:lw*0.85})); });
+    addHoles(fn.A,G.others,col);
+    const xl=Math.min(b,Math.max(a, b-W*0.06)); const yl=fn.F.f(xl);
+    if(isFinite(yl)&&yl>=y0&&yl<=y1){ const l=makeRichLabel([Mx(FSLOT[k])],hex(col),u*2.8,{bg:false,center:[0,0]}); l.position.set(xl,yl+u*0.8,u); G.others.add(l); }
+  });
+  // gráficas de f′ y f″ de la función activa
+  G.derivs=new THREE.Group(); graph.add(G.derivs);
+  if(A && !A.empty){
+    const nm=FSLOT[st.act];
+    [[1,st.F.f1,0xf0f4f4,"'",u*1.6],[2,st.F.f2,0x9fb6bc,"''",u*0.7]].forEach(([bit,fd,col,pr,dash])=>{
+      if(!(st.deriv&bit)) return;
+      const runs=derivRuns(fd); let last=null;
+      runs.forEach(pc=>{ const pos=[]; pc.X.forEach((x,i)=>pos.push(x,pc.Y[i],-u*0.03)); G.derivs.add(line2(pos,{color:col,w:lw*0.8,dash,gap:0.9,opacity:0.95})); last=pc; });
+      if(last){ const i=last.X.length-1; const l=makeRichLabel([Mx(nm+pr)],hex(col),u*2.8,{bg:true,center:[1,0]}); l.position.set(last.X[i],last.Y[i]+u*0.8,u); G.derivs.add(l); }
+    });
   }
-  recolor();
 
-  // asíntotas verticales y discontinuidades
+  // curva activa, coloreada según la pestaña
+  buildPieces(); G.curves=[];
+  for(const pc of pieces){
+    const pos=[]; pc.X.forEach((x,i)=>pos.push(x,pc.Y[i],0));
+    const l=line2(pos,{colors:curveColors(pc.X),w:lw}); l.userData.X=pc.X; graph.add(l); G.curves.push(l);
+  }
+
+  // asíntotas verticales y discontinuidades de la función activa
   const inWin=(x,y)=>x>=a-1e-9&&x<=b+1e-9&&y>=y0&&y<=y1;
   const AG=new THREE.Group(); graph.add(AG); G.asyGroup=AG;
-  for(const br of A.breaks){
-    if(br.kind==='asintota'){
-      AG.add(dashed([new THREE.Vector3(br.x,y0,0),new THREE.Vector3(br.x,y1,0)],COL.disc,u*1.4));
-      const l=makeRichLabel([Mx('x='+texNum(br.x),'x = '+fmtS(br.x))],hex(COL.disc),u*3,{center:[0,1]}); l.position.set(br.x+u*1.2,y1-u,u); AG.add(l);
+  const HG=new THREE.Group(); graph.add(HG); G.holeGroup=HG;
+  if(A && !A.empty){
+    for(const br of A.breaks){
+      if(br.kind==='asintota'){
+        AG.add(line2([br.x,y0,-u*0.05,br.x,y1,-u*0.05],{color:COL.disc,w:1.4,dash:H/60}));
+        const l=makeRichLabel([Mx('x='+texNum(br.x),'x = '+fmtS(br.x))],hex(COL.disc),u*3,{center:[0,1]}); l.position.set(br.x+u*1.2,y1-u,u); AG.add(l);
+      }
     }
-    const ring=(y,filled)=>{ if(!inWin(br.x,y)) return; const m=filled? new THREE.Mesh(new THREE.SphereGeometry(u*1.3*ks,16,12),new THREE.MeshStandardMaterial({color:COL.disc,emissive:COL.disc,emissiveIntensity:0.3}))
-        : new THREE.Mesh(new THREE.TorusGeometry(u*1.3*ks,u*0.35*ks,10,28),new THREE.MeshStandardMaterial({color:COL.disc,emissive:COL.disc,emissiveIntensity:0.4})); m.position.set(br.x,y,0); AG.add(m); };
-    if(br.kind==='evitable'||br.kind==='salto'||br.kind==='borde'){
-      if(br.L.type==='fin') ring(br.L.v, isFinite(br.fc)&&Math.abs(br.fc-br.L.v)<1e-6*(1+Math.abs(br.fc)));
-      if(br.R.type==='fin' && !(br.L.type==='fin'&&Math.abs(br.L.v-br.R.v)<1e-9)) ring(br.R.v, isFinite(br.fc)&&Math.abs(br.fc-br.R.v)<1e-6*(1+Math.abs(br.fc)));
-      if(isFinite(br.fc) && !(br.L.type==='fin'&&Math.abs(br.fc-br.L.v)<1e-6*(1+Math.abs(br.fc))) && !(br.R.type==='fin'&&Math.abs(br.fc-br.R.v)<1e-6*(1+Math.abs(br.fc)))) ring(br.fc,true);
-    }
+    addHoles(A,HG);
+    G.asy=[];
+    const addAsy=(inf,side)=>{
+      let m=null,n=null,txt=null;
+      if(inf.L.type==='fin'){ m=0; n=inf.L.v; txt=Mx('y='+texNum(n),'y = '+fmtS(n)); }
+      else if(inf.oblique){ m=inf.oblique.m; n=inf.oblique.n; txt=Mx('y='+linEqTeX(m,n),'y = '+linEq(m,n)); }
+      if(m===null) return;
+      if(G.asy.some(o=>Math.abs(o.m-m)<1e-9&&Math.abs(o.n-n)<1e-9)) return;
+      G.asy.push({m,n});
+      const cl=clipLine(0,n,1,m,a,b,y0,y1); if(!cl) return;
+      AG.add(line2([cl[0],n+m*cl[0],-u*0.05,cl[1],n+m*cl[1],-u*0.05],{color:0xbfa2f0,w:1.4,dash:W/60}));
+      const at=side>0?cl[1]:cl[0];
+      const l=makeRichLabel([txt],'#cdb6f5',u*3,{center:[side>0?1:0,0]}); l.position.set(at,n+m*at+u,u); AG.add(l);
+    };
+    addAsy(A.infPos,1); addAsy(A.infNeg,-1);
   }
-  // asíntotas en ±∞
-  G.asy=[];
-  const addAsy=(inf,side)=>{
-    let m=null,n=null,txt=null;
-    if(inf.L.type==='fin'){ m=0; n=inf.L.v; txt=Mx('y='+texNum(n),'y = '+fmtS(n)); }
-    else if(inf.oblique){ m=inf.oblique.m; n=inf.oblique.n; txt=Mx('y='+linEqTeX(m,n),'y = '+linEq(m,n)); }
-    if(m===null) return;
-    if(G.asy.some(o=>Math.abs(o.m-m)<1e-9&&Math.abs(o.n-n)<1e-9)) return;
-    G.asy.push({m,n});
-    const cl=clipLine(0,n,1,m,a,b,y0,y1); if(!cl) return;
-    const p=new THREE.Vector3(cl[0],n+m*cl[0],0), q=new THREE.Vector3(cl[1],n+m*cl[1],0);
-    AG.add(dashed([p,q],0xbfa2f0,u*1.4));
-    const at = side>0? q : p;
-    const l=makeRichLabel([txt],'#cdb6f5',u*3,{center:[side>0?1:0,0]}); l.position.set(at.x,at.y+u,u); AG.add(l);
-  };
-  addAsy(A.infPos,1); addAsy(A.infNeg,-1);
 
   // marcadores de puntos característicos
   G.markers=[]; G.markerGroups=[];
-  A.stops.forEach((s,i)=>{
+  (A&&!A.empty?A.stops:[]).forEach((s,i)=>{
     if(s.kind==='disc' || !isFinite(s.y) || !inWin(s.x,s.y)) { G.markers.push(null); G.markerGroups.push(null); return; }
     const col=COL[s.kind];
     const grp=new THREE.Group(); graph.add(grp);
-    const mk=new THREE.Mesh(new THREE.SphereGeometry(u*1.55*ks,20,14),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.35,roughness:0.35}));
+    const mk=new THREE.Mesh(new THREE.SphereGeometry(u*0.95*ks,20,14),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.4,roughness:0.35}));
     mk.position.set(s.x,s.y,0); grp.add(mk);
-    const short={cero:'cero',max:'máx',min:'mín',silla:'f′ = 0',infl:'inflexión'};
+    const nm=FSLOT[st.act], short={cero:'cero',max:'máx',min:'mín',silla:nm+'′ = 0',infl:'inflexión'};
     const names=[...new Set(s.items.map(it=>it.noTangent?'cambio de concavidad':short[it.kind]))].join(' · ');
-    const above = s.kind!=='min';
-    const l=makeRichLabel([names+'  ',Mx(s.ptTeX,s.pt)],hex(col),u*2.5,{center:[0.5,above?0:1]});
-    l.position.set(s.x,s.y+(above?u*2.2*ks+u*0.6:-(u*2.2*ks+u*0.6)),u*1.5); grp.add(l);
+    const above=s.kind!=='min';
+    const l=makeRichLabel([names+'  ',Mx(s.ptTeX,s.pt)],hex(col),u*2.4,{center:[0.5,above?0:1]});
+    l.position.set(s.x,s.y+(above?u*1.4*ks+u*0.9:-(u*1.4*ks+u*0.9)),u*1.5); grp.add(l);
     G.markers.push(mk); G.markerGroups.push(grp);
+  });
+  // intersecciones
+  G.inter=new THREE.Group(); graph.add(G.inter);
+  (st.inter||[]).forEach(p=>{
+    if(!inWin(p.x,p.y)) return;
+    const mk=new THREE.Mesh(new THREE.OctahedronGeometry(u*1.1*ks),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:0.3}));
+    mk.position.set(p.x,p.y,0); G.inter.add(mk);
+    const l=makeRichLabel([Mx(FSLOT[st.act]+'='+FSLOT[p.slot]),'  ',Mx(texPt(p.x,p.y),'('+fmtS(p.x)+', '+fmtS(p.y)+')')],'#ffffff',u*2.3,{center:[0.5,0]}); l.position.set(p.x,p.y+u*2.2,u*1.5); G.inter.add(l);
   });
 
   // vagón
   const rider=new THREE.Group();
-  const body=new THREE.Mesh(new THREE.SphereGeometry(u*1.5*ks,24,16),new THREE.MeshStandardMaterial({color:COL.rider,emissive:COL.rider,emissiveIntensity:0.45,roughness:0.3,transparent:true,opacity:1}));
-  const halo=new THREE.Mesh(new THREE.TorusGeometry(u*2.4*ks,u*0.2*ks,10,36),new THREE.MeshBasicMaterial({color:0xe3ecec,transparent:true,opacity:1}));
+  const body=new THREE.Mesh(new THREE.SphereGeometry(u*1.25*ks,24,16),new THREE.MeshStandardMaterial({color:COL.rider,emissive:COL.rider,emissiveIntensity:0.45,roughness:0.3,transparent:true,opacity:1}));
+  const halo=new THREE.Mesh(new THREE.TorusGeometry(u*2.0*ks,u*0.16*ks,10,36),new THREE.MeshBasicMaterial({color:0xe3ecec,transparent:true,opacity:1}));
   rider.add(body); rider.add(halo); graph.add(rider); G.rider=rider;
-  // tangente y normal
-  G.tan=makeRod(COL.tan,u*0.12*(0.6+tk)); G.nor=makeRod(COL.nor,u*0.12*(0.6+tk)); graph.add(G.tan); graph.add(G.nor);
-  G.tanPt=new THREE.Mesh(new THREE.SphereGeometry(u*0.5*ks,14,10),new THREE.MeshBasicMaterial({color:COL.tan})); graph.add(G.tanPt);
+  // tangente, normal y salto
+  G.tan=line2([0,0,0,1,0,0],{color:COL.tan,w:lw*0.62}); G.tan.frustumCulled=false; graph.add(G.tan);
+  G.nor=line2([0,0,0,1,0,0],{color:COL.nor,w:lw*0.62}); G.nor.frustumCulled=false; graph.add(G.nor);
+  G.tanPt=new THREE.Mesh(new THREE.SphereGeometry(u*0.42*ks,14,10),new THREE.MeshBasicMaterial({color:COL.tan})); graph.add(G.tanPt);
+  G.jumpLine=line2([0,0,0,0,1,0],{color:COL.disc,w:2.2,dash:H/70}); G.jumpLine.visible=false; G.jumpLine.frustumCulled=false; graph.add(G.jumpLine);
   // límites
   G.lim=new THREE.Group(); graph.add(G.lim);
-  G.beadL=new THREE.Mesh(new THREE.SphereGeometry(u*1.2*ks,14,10),new THREE.MeshBasicMaterial({color:0xffffff}));
-  G.beadR=new THREE.Mesh(new THREE.SphereGeometry(u*1.2*ks,14,10),new THREE.MeshBasicMaterial({color:0xffffff}));
+  G.beadL=new THREE.Mesh(new THREE.SphereGeometry(u*1.0*ks,14,10),new THREE.MeshBasicMaterial({color:0xffffff}));
+  G.beadR=new THREE.Mesh(new THREE.SphereGeometry(u*1.0*ks,14,10),new THREE.MeshBasicMaterial({color:0xffffff}));
   graph.add(G.beadL); graph.add(G.beadR);
+  recolor();
   buildLimitVisual();
   placeGraph(resetCam!==false);
 }
@@ -1268,9 +1542,9 @@ function buildLimitVisual(){
   const L=st.limit, a=st.a,b=st.b,y0=st.ymin,y1=st.ymax,u=G.u;
   G.beadL.visible=G.beadR.visible=false;
   if(!L || !isFinite(L.c) || L.c<a || L.c>b) return;
-  G.lim.add(dashed([new THREE.Vector3(L.c,y0,u*0.5),new THREE.Vector3(L.c,y1,u*0.5)],0xffffff,u*1.1));
+  G.lim.add(line2([L.c,y0,u*0.3,L.c,y1,u*0.3],{color:0xffffff,w:1.2,dash:(y1-y0)/70,opacity:0.85}));
   const vals=[L.res.L,L.res.R].filter(r=>r.type==='fin').map(r=>r.v);
-  [...new Set(vals)].forEach(v=>{ if(v>=y0&&v<=y1) G.lim.add(dashed([new THREE.Vector3(a,v,u*0.5),new THREE.Vector3(b,v,u*0.5)],0xffffff,u*1.1)); });
+  [...new Set(vals)].forEach(v=>{ if(v>=y0&&v<=y1) G.lim.add(line2([a,v,u*0.3,b,v,u*0.3],{color:0xffffff,w:1.2,dash:(b-a)/70,opacity:0.85})); });
 }
 
 /* ---- colocación en el mundo ---- */
@@ -1301,11 +1575,80 @@ function moveBy(dy){
 function resetView(){ st.zoom=1; st.zoomRide=1; st.offset.set(0,0,0); st.seat=0; placeGraph(!renderer.xr.isPresenting); snapCam=true; }
 
 /* ================= narración ================= */
-// Voz del sistema si hay una en español; si no (p. ej. navegador del Quest), voz integrada meSpeak en español latinoamericano.
+// Tres motores: voz neuronal Piper en un worker (natural, se descarga una vez y queda guardada),
+// voz del sistema cuando el navegador trae una en español, y meSpeak como último respaldo.
 const MS_BASE='https://cdn.jsdelivr.net/npm/mespeak@1.9.6/';
+const HFV='https://huggingface.co/rhasspy/piper-voices/resolve/main/es/';
+const NVOICES=[{id:'ald',name:'México, masculina',url:HFV+'es_MX/ald/medium/es_MX-ald-medium.onnx'},
+  {id:'davefx',name:'España, masculina',url:HFV+'es_ES/davefx/medium/es_ES-davefx-medium.onnx'},
+  {id:'sharvard',name:'España, femenina',url:HFV+'es_ES/sharvard/medium/es_ES-sharvard-medium.onnx'}];
 const IS_QUEST=/OculusBrowser|Quest/i.test(navigator.userAgent||'');
+const PIPER_WORKER=`const ORT='https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.18.0/';
+const PH='https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize';
+const PHJS='https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/dist/piper-DeOu3H9E.js';
+let ready=null, session=null, cfg=null, phon=null, printCb=null, queue=[], busy=false, gen=0, rate=1;
+function post(m,t){ self.postMessage(m,t||[]); }
+async function getBuf(url,label){
+  let cache=null;
+  try{ cache=await caches.open('funciones-a-bordo-voz-1'); const hit=await cache.match(url); if(hit){ post({type:'progress',label,loaded:1,total:1,cached:true}); return await hit.arrayBuffer(); } }catch(e){ cache=null; }
+  const r=await fetch(url); if(!r.ok) throw new Error('HTTP '+r.status);
+  const total=+(r.headers.get('Content-Length')||0), rd=r.body.getReader(), parts=[]; let got=0, last=0;
+  for(;;){ const {done,value}=await rd.read(); if(done) break; parts.push(value); got+=value.length; const now=Date.now(); if(now-last>500){ last=now; post({type:'progress',label,loaded:got,total}); } }
+  const blob=new Blob(parts);
+  if(cache){ try{ await cache.put(url,new Response(blob)); }catch(e){} }
+  post({type:'progress',label,loaded:got,total:got});
+  return await blob.arrayBuffer();
+}
+async function init(model){
+  importScripts(ORT+'ort.min.js');
+  ort.env.wasm.wasmPaths=ORT; ort.env.wasm.numThreads=1;
+  cfg=JSON.parse(new TextDecoder().decode(await getBuf(model+'.json','config')));
+  const mod=await import(PHJS);
+  phon=await mod.createPiperPhonemize({print:l=>{ if(printCb) printCb(l); }, printErr:()=>{}, locateFile:f=>f.endsWith('.wasm')?PH+'.wasm':(f.endsWith('.data')?PH+'.data':f)});
+  const buf=await getBuf(model,'modelo');
+  session=await ort.InferenceSession.create(buf,{executionProviders:['wasm'],graphOptimizationLevel:'all'});
+}
+function phonemize(text){
+  return new Promise((res,rej)=>{
+    printCb=l=>{ printCb=null; try{ res(JSON.parse(l).phoneme_ids); }catch(e){ rej(e); } };
+    try{ phon.callMain(['-l',cfg.espeak.voice,'--input',JSON.stringify([{text}]),'--espeak_data','/espeak-ng-data']); }catch(e){ printCb=null; rej(e); }
+  });
+}
+async function synth(text){
+  const ids=await phonemize(text), inf=cfg.inference||{};
+  const feeds={
+    input:new ort.Tensor('int64',BigInt64Array.from(ids.map(v=>BigInt(v))),[1,ids.length]),
+    input_lengths:new ort.Tensor('int64',BigInt64Array.from([BigInt(ids.length)]),[1]),
+    scales:new ort.Tensor('float32',Float32Array.from([inf.noise_scale??0.667,(inf.length_scale??1)*rate,inf.noise_w??0.8]),[3])
+  };
+  if(cfg.num_speakers>1) feeds.sid=new ort.Tensor('int64',BigInt64Array.from([0n]),[1]);
+  const out=await session.run(feeds);
+  return (out.output||out[Object.keys(out)[0]]).data;
+}
+async function pump(){
+  if(busy) return; busy=true;
+  while(queue.length){
+    const it=queue.shift(); if(it.gen!==gen) continue;
+    try{ const pcm=await synth(it.text); if(it.gen!==gen) continue;
+      const a=new Float32Array(pcm); post({type:'audio',id:it.id,gen:it.gen,pcm:a,sr:cfg.audio.sample_rate},[a.buffer]); }
+    catch(e){ post({type:'fail',id:it.id,gen:it.gen,error:String(e&&e.message||e)}); }
+  }
+  busy=false;
+}
+self.onmessage=async e=>{
+  const m=e.data;
+  if(m.type==='init'){ rate=m.rate||1; ready=ready||init(m.model).then(()=>{ post({type:'ready'}); return true; },err=>{ post({type:'error',error:String(err&&err.message||err)}); return false; }); return; }
+  if(m.type==='rate'){ rate=m.rate; return; }
+  if(m.type==='cancel'){ gen=m.gen; queue=[]; return; }
+  if(m.type==='say'){ if(m.gen<gen) return; gen=m.gen; queue.push(m); if(!ready || !(await ready)) return; pump(); }
+};`;
 const TTS={web:('speechSynthesis' in window)&&typeof SpeechSynthesisUtterance!=='undefined', on:true, voice:null, nVoices:0,
-  engine: 'mespeak', ms:'idle', ctx:null, queue:[], playing:false, src:null, last:0, gen:0};
+  engine:'neural', userEngine:null, ctx:null, last:0, rate:1,
+  nv:{id:'ald', state:'idle', worker:null, gen:0, nextId:0, order:[], ready:new Map(), playing:false, src:null, loaded:0, total:0, label:''},
+  ms:'idle', msQueue:[], msPlaying:false, msSrc:null, msGen:0};
+function prefGet(k,d){ try{ const v=localStorage.getItem('fab-'+k); return v===null?d:v; }catch(e){ return d; } }
+function prefSet(k,v){ try{ localStorage.setItem('fab-'+k,v); }catch(e){} }
+TTS.userEngine=prefGet('engine','')||null; TTS.nv.id=prefGet('voice','ald'); TTS.rate=+prefGet('rate','1')||1;
 function pickVoice(){
   if(TTS.web){
     let vs=[]; try{ vs=speechSynthesis.getVoices()||[]; }catch(e){}
@@ -1315,92 +1658,280 @@ function pickVoice(){
     if(!v) v=vs.find(x=>norm(x.lang).startsWith('es'));
     TTS.voice=v||null; TTS.nVoices=vs.length;
   }
-  TTS.engine = (TTS.voice && !IS_QUEST) ? 'web' : 'mespeak';
+  let e=TTS.userEngine;
+  if(e==='web' && (!TTS.voice || IS_QUEST)) e=null;
+  if(!e) e=(TTS.voice && !IS_QUEST) ? 'web' : 'neural';
+  if(e==='neural' && TTS.nv.state==='error') e='mespeak';
+  TTS.engine=e;
   updateTTSStatus();
 }
 function updateTTSStatus(){
-  const el=document.getElementById('ttsStatus'); if(!el) return;
-  if(TTS.engine==='web') el.textContent='Narración con la voz del sistema: '+TTS.voice.name+'.';
-  else if(TTS.ms==='ready') el.textContent='Narración con la voz integrada en español (voz sintética).';
-  else if(TTS.ms==='loading') el.textContent='Cargando la voz integrada en español…';
-  else if(TTS.ms==='error') el.textContent='No se pudo cargar la voz integrada. Revise la conexión a internet y recargue la página. Los textos siguen apareciendo en pantalla.';
-  else el.textContent='La voz integrada en español se cargará con la primera narración.';
+  const el=document.getElementById('ttsStatus'); const sel=document.getElementById('ttsEngine');
+  if(sel){ sel.value=TTS.userEngine||'auto'; }
+  const vs=document.getElementById('ttsVoice'); if(vs) vs.value=TTS.nv.id;
+  let t='';
+  if(TTS.engine==='web') t='Narración con la voz del sistema ('+TTS.voice.name+').';
+  else if(TTS.engine==='neural'){
+    const n=TTS.nv;
+    if(n.state==='ready') t='Narración con voz natural en español ('+(NVOICES.find(v=>v.id===n.id)||NVOICES[0]).name+').';
+    else if(n.state==='loading') t='Preparando la voz natural'+(n.total>1000?': '+Math.round(100*n.loaded/n.total)+' % de '+Math.round(n.total/1048576)+' MB':'')+'. Se descarga una sola vez.';
+    else t='La voz natural se descargará al comenzar (unos 80 MB, una sola vez).';
+  } else {
+    t = TTS.ms==='ready' ? 'Narración con la voz básica integrada.' : TTS.ms==='error' ? 'No se pudo cargar ninguna voz. Los textos siguen en pantalla.' : 'Cargando la voz básica.';
+    if(TTS.nv.state==='error') t='No se pudo cargar la voz natural en este dispositivo. '+t;
+  }
+  if(el) el.textContent=t;
+  try{ vrDirty=true; }catch(e){}
+}
+function voiceStatusShort(){
+  if(TTS.engine==='neural' && TTS.nv.state==='loading') return 'Preparando voz'+(TTS.nv.total>1000?' '+Math.round(100*TTS.nv.loaded/TTS.nv.total)+' %':'…');
+  return '';
 }
 function audioCtx(){
   if(!TTS.ctx){ try{ const AC=window.AudioContext||window.webkitAudioContext; if(AC) TTS.ctx=new AC(); }catch(e){} }
   if(TTS.ctx && TTS.ctx.state==='suspended'){ try{ TTS.ctx.resume(); }catch(e){} }
   return TTS.ctx;
 }
+// ---- voz neuronal
+function nvStart(){
+  const n=TTS.nv; if(n.worker) return;
+  const url=(NVOICES.find(v=>v.id===n.id)||NVOICES[0]).url;
+  try{
+    n.worker=new Worker(URL.createObjectURL(new Blob([PIPER_WORKER],{type:'text/javascript'})));
+  }catch(e){ nvFail('sin worker'); return; }
+  n.state='loading'; n.loaded=0; n.total=0; updateTTSStatus();
+  n.worker.onmessage=e=>{
+    const m=e.data;
+    if(m.type==='progress'){ if(m.label==='modelo'){ n.loaded=m.loaded; n.total=Math.max(m.total,m.loaded)+ (m.cached?0:0); } if(Math.random()<0.5) updateTTSStatus(); }
+    else if(m.type==='ready'){ n.state='ready'; updateTTSStatus(); }
+    else if(m.type==='error'){ nvFail(m.error); }
+    else if(m.type==='audio'){ if(m.gen===n.gen){ n.ready.set(m.id,m); nvPlay(); } }
+    else if(m.type==='fail'){ if(m.gen===n.gen){ n.order=n.order.filter(i=>i!==m.id); nvPlay(); } }
+  };
+  n.worker.onerror=()=>nvFail('worker');
+  n.worker.postMessage({type:'init',model:url,rate:1/TTS.rate});
+}
+function nvFail(err){
+  const n=TTS.nv; n.state='error'; try{ n.worker&&n.worker.terminate(); }catch(e){} n.worker=null;
+  const pending=n.lastText; n.order=[]; n.ready.clear();
+  if(TTS.engine==='neural'){ TTS.engine='mespeak'; loadMeSpeak(); if(pending) speak(pending); }
+  updateTTSStatus();
+}
+function nvPlay(){
+  const n=TTS.nv; if(n.playing||!n.order.length) return;
+  const id=n.order[0], m=n.ready.get(id); if(!m) return;
+  n.order.shift(); n.ready.delete(id);
+  const ctx=audioCtx(); if(!ctx){ nvPlay(); return; }
+  const buf=ctx.createBuffer(1,m.pcm.length,m.sr); buf.copyToChannel(m.pcm,0);
+  const src=ctx.createBufferSource(); src.buffer=buf; src.connect(ctx.destination);
+  n.playing=true; n.src=src;
+  src.onended=()=>{ if(n.src===src){ n.src=null; n.playing=false; setTimeout(nvPlay,120); } };
+  src.start();
+}
+function nvStop(){
+  const n=TTS.nv; n.gen++; n.order=[]; n.ready.clear();
+  if(n.worker) n.worker.postMessage({type:'cancel',gen:n.gen});
+  if(n.src){ try{ n.src.onended=null; n.src.stop(); }catch(e){} n.src=null; }
+  n.playing=false;
+}
+function chunks(text){
+  const out=[];
+  (String(text).match(/[^.!?;]+[.!?;]*/g)||[text]).forEach(p=>{
+    p=p.trim(); if(!p) return;
+    if(p.length<=170){ out.push(p); return; }
+    let cur=''; p.split(/(?<=,)\s+/).forEach(q=>{ if((cur+' '+q).length>170 && cur){ out.push(cur.trim()); cur=q; } else cur=cur?cur+' '+q:q; });
+    if(cur.trim()) out.push(cur.trim());
+  });
+  return out;
+}
+// ---- meSpeak (respaldo)
 function loadMeSpeak(){
   if(TTS.ms!=='idle') return;
   TTS.ms='loading'; updateTTSStatus();
   const sc=document.createElement('script'); sc.src=MS_BASE+'mespeak.js';
-  sc.onload=()=>{
-    try{
-      meSpeak.loadConfig(MS_BASE+'mespeak_config.json');
-      meSpeak.loadVoice(MS_BASE+'voices/es-la.json',ok=>{ TTS.ms= ok?'ready':'error'; updateTTSStatus(); if(ok) pump(); });
-    }catch(e){ TTS.ms='error'; updateTTSStatus(); }
-  };
+  sc.onload=()=>{ try{ meSpeak.loadConfig(MS_BASE+'mespeak_config.json'); meSpeak.loadVoice(MS_BASE+'voices/es-la.json',ok=>{ TTS.ms=ok?'ready':'error'; updateTTSStatus(); if(ok) msPump(); }); }catch(e){ TTS.ms='error'; updateTTSStatus(); } };
   sc.onerror=()=>{ TTS.ms='error'; updateTTSStatus(); };
   document.head.appendChild(sc);
 }
-function stopSpeech(){
-  TTS.queue=[]; TTS.gen++;
-  if(TTS.src){ try{ TTS.src.onended=null; TTS.src.stop(); }catch(e){} TTS.src=null; }
-  TTS.playing=false;
-  if(TTS.web){ try{ speechSynthesis.cancel(); }catch(e){} }
-}
-function pump(){
-  if(TTS.playing||!TTS.queue.length) return;
-  if(TTS.ms!=='ready' || typeof meSpeak==='undefined' || !meSpeak.isConfigLoaded()){ if(TTS.ms==='ready'||TTS.ms==='loading') setTimeout(pump,300); return; }
+function msPump(){
+  if(TTS.msPlaying||!TTS.msQueue.length) return;
+  if(TTS.ms!=='ready'||typeof meSpeak==='undefined'||!meSpeak.isConfigLoaded()){ if(TTS.ms==='loading'||TTS.ms==='ready') setTimeout(msPump,300); return; }
   const ctx=audioCtx(); if(!ctx) return;
-  const t=TTS.queue.shift(); TTS.playing=true; const gen=TTS.gen;
-  let raw=null; try{ raw=meSpeak.speak(t,{rawdata:'default',speed:160,pitch:45}); }catch(e){ raw=null; }
-  if(!raw){ TTS.playing=false; pump(); return; }
-  const ab = raw instanceof ArrayBuffer ? raw.slice(0) : (raw.buffer ? raw.buffer.slice(0) : new Uint8Array(raw).buffer);
-  ctx.decodeAudioData(ab).then(buf=>{
-    if(gen!==TTS.gen) return;
-    const src=ctx.createBufferSource(); src.buffer=buf; src.connect(ctx.destination);
-    src.onended=()=>{ if(TTS.src===src){ TTS.src=null; TTS.playing=false; pump(); } };
-    TTS.src=src; src.start();
-  }).catch(()=>{ if(gen===TTS.gen){ TTS.playing=false; pump(); } });
+  const t=TTS.msQueue.shift(); TTS.msPlaying=true; const gen=TTS.msGen;
+  let raw=null; try{ raw=meSpeak.speak(t,{rawdata:'default',speed:Math.round(145*TTS.rate),pitch:42,wordgap:1,amplitude:120}); }catch(e){ raw=null; }
+  if(!raw){ TTS.msPlaying=false; msPump(); return; }
+  const ab=raw instanceof ArrayBuffer?raw.slice(0):(raw.buffer?raw.buffer.slice(0):new Uint8Array(raw).buffer);
+  ctx.decodeAudioData(ab).then(buf=>{ if(gen!==TTS.msGen) return; const src=ctx.createBufferSource(); src.buffer=buf; src.connect(ctx.destination); src.onended=()=>{ if(TTS.msSrc===src){ TTS.msSrc=null; TTS.msPlaying=false; msPump(); } }; TTS.msSrc=src; src.start(); })
+    .catch(()=>{ if(gen===TTS.msGen){ TTS.msPlaying=false; msPump(); } });
+}
+function stopSpeech(){
+  nvStop();
+  TTS.msQueue=[]; TTS.msGen++; if(TTS.msSrc){ try{ TTS.msSrc.onended=null; TTS.msSrc.stop(); }catch(e){} TTS.msSrc=null; } TTS.msPlaying=false;
+  if(TTS.web){ try{ speechSynthesis.cancel(); }catch(e){} }
 }
 function speak(text,interrupt){
   if(interrupt===undefined) interrupt=true;
   if(!TTS.on||!text) return;
+  TTS.last=performance.now();
   if(TTS.engine==='web'){
-    try{
-      if(interrupt) speechSynthesis.cancel();
-      const parts=String(text).match(/[^.!?]+[.!?]*/g)||[text];
-      parts.forEach(p=>{ const t=p.trim(); if(!t) return; const u=new SpeechSynthesisUtterance(t); u.lang=TTS.voice.lang; u.voice=TTS.voice; u.rate=1.0; speechSynthesis.speak(u); });
-      TTS.last=performance.now();
-    }catch(e){}
+    try{ if(interrupt) speechSynthesis.cancel();
+      chunks(text).forEach(p=>{ const u=new SpeechSynthesisUtterance(p); u.lang=TTS.voice.lang; u.voice=TTS.voice; u.rate=TTS.rate; speechSynthesis.speak(u); }); }catch(e){}
     return;
   }
-  if(interrupt) stopSpeech();
-  const parts=String(text).match(/[^.!?]+[.!?]*/g)||[text];
-  parts.forEach(p=>{ const t=p.trim(); if(t) TTS.queue.push(t); });
-  TTS.last=performance.now();
+  if(TTS.engine==='neural'){
+    const n=TTS.nv; if(interrupt) nvStop();
+    n.lastText=text; nvStart(); audioCtx();
+    chunks(text).forEach(p=>{ const id=++n.nextId; n.order.push(id); if(n.worker) n.worker.postMessage({type:'say',id,gen:n.gen,text:p}); });
+    return;
+  }
+  if(interrupt){ TTS.msQueue=[]; TTS.msGen++; if(TTS.msSrc){ try{ TTS.msSrc.onended=null; TTS.msSrc.stop(); }catch(e){} TTS.msSrc=null; } TTS.msPlaying=false; }
+  chunks(text).forEach(p=>TTS.msQueue.push(p));
   if(TTS.ms==='idle') loadMeSpeak();
-  audioCtx(); pump();
+  audioCtx(); msPump();
 }
 function isSpeaking(){
   if(!TTS.on) return false;
   if(TTS.engine==='web'){ try{ return speechSynthesis.speaking||speechSynthesis.pending; }catch(e){ return false; } }
+  if(TTS.engine==='neural'){ const n=TTS.nv; if(n.state!=='ready') return false; return n.playing||n.order.length>0; }
   if(TTS.ms==='error') return false;
-  return TTS.playing || TTS.queue.length>0;
+  return TTS.msPlaying||TTS.msQueue.length>0;
 }
+function setEngine(v){
+  TTS.userEngine = v==='auto'?null:v; prefSet('engine',TTS.userEngine||'');
+  if(TTS.userEngine===null) try{ localStorage.removeItem('fab-engine'); }catch(e){}
+  stopSpeech(); if(v==='neural'&&TTS.nv.state==='error') TTS.nv.state='idle';
+  pickVoice(); if(TTS.engine==='neural') nvStart(); if(TTS.engine==='mespeak') loadMeSpeak();
+  speak('Narración activada.');
+}
+function setNeuralVoice(id){
+  if(id===TTS.nv.id) return; prefSet('voice',id);
+  stopSpeech(); const n=TTS.nv; try{ n.worker&&n.worker.terminate(); }catch(e){} n.worker=null; n.state='idle'; n.id=id;
+  if(TTS.engine==='neural'){ nvStart(); speak('Esta es la nueva voz.'); }
+  updateTTSStatus();
+}
+function setRate(r){ TTS.rate=r; prefSet('rate',String(r)); if(TTS.nv.worker) TTS.nv.worker.postMessage({type:'rate',rate:1/r}); }
 pickVoice();
 if(TTS.web){ try{ speechSynthesis.onvoiceschanged=pickVoice; }catch(e){} }
-['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{ audioCtx(); if(TTS.engine==='mespeak') loadMeSpeak(); },{passive:true}));
+['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{ audioCtx(); },{passive:true}));
 function setTTS(on){
   TTS.on=on; if(!on) stopSpeech();
   const b=document.getElementById('btnTTS'); b.setAttribute('aria-pressed',on); b.textContent='Narración: '+(on?'sí':'no');
   vrDirty=true;
 }
 function sayList(arr){ if(!arr.length) return ''; if(arr.length===1) return arr[0]; return arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1]; }
-const HELP_VR='Controles en realidad virtual. El stick derecho avanza o retrocede sobre la curva. El stick izquierdo acerca o aleja la función. Mantenga apretado el botón de agarre, al costado del mando, y mueva la mano para subir, bajar o desplazar la función. Con los dos agarres a la vez puede estirarla o encogerla. Apunte al tablero y pulse el gatillo para elegir una pestaña o un botón. Fuera del tablero, el gatillo derecho salta al punto siguiente y el izquierdo al anterior. El botón A inicia o pausa el recorrido. El botón B muestra la tangente y la normal. El botón X cambia entre montar la curva y verla como maqueta. El botón Y muestra u oculta el tablero. En el tablero, Cambiar función abre un teclado para escribir una nueva función y elegir la ventana, y Grosor alterna entre líneas finas, medias y gruesas. El clic del stick izquierdo carga la siguiente función de ejemplo. El clic del stick derecho repite esta ayuda.';
-const HELP_2D='Arrastre sobre el gráfico para girarlo y use la rueda o los botones más y menos para acercarlo. Las flechas hacia arriba y hacia abajo mueven la función. Elija una pestaña para estudiar ceros, extremos, monotonía, concavidad o asíntotas, y pulse Subir y recorrer para que el vagón visite esos elementos mientras la narración los explica.';
+const HELP_VR='Controles en realidad virtual. El stick derecho avanza o retrocede sobre la curva; si llega al borde, la ventana avanza con usted. El stick izquierdo hacia adelante o atrás cambia el tamaño de la maqueta, y hacia los lados desplaza la ventana por el dominio. Mantenga apretado el botón de agarre y mueva la mano para subir, bajar o desplazar la función. Apunte al tablero y pulse el gatillo para elegir una pestaña o un botón. Fuera del tablero, el gatillo derecho salta al punto siguiente y el izquierdo al anterior. El botón A inicia o pausa el recorrido. El botón B alterna entre tangente, normal, ambas o ninguna. El botón X cambia entre montar la curva y verla como maqueta. El botón Y muestra u oculta el tablero. En el tablero, la fila Ventana mueve y amplía el trozo visible de la función, Lupa acerca el punto de tangencia, y Cambiar función abre un teclado con funciones trigonométricas, logaritmos, raíces y funciones por tramos. El clic del stick derecho repite esta ayuda.';
+const HELP_2D='Arrastre sobre el gráfico para girarlo y use la rueda para acercar la cámara. Los botones de ventana, o Mayúsculas con las flechas, desplazan la región visible por todo el dominio y el recorrido; Ver más y Ver menos cambian su tamaño. Las flechas izquierda y derecha mueven el vagón, que empuja la ventana al llegar al borde. Elija una pestaña y pulse Subir y recorrer para que el vagón visite los elementos mientras la narración los explica.';
+
+/* ================= varias funciones ================= */
+const FN=()=>FSLOT[st.act];
+function makeFn(slot,src){ return {slot,src:src||'',F:null,A:null,visible:true}; }
+function renameF(x,nm){
+  if(nm==='f'||x==null) return x;
+  if(Array.isArray(x)) return x.map(y=>renameF(y,nm));
+  if(typeof x==='object') return Mx(x.t.replace(/(^|[^a-zA-Z\\])f(?=\\left|'|\(|\^)/g,'$1'+nm), x.a.replace(/(^|[^a-zA-Záéíóúñ])f(?=\(|′|″)/g,'$1'+nm));
+  return x;
+}
+function renameStops(A,nm){ if(nm==='f'||!A||A.empty) return; A.stops.forEach(s=>{ s.lines=renameF(s.lines,nm); }); }
+function syncActive(){ let fn=st.funcs[st.act]; if(!fn||!fn.F){ st.act=0; fn=st.funcs[0]; } st.F=fn.F; st.A=fn.A||emptyA(st.a,st.b); }
+function computeAll(){
+  st.funcs.forEach((fn,k)=>{
+    if(!fn) return;
+    if(!fn.F || (!fn.visible && k!==st.act)){ fn.A=null; return; }
+    let A=analyze(fn.F,st.a,st.b); if(A.empty) A=emptyA(st.a,st.b);
+    renameStops(A,FSLOT[k]); fn.A=A;
+  });
+  syncActive(); computeIntersections();
+}
+function setFnSrc(slot,src){
+  let F; try{ F=buildF(src); }catch(e){ return e.message; }
+  F.name=FSLOT[slot];
+  st.funcs[slot]=Object.assign(st.funcs[slot]||makeFn(slot),{src,F});
+  return '';
+}
+function syncWindowInputs(){
+  const s=(id,v)=>{ const el=document.getElementById(id); if(el && document.activeElement!==el) el.value=fmtNum(v); };
+  s('xa',st.a); s('xb',st.b); s('ya',st.ymin); s('yb',st.ymax);
+}
+// carga o recarga todas las funciones con una ventana
+function applyAll(o){
+  o=o||{};
+  if(o.act!==undefined) st.act=o.act;
+  const a=o.a!==undefined?o.a:st.a, b=o.b!==undefined?o.b:st.b;
+  if(!(b>a)) return 'La ventana necesita x mín menor que x máx.';
+  st.a=a; st.b=b;
+  computeAll();
+  let lo=o.ymin==null?null:o.ymin, hi=o.ymax==null?null:o.ymax;
+  if(lo===null||hi===null||!(hi>lo)){ const r=autoY(st.A); if(lo===null||!(hi>lo)) lo=r[0]; if(hi===null||!(hi>lo)) hi=r[1]; }
+  st.ymin=lo; st.ymax=hi; st.lupa=[];
+  syncWindowInputs();
+  st.limit=null; document.getElementById('limOut').innerHTML='';
+  buildGraph(o.resetCam!==false);
+  renderPanel(); renderFnList();
+  st.piece=0; st.s=0; st.playing=false; st.jump=null; updatePlayBtn(); curTourIdx=-1; curStopIdx=-1; snapCam=true; pendingJump=null;
+  setTab(st.tab,{speak:false});
+  if(o.talk) speak(tabInfo(st.tab).say);
+  if(st.limitUsed) computeLimit();
+  hudDirty=true; vrDirty=true;
+  return st.A.empty ? 'La función '+FN()+' no toma valores reales en esta ventana. Desplace o amplíe la ventana.' : '';
+}
+function loadFunction(src,a,b,ymin,ymax,talk,slot){
+  if(slot===undefined) slot=st.act;
+  const err=document.getElementById('fnError');
+  const e=setFnSrc(slot,src);
+  if(e){ err.textContent=FSLOT[slot]+'(x): '+e; err.hidden=false; speak('No pude leer la función. '+e); return false; }
+  const w=applyAll({a,b,ymin,ymax,talk,act:slot});
+  if(w && w.startsWith('La ventana')){ err.textContent=w; err.hidden=false; return false; }
+  err.textContent=w; err.hidden=!w;
+  return true;
+}
+function setActive(k,talk){
+  if(!st.funcs[k]||!st.funcs[k].F) return;
+  st.act=k; st.funcs[k].visible=true;
+  computeAll(); buildGraph(false); renderPanel(); renderFnList();
+  const r=nearestReach(curX()); if(r){ st.piece=r.piece; st.s=r.s; } else { st.piece=0; st.s=0; }
+  setTab(st.tab,{speak:false}); if(st.limitUsed) computeLimit(); hudDirty=vrDirty=true;
+  if(talk) speak('Ahora se recorre la función '+FN()+' de x, igual a '+sayExpr(st.F.node)+'.');
+}
+function cycleActive(){
+  const ks=st.funcs.map((f,k)=>f&&f.F?k:-1).filter(k=>k>=0);
+  if(ks.length<2){ speak('Solo hay una función. Use Cambiar función para agregar otra.'); return; }
+  setActive(ks[(ks.indexOf(st.act)+1)%ks.length],true);
+}
+
+/* ================= ventana: desplazar, ampliar y lupa ================= */
+function setWindow(a,b,y0,y1,o){
+  o=o||{};
+  const x=o.x!==undefined?o.x:curX();
+  st.a=a; st.b=b; st.ymin=y0; st.ymax=y1;
+  computeAll(); buildGraph(false);
+  applyTabVisibility(); buildTour(); curTourIdx=-1; curStopIdx=-1; renderTab();
+  const r=nearestReach(x); if(r){ st.piece=r.piece; st.s=r.s; } else { st.piece=0; st.s=0; }
+  pendingJump=null; st.jump=null; snapCam=true;
+  if(!o.keepPlay){ st.playing=false; updatePlayBtn(); }
+  syncWindowInputs();
+  hudDirty=true; vrDirty=true;
+}
+const rnd=v=>{ const s=Math.pow(10,Math.floor(Math.log10(Math.abs(v)||1))-3); return Math.round(v/s)*s; };
+function winSay(){ return 'Ventana de x entre '+sayNum(rnd(st.a))+' y '+sayNum(rnd(st.b))+', y de y entre '+sayNum(rnd(st.ymin))+' y '+sayNum(rnd(st.ymax))+'.'; }
+function panWin(fx,fy,talk){ const W=st.b-st.a,H=st.ymax-st.ymin; setWindow(rnd(st.a+fx*W),rnd(st.b+fx*W),rnd(st.ymin+fy*H),rnd(st.ymax+fy*H)); if(talk) speak(winSay()); }
+function zoomWin(k,talk){
+  const cx=(st.a+st.b)/2, cy=(st.ymin+st.ymax)/2;
+  setWindow(rnd(cx+(st.a-cx)*k),rnd(cx+(st.b-cx)*k),rnd(cy+(st.ymin-cy)*k),rnd(cy+(st.ymax-cy)*k));
+  if(talk) speak((k>1?'Se ve una región más amplia. ':'Se ve una región más pequeña. ')+winSay());
+}
+function fitWin(talk){ const r=autoY(st.A); setWindow(st.a,st.b,r[0],r[1]); if(talk) speak('Rango de y ajustado a la función. '+winSay()); }
+function lupa(){
+  if(st.lupa.length){ const w=st.lupa.pop(); setWindow(w[0],w[1],w[2],w[3]); speak(st.lupa.length?'Se aleja un nivel.':'Fin de la lupa. Vuelve la ventana anterior.'); return; }
+  lupaIn();
+}
+function lupaIn(){
+  const t=tangentInfo(); if(!t.ok){ speak('En este punto la función no está definida.'); return; }
+  if(st.tn===0){ st.tn=1; syncTnRadios(); }
+  st.lupa.push([st.a,st.b,st.ymin,st.ymax]);
+  const W=(st.b-st.a)/5, H=(st.ymax-st.ymin)/5;
+  setWindow(t.x0-W/2,t.x0+W/2,t.y0-H/2,t.y0+H/2,{x:t.x0});
+  speak(st.lupa.length===1?'Lupa sobre el punto de tangencia. Al acercarse, la curva se confunde cada vez más con su recta tangente.':'Más cerca todavía. La curva y la tangente casi coinciden.');
+}
 
 /* ================= pestañas ================= */
 const TABS=[
@@ -1409,7 +1940,8 @@ const TABS=[
   {id:'extremos',name:'Extremos',color:'mono'},
   {id:'mono',name:'Monotonía',color:'mono'},
   {id:'conc',name:'Concavidad',color:'conc'},
-  {id:'asint',name:'Asíntotas',color:'none'}
+  {id:'asint',name:'Asíntotas',color:'none'},
+  {id:'inter',name:'Intersecciones',color:'none'}
 ];
 const hasK=(s,ks)=>s.items.some(i=>ks.includes(i.kind));
 function stopInTab(s,tab){
@@ -1425,7 +1957,7 @@ function stopInTab(s,tab){
 function tabName(id){ return (TABS.find(t=>t.id===id)||TABS[0]).name; }
 function ivTxt(p,q){ return '('+fmtS(p)+', '+fmtS(q)+')'; }
 function buildTour(){
-  const A=st.A, tab=st.tab, W=st.b-st.a, items=[];
+  const A=st.A, tab=st.tab, W=st.b-st.a, items=[], nm=FN();
   A.stops.forEach(s=>{ if(stopInTab(s,tab)) items.push({x:s.x, kind:s.kind, title:s.title, pt:s.pt, ptTeX:s.ptTeX, lines:s.lines, say:s.say, stop:s}); });
   const addIv=(list,names,sayFn,lineFn)=>{
     list.forEach(o=>{
@@ -1436,17 +1968,23 @@ function buildTour(){
   };
   if(tab==='mono') addIv(A.mono,{crec:'Intervalo creciente',decr:'Intervalo decreciente',const:'Intervalo constante'},
     o=>'Ahora la función es '+({crec:'creciente',decr:'decreciente',const:'constante'}[o.kind])+', desde x igual a '+sayNum(o.p)+' hasta x igual a '+sayNum(o.q)+'. En este tramo la derivada es '+({crec:'positiva',decr:'negativa',const:'cero'}[o.kind])+'.',
-    o=>[Mx("f'(x)"+({crec:'>0',decr:'<0',const:'=0'}[o.kind]),'f′(x) '+({crec:'> 0',decr:'< 0',const:'= 0'}[o.kind])),' en ',Mx(texIv(o.p,o.q),ivTxt(o.p,o.q)),'.']);
+    o=>[Mx(nm+"'(x)"+({crec:'>0',decr:'<0',const:'=0'}[o.kind]),nm+'′(x) '+({crec:'> 0',decr:'< 0',const:'= 0'}[o.kind])),' en ',Mx(texIv(o.p,o.q),ivTxt(o.p,o.q)),'.']);
   if(tab==='conc') addIv(A.conc,{up:'Cóncava hacia arriba',down:'Cóncava hacia abajo',lin:'Tramo lineal'},
     o=>'Ahora la curva es '+({up:'cóncava hacia arriba',down:'cóncava hacia abajo',lin:'recta'}[o.kind])+', desde x igual a '+sayNum(o.p)+' hasta x igual a '+sayNum(o.q)+'. La segunda derivada es '+({up:'positiva',down:'negativa',lin:'cero'}[o.kind])+'.',
-    o=>[Mx("f''(x)"+({up:'>0',down:'<0',lin:'=0'}[o.kind]),'f″(x) '+({up:'> 0',down:'< 0',lin:'= 0'}[o.kind])),' en ',Mx(texIv(o.p,o.q),ivTxt(o.p,o.q)),'.']);
+    o=>[Mx(nm+"''(x)"+({up:'>0',down:'<0',lin:'=0'}[o.kind]),nm+'″(x) '+({up:'> 0',down:'< 0',lin:'= 0'}[o.kind])),' en ',Mx(texIv(o.p,o.q),ivTxt(o.p,o.q)),'.']);
+  if(tab==='todo'||tab==='inter') (st.inter||[]).forEach(p=>{
+    const gn=FSLOT[p.slot], tx=texNum(p.x), ty=texNum(p.y);
+    items.push({x:p.x, kind:'inter', title:'Intersección con '+gn, pt:'('+fmtS(p.x)+', '+fmtS(p.y)+')', ptTeX:texPt(p.x,p.y),
+      lines:[[Mx(nm+'\\left('+tx+'\\right)='+gn+'\\left('+tx+'\\right)='+ty, nm+'('+fmtS(p.x)+') = '+gn+'('+fmtS(p.x)+') = '+fmtS(p.y)),'. Las dos curvas se cortan.']],
+      say:'Intersección con la función '+gn+', en x igual a '+sayNum(p.x)+'. Ambas funciones valen '+sayNum(p.y)+'.', inter:p});
+  });
   items.sort((p,q)=>p.x-q.x);
   items.forEach(it=>{ it.reach=stopReach(it); });
   st.tour=items;
 }
 function infSay(r,sgn){
   const s=sgn>0?'más infinito':'menos infinito';
-  let t='Cuando x tiende a '+s+', f tiende a '+sayLim(r.L)+'.';
+  let t='Cuando x tiende a '+s+', '+FN()+' tiende a '+sayLim(r.L)+'.';
   if(r.L.type==='fin') t+=' Hay una asíntota horizontal, y igual a '+sayNum(r.L.v)+'.';
   else if(r.oblique) t+=' Hay una asíntota oblicua, y igual a '+sayLin(r.oblique.m,r.oblique.n)+'.';
   return t;
@@ -1462,31 +2000,36 @@ const MxV=v=>Mx(texNum(v),fmtS(v));
 const MxIvs=l=>Mx(l.map(o=>texIv(o.p,o.q)).join('\\cup '),l.map(o=>ivTxt(o.p,o.q)).join(' ∪ '));
 const MxWin=()=>Mx('\\left['+texNum(st.a)+',\\ '+texNum(st.b)+'\\right]','['+fmtS(st.a)+', '+fmtS(st.b)+']');
 function infLine(r,sgn){
-  const out=[Mx('\\lim_{x\\to '+(sgn>0?'+':'-')+'\\infty} f(x)='+texLim(r.L),'lím x→'+(sgn>0?'+∞':MINUS+'∞')+' f(x) = '+limTxt(r.L))];
+  const nm=FN();
+  const out=[Mx('\\lim_{x\\to '+(sgn>0?'+':'-')+'\\infty} '+nm+'(x)='+texLim(r.L),'lím x→'+(sgn>0?'+∞':MINUS+'∞')+' '+nm+'(x) = '+limTxt(r.L))];
   if(r.L.type==='fin') out.push(', asíntota horizontal ',Mx('y='+texNum(r.L.v),'y = '+fmtS(r.L.v)));
   else if(r.oblique) out.push(', asíntota oblicua ',Mx('y='+linEqTeX(r.oblique.m,r.oblique.n),'y = '+linEq(r.oblique.m,r.oblique.n)));
   out.push('.'); return out;
 }
 function extTxt(o,word){
-  if(o.none) return ['No tiene '+word+' absoluto en la ventana, porque f no está acotada cerca de ',MxX([o.x]),'.'];
+  if(o.empty) return ['La función no toma valores en la ventana.'];
+  if(o.none) return ['No tiene '+word+' absoluto en la ventana, porque '+FN()+' no está acotada cerca de ',MxX([o.x]),'.'];
   if(o.attained) return [word.charAt(0).toUpperCase()+word.slice(1)+' absoluto ',MxV(o.v),' en ',MxX([o.x]),(Math.abs(o.x-st.a)<1e-9||Math.abs(o.x-st.b)<1e-9?', extremo de la ventana.':'.')];
   return [(word==='máximo'?'Supremo ':'Ínfimo '),MxV(o.v),' cerca de ',MxX([o.x]),', no alcanzado.'];
 }
-function extSay(o,word){ return o.none ? 'No hay '+word+' absoluto en la ventana, porque la función no está acotada cerca de x igual a '+sayNum(o.x)+'.'
+function extSay(o,word){ return o.empty ? '' : o.none ? 'No hay '+word+' absoluto en la ventana, porque la función no está acotada cerca de x igual a '+sayNum(o.x)+'.'
     : (o.attained ? 'El '+word+' absoluto en la ventana es '+sayNum(o.v)+', en x igual a '+sayNum(o.x)+'.' : 'La función se acerca a '+sayNum(o.v)+' cerca de x igual a '+sayNum(o.x)+', sin alcanzarlo.'); }
 function tabInfo(tab){
-  const A=st.A, F=st.F;
+  const A=st.A, F=st.F, nm=FN();
+  if(A.empty && tab!=='inter') return {title:'Sin gráfica en la ventana', lines:['La función '+nm+' no toma valores reales en esta ventana. Desplace o amplíe la ventana.'], say:'La función no toma valores reales en esta ventana. Desplace o amplíe la ventana.'};
   const ivs=(list,k)=>list.filter(o=>o.kind===k);
   const ivSay=l=>sayList(l.map(o=>'entre '+sayNum(o.p)+' y '+sayNum(o.q)));
   switch(tab){
     case 'todo': {
-      const n=A.stops.length;
-      return {title:'Vista general', lines:[[n+' puntos característicos en la ventana ',MxWin(),'.'],['Dominio en la ventana ',Mx(domTeX(A),A.domTxt),'.']],
-        say:'Función f de x igual a '+sayExpr(F.node)+'. En la ventana de x igual a '+sayNum(st.a)+' hasta '+sayNum(st.b)+' hay '+n+' puntos característicos. Use las pestañas para estudiar ceros, extremos, monotonía, concavidad y asíntotas.'};
+      const n=A.stops.length, ni=(st.inter||[]).length;
+      const lines=[[n+' puntos característicos en la ventana ',MxWin(),'.'],['Dominio en la ventana ',Mx(domTeX(A),A.domTxt),'.']];
+      if(ni) lines.push([ni+(ni===1?' intersección':' intersecciones')+' con otras funciones.']);
+      return {title:'Vista general', lines,
+        say:'Función '+nm+' de x igual a '+sayExpr(F.node)+'. En la ventana de x igual a '+sayNum(rnd(st.a))+' hasta '+sayNum(rnd(st.b))+' hay '+n+' puntos característicos'+(ni?' y '+ni+(ni===1?' intersección':' intersecciones'):'')+'. Use las pestañas para estudiar cada elemento.'};
     }
     case 'ceros': {
       const z=A.zeros.map(o=>o.x);
-      return {title:'Ceros', lines: z.length? [[Mx('f(x)=0','f(x) = 0'),' en ',MxX(z),'.'],'Son los puntos donde la curva corta o toca el eje x.'] : ['No hay ceros en la ventana.'],
+      return {title:'Ceros', lines: z.length? [[Mx(nm+'(x)=0',nm+'(x) = 0'),' en ',MxX(z),'.'],'Son los puntos donde la curva corta o toca el eje x.'] : ['No hay ceros en la ventana.'],
         say: z.length? 'Ceros. La función se anula en '+(z.length===1?'un punto':z.length+' puntos')+': x igual a '+sayList(z.map(sayNum))+'. Allí la curva corta o toca el eje x.' : 'Ceros. La función no se anula en esta ventana.'};
     }
     case 'extremos': {
@@ -1525,16 +2068,26 @@ function tabInfo(tab){
       return {title:'Concavidad', lines, say};
     }
     case 'asint': {
-      const va=A.breaks.filter(b=>b.kind==='asintota'), other=A.breaks.filter(b=>b.kind!=='asintota');
+      const va=A.breaks.filter(b=>b.kind==='asintota'), jumps=A.breaks.filter(b=>b.kind==='salto'), other=A.breaks.filter(b=>b.kind!=='asintota'&&b.kind!=='salto');
       const lines=[];
       lines.push(va.length?[(va.length>1?'Asíntotas verticales ':'Asíntota vertical '),MxX(va.map(b=>b.x)),'.']:'Sin asíntotas verticales en la ventana.');
+      if(jumps.length) lines.push([(jumps.length>1?'Discontinuidades de salto en ':'Discontinuidad de salto en '),MxX(jumps.map(b=>b.x)),'. El círculo vacío marca el límite lateral que no se alcanza y el lleno, el valor de la función.']);
       if(other.length) lines.push(['Otras discontinuidades o bordes en ',MxX(other.map(b=>b.x)),'.']);
       lines.push(infLine(A.infNeg,-1)); lines.push(infLine(A.infPos,1));
-      let say='Asíntotas y límites. ';
+      let say='Asíntotas y discontinuidades. ';
       say+= va.length ? 'Hay '+(va.length===1?'una asíntota vertical':va.length+' asíntotas verticales')+', en x igual a '+sayList(va.map(b=>sayNum(b.x)))+'. ' : 'No hay asíntotas verticales en la ventana. ';
+      if(jumps.length) say+='Hay '+(jumps.length===1?'un salto':jumps.length+' saltos')+', en x igual a '+sayList(jumps.map(b=>sayNum(b.x)))+'. ';
       if(other.length) say+='También hay '+(other.length===1?'una discontinuidad o borde del dominio':other.length+' discontinuidades o bordes del dominio')+'. ';
       say+=infSay(A.infNeg,-1)+' '+infSay(A.infPos,1);
-      return {title:'Asíntotas y límites', lines, say};
+      return {title:'Asíntotas y discontinuidades', lines, say};
+    }
+    case 'inter': {
+      const others=st.funcs.filter((f,k)=>f&&f.F&&k!==st.act&&f.visible);
+      if(!others.length) return {title:'Intersecciones', lines:['Agregue otra función, por ejemplo g(x), para estudiar dónde se cortan las curvas.'], say:'Intersecciones. Agregue otra función con Cambiar función para estudiar dónde se cortan las curvas.'};
+      const I=st.inter||[];
+      const lines=I.length? I.map(p=>[Mx(nm+'(x)='+FSLOT[p.slot]+'(x)'),' en ',MxX([p.x]),', con ',Mx('y='+texNum(p.y),'y = '+fmtS(p.y)),'.']) : ['Las curvas no se cortan en la ventana.'];
+      const say=I.length? 'Intersecciones. Las curvas se cortan en '+(I.length===1?'un punto':I.length+' puntos')+': '+sayList(I.map(p=>'con '+FSLOT[p.slot]+' en x igual a '+sayNum(p.x)))+'.' : 'Las curvas no se cortan en esta ventana.';
+      return {title:'Intersecciones', lines, say};
     }
   }
   return {title:'',lines:[],say:''};
@@ -1543,6 +2096,7 @@ function applyTabVisibility(){
   const tab=st.tab;
   if(G.markerGroups) G.markerGroups.forEach((g,i)=>{ if(g) g.visible=stopInTab(st.A.stops[i],tab); });
   if(G.asyGroup) G.asyGroup.visible=(tab==='todo'||tab==='asint');
+  if(G.inter) G.inter.visible=(tab==='todo'||tab==='inter');
 }
 function setTab(id,opts){
   opts=opts||{};
@@ -1560,7 +2114,7 @@ function setTab(id,opts){
 }
 
 /* ================= recorrido ================= */
-function curPos(){ const pc=pieces[st.piece]; if(!pc) return null; return posAt(pc,st.s); }
+function curPos(){ if(st.jump) return {x:st.jump.x,y:st.jump.y}; const pc=pieces[st.piece]; if(!pc) return null; return posAt(pc,st.s); }
 function curX(){ const p=curPos(); return p?p.x:st.a; }
 function setMsg(title,lines){ st.msgTitle=title||''; st.msgLines=lines||[]; hudDirty=true; vrDirty=true; }
 function stopReach(s){
@@ -1584,12 +2138,13 @@ function announce(it,talk){
   setMsg([it.title+'  ',Mx(it.ptTeX||it.pt,it.pt)], it.lines);
   curTourIdx=st.tour.indexOf(it);
   curStopIdx=it.stop?st.A.stops.indexOf(it.stop):-1;
+  st.follow=0;
   document.querySelectorAll('#stopList button').forEach((b,i)=>b.classList.toggle('cur',i===curTourIdx));
   if(talk!==false) speak(it.say);
 }
 function jumpToTour(i){
   const it=st.tour[i]; if(!it) return;
-  st.playing=false; updatePlayBtn();
+  st.playing=false; st.jump=null; updatePlayBtn();
   let r=it.reach;
   if(!r) r=nearestReach(it.x - (it.kind==='disc'?1e-3*(st.b-st.a):0));
   moveTo(r,true); announce(it);
@@ -1601,7 +2156,25 @@ function stepStop(dir){
 }
 function speedUnits(){ return (st.b-st.a)/9*st.speed; }
 function holdFor(ms){ st.pauseUntil=performance.now()+ms; st.waitSpeech=true; }
+function breakBetween(x1,x2){ const W=st.b-st.a, e=1e-5*W, lo=Math.min(x1,x2), hi=Math.max(x1,x2); return st.A.breaks.find(b=>b.x>=lo-e&&b.x<=hi+e)||null; }
+// el vagón baja o sube por el salto, mostrando la distancia entre los límites laterales
+function startJump(br,x,y0,y1,next,manual){
+  const H=st.ymax-st.ymin, d=Math.abs(y1-y0);
+  const it=st.tour.find(t=>t.kind==='disc' && Math.abs(t.x-br.x)<1e-6*(st.b-st.a));
+  if(it) announce(it,!manual);
+  const verb = d<1e-9*(1+H) ? 'El vagón atraviesa un orificio de la curva.' : 'Salto. El vagón pasa de '+sayNum(y0)+' a '+sayNum(y1)+'.';
+  if(!it){ setMsg(br.kind==='salto'?'Discontinuidad de salto':'Discontinuidad evitable',[[MxX([br.x]),'. '+verb.replace('Salto. ','')]]); speak(verb); }
+  else if(manual) speak(verb);
+  else speak(verb,false);
+  st.jump={x,y:y0,y0,y1,t:0,hold:manual?0.25:0.8,dur:d<1e-9*(1+H)?0.2:Math.min(1.8,0.8+1.6*d/H),next,manual};
+  G.jumpLine.visible=true;
+}
+function canExtend(dir){ const W=st.b-st.a, x=dir>0?st.b+W*0.02:st.a-W*0.02, v=st.F.f(x); return isFinite(v); }
+function shiftX(dir,x){ const W=st.b-st.a; setWindow(rnd(st.a+dir*W/2),rnd(st.b+dir*W/2),st.ymin,st.ymax,{x,keepPlay:true}); setMsg('La ventana avanza',['Ahora se ve ',MxWin(),'.']); }
+function followY(dir,x){ const H=st.ymax-st.ymin; setWindow(st.a,st.b,rnd(st.ymin+dir*H/2),rnd(st.ymax+dir*H/2),{x,keepPlay:true}); }
+function exitDir(y){ const H=st.ymax-st.ymin; return Math.abs(y-st.ymax)<1e-7*H ? 1 : Math.abs(y-st.ymin)<1e-7*H ? -1 : 0; }
 function advance(dt,dir,manual){
+  if(st.jump) return;
   const pc=pieces[st.piece]; if(!pc) return;
   const prevS=st.s; let ns=st.s+dir*speedUnits()*dt;
   const lo=Math.min(prevS,ns), hi=Math.max(prevS,ns);
@@ -1612,31 +2185,44 @@ function advance(dt,dir,manual){
       announce(it);
     }
   }
+  const W=st.b-st.a;
   if(ns>pc.L){
-    const nx=st.piece+1;
-    if(nx<pieces.length){
-      const x1=pc.X[pc.X.length-1], x2=pieces[nx].X[0];
-      const brs=st.tour.filter(s=>s.kind==='disc'&&s.x>=x1-1e-9&&s.x<=x2+1e-9);
-      if(brs.length) announce(brs[0]); else setMsg('La curva sale de la ventana',['Continúa fuera del rango visible en y. El vagón salta al siguiente tramo visible.']);
-      st.s=pc.L;
+    const xe=pc.X[pc.X.length-1], ye=pc.Y[pc.Y.length-1], nx=st.piece+1, np=pieces[nx];
+    const br=breakBetween(xe, np?np.X[0]:st.b);
+    st.s=pc.L;
+    if(br && (br.kind==='salto'||br.kind==='evitable') && np && Math.abs(np.X[0]-br.x)<1e-3*W && Math.abs(xe-br.x)<1e-3*W){ startJump(br,br.x,ye,np.Y[0],{piece:nx,s:0},manual); return; }
+    const ey=exitDir(ye);
+    if(ey && !(br && br.kind==='asintota') && st.follow<10 && xe<st.b-1e-6*W){ st.follow++; followY(ey,xe); return; }
+    if(np){
+      const x2=np.X[0];
+      const brs=st.tour.filter(s=>s.kind==='disc'&&s.x>=xe-1e-9&&s.x<=x2+1e-9);
+      if(brs.length) announce(brs[0]); else setMsg('La curva sale de la ventana',['Continúa fuera del rango visible. El vagón salta al siguiente tramo visible.']);
       pendingJump={piece:nx,s:0};
       if(manual){ moveTo(pendingJump,true); pendingJump=null; }
       else holdFor(brs.length?1800:900);
       return;
     }
-    st.s=pc.L;
+    if(manual && xe>=st.b-1e-3*W && canExtend(1)){ shiftX(1,xe); return; }
     if(!manual){
       st.playing=false; updatePlayBtn();
       let extra='';
       if(st.tab==='asint'||st.tab==='todo') extra=' '+infSay(st.A.infNeg,-1)+' '+infSay(st.A.infPos,1);
-      setMsg('Fin del recorrido',['El vagón llegó al borde derecho de la ventana.']);
+      setMsg('Fin del recorrido',['El vagón llegó al borde derecho de la ventana. Con el stick o las flechas puede seguir avanzando y la ventana lo acompaña.']);
       speak('Fin del recorrido de '+tabName(st.tab)+'.'+extra, false);
     }
     return;
   }
   if(ns<0){
-    const pv=st.piece-1;
-    if(pv>=0 && manual){ const p2=pieces[pv]; moveTo({piece:pv,s:p2.L},true); return; }
+    const xs=pc.X[0], ys=pc.Y[0], pv=st.piece-1, pp=pieces[pv];
+    const br=breakBetween(pp?pp.X[pp.X.length-1]:st.a, xs);
+    if(manual){
+      st.s=0;
+      if(br && (br.kind==='salto'||br.kind==='evitable') && pp && Math.abs(xs-br.x)<1e-3*W){ startJump(br,br.x,ys,pp.Y[pp.Y.length-1],{piece:pv,s:pp.L},true); return; }
+      const ey=exitDir(ys);
+      if(ey && !(br && br.kind==='asintota') && xs>st.a+1e-6*W && st.follow<10){ st.follow++; followY(ey,xs); return; }
+      if(pp){ moveTo({piece:pv,s:pp.L},true); return; }
+      if(xs<=st.a+1e-3*W && canExtend(-1)){ shiftX(-1,xs); return; }
+    }
     ns=0;
   }
   st.s=ns;
@@ -1645,7 +2231,7 @@ let pendingJump=null, snapCam=true;
 function rideTour(){
   if(renderer.xr.isPresenting){ if(st.xrKind!=='ar'){ st.xrMode='ride'; placeGraph(); } }
   else setView('board');
-  pendingJump=null;
+  pendingJump=null; st.jump=null; st.follow=0;
   moveTo({piece:0,s:0},true);
   st.playing=true; updatePlayBtn();
   const n=st.tour.length;
@@ -1676,7 +2262,7 @@ function linEqTeX(m,b){
   return s;
 }
 function tnEquations(t){
-  if(!t.ok) return {tan:'f no está definida en x₀ = '+fmtS(t.x0),nor:'',tanT:null,norT:null};
+  if(!t.ok) return {tan:FN()+' no está definida en x₀ = '+fmtS(t.x0),nor:'',tanT:null,norT:null};
   const x0=fmtS(t.x0), y0=fmtS(t.y0);
   if(t.vertical) return {tan:'x = '+x0, nor:'y = '+y0, tanT:'x='+texNum(t.x0), norT:'y='+texNum(t.y0), vert:true};
   const m=t.m, bT=t.y0-m*t.x0;
@@ -1686,27 +2272,31 @@ function tnEquations(t){
   else { const mn=-1/m; nor='y = '+linEq(mn,t.y0-mn*t.x0); norT='y='+linEqTeX(mn,t.y0-mn*t.x0); }
   return {tan,nor,tanT,norT,m};
 }
+const showTan=()=>st.tn===1||st.tn===3, showNor=()=>st.tn===2||st.tn===3;
 function tnSay(){
   const t=tangentInfo(); if(!t.ok) return 'En este punto la función no está definida.';
-  if(t.vertical) return 'La tangente es vertical, x igual a '+sayNum(t.x0)+'. La normal es horizontal, y igual a '+sayNum(t.y0)+'.';
-  const m=t.m;
-  let s='La recta tangente en x igual a '+sayNum(t.x0)+' tiene pendiente '+sayNum(m)+'.';
-  s+= Math.abs(m)<1e-12 ? ' Es horizontal, y la normal es vertical.' : ' La normal tiene pendiente '+sayNum(-1/m)+'.';
-  return s;
+  if(t.vertical) return (showNor()&&!showTan()?'La normal es horizontal, y igual a '+sayNum(t.y0)+'. La tangente sería vertical.':'La tangente es vertical, x igual a '+sayNum(t.x0)+'.');
+  const m=t.m; let s='';
+  if(showTan()||st.tn===0) s+='La recta tangente en x igual a '+sayNum(t.x0)+' tiene pendiente '+sayNum(m)+'.';
+  if(showNor()) s+= Math.abs(m)<1e-12 ? ' La normal es vertical, x igual a '+sayNum(t.x0)+'.' : ' La normal tiene pendiente '+sayNum(-1/m)+', el opuesto del recíproco de la pendiente de la tangente.';
+  return s.trim();
 }
 function shiftTxt(v,varName){ if(Math.abs(v)<1e-12) return varName; return varName+(v<0?' + ':' '+MINUS+' ')+fmtS(Math.abs(v),3); }
 function shiftTeX(v,n){ if(Math.abs(v)<1e-12) return n; return n+(v<0?'+':'-')+texNum(Math.abs(v),3); }
 function pointSlopeTeX(t){ const m=texNum(t.m,3); return shiftTeX(t.y0,'y')+'='+(Math.abs(t.x0)<1e-12? m+' x' : m+'\\left('+shiftTeX(t.x0,'x')+'\\right)'); }
 function pointSlope(t){ const L=shiftTxt(t.y0,'y'), R=shiftTxt(t.x0,'x'); const m=fmtS(t.m,3); return L+' = '+(Math.abs(t.x0)<1e-12? m+'x' : m+'('+R+')'); }
 function stateAt(x){
-  const F=st.F, d1=F.f1(x), d2=F.f2(x);
+  const F=st.F, d1=F.f1(x), d2=F.f2(x), nm=FN();
   const out=[];
-  if(isFinite(d1)){ if(Math.abs(d1)<1e-9) out.push(['f′ = 0','#e3ecec']); else out.push(d1>0?['creciente',hex(COL.crec)]:['decreciente',hex(COL.decr)]); }
-  if(isFinite(d2)){ if(Math.abs(d2)<1e-9) out.push(['f″ = 0','#e3ecec']); else out.push(d2>0?['cóncava hacia arriba',hex(COL.up)]:['cóncava hacia abajo',hex(COL.down)]); }
+  if(isFinite(d1)){ if(Math.abs(d1)<1e-9) out.push([nm+'′ = 0','#e3ecec']); else out.push(d1>0?['creciente',hex(COL.crec)]:['decreciente',hex(COL.decr)]); }
+  if(isFinite(d2)){ if(Math.abs(d2)<1e-9) out.push([nm+'″ = 0','#e3ecec']); else out.push(d2>0?['cóncava hacia arriba',hex(COL.up)]:['cóncava hacia abajo',hex(COL.down)]); }
   return out;
 }
+let hudName='';
 function updateHUD(){
   const F=st.F; if(!F) return;
+  const nm=FN();
+  if(hudName!==nm){ hudName=nm; [['hLy',nm+'(x)'],['hLd1',nm+"'(x)"],['hLd2',nm+"''(x)"]].forEach(([id,t])=>{ const el=document.getElementById(id); if(el) el.innerHTML=texHTML(t,t.replace("''",'″').replace("'",'′')); }); }
   const x=curX(), y=F.f(x), d1=F.f1(x), d2=F.f2(x);
   document.getElementById('hX').textContent=fmtS(x,3);
   document.getElementById('hY').textContent=fmtS(y,3);
@@ -1714,13 +2304,17 @@ function updateHUD(){
   document.getElementById('hD2').textContent=fmtS(d2,3);
   document.getElementById('hState').innerHTML=stateAt(x).map(([t,c])=>'<span class="pill" style="color:'+c+'">'+t+'</span>').join('');
   const t=tangentInfo(), e=tnEquations(t);
-  document.getElementById('hEq').innerHTML = st.tn>0 && e.tanT ? '<span style="color:'+hex(COL.tan)+'">tangente '+texHTML(e.tanT,e.tan)+'</span>'+(st.tn>1&&e.norT?'<br><span style="color:'+hex(COL.nor)+'">normal '+texHTML(e.norT,e.nor)+'</span>':'') : '';
+  const eq=[]; if(showTan()&&e.tanT) eq.push('<span style="color:'+hex(COL.tan)+'">tangente '+texHTML(e.tanT,e.tan)+'</span>'); if(showNor()&&e.norT) eq.push('<span style="color:'+hex(COL.nor)+'">normal '+texHTML(e.norT,e.nor)+'</span>');
+  document.getElementById('hEq').innerHTML=eq.join('<br>');
+  const vs=voiceStatusShort();
   document.getElementById('hMsg').innerHTML = (st.msgTitle && st.msgTitle.length)? '<strong>'+richHTML(st.msgTitle)+'</strong>'+st.msgLines.map(richHTML).join('<br>') : '<span style="color:var(--stage-muted)">Elija una pestaña y pulse Subir y recorrer.</span>';
+  document.getElementById('hVoice').textContent=vs;
   document.getElementById('tnBox').innerHTML = t.ok ?
-    '<div class="tnv">'+texHTML('x_0='+texNum(t.x0),'x₀ = '+fmtS(t.x0))+' '+texHTML('f(x_0)='+texNum(t.y0,3),'f(x₀) = '+fmtS(t.y0,3))+' '+(t.vertical?texHTML("f'(x_0)","f′(x₀)")+' no existe':texHTML("f'(x_0)="+texNum(t.m,3),'f′(x₀) = '+fmtS(t.m,3)))+'</div>'+
+    '<div class="tnv">'+texHTML('x_0='+texNum(t.x0),'x₀ = '+fmtS(t.x0))+' '+texHTML(nm+'(x_0)='+texNum(t.y0,3),nm+'(x₀) = '+fmtS(t.y0,3))+' '+(t.vertical?texHTML(nm+"'(x_0)",nm+"′(x₀)")+' no existe':texHTML(nm+"'(x_0)="+texNum(t.m,3),nm+'′(x₀) = '+fmtS(t.m,3)))+'</div>'+
     '<div class="t">Tangente '+texHTML(e.tanT,e.tan)+(t.vertical?' (vertical)':'')+'</div>'+(t.vertical||Math.abs(t.m)<1e-12?'':'<div class="t">Forma punto pendiente '+texHTML(pointSlopeTeX(t),pointSlope(t))+'</div>')+
     '<div class="n">Normal '+texHTML(e.norT,e.nor)+'</div>' : '<div>'+esc(e.tan)+'</div>';
   const sl=document.getElementById('xslider'); if(document.activeElement!==sl) sl.value=Math.round((x-st.a)/(st.b-st.a)*1000);
+  const lb=document.getElementById('bLupa'); if(lb) lb.textContent=st.lupa.length?'Salir de la lupa':'Lupa en el punto';
 }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r); g.lineTo(x+w,y+h-r); g.quadraticCurveTo(x+w,y+h,x+w-r,y+h); g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r); g.lineTo(x,y+r); g.quadraticCurveTo(x,y,x+r,y); g.closePath(); }
@@ -1730,45 +2324,113 @@ function wrap(g,text,maxW){
   if(line) out.push(line); return out;
 }
 
+/* ================= teclado matemático (pantalla y VR) ================= */
+// '|' indica dónde queda el cursor después de insertar
+const KB_PAGES=[
+  {name:'Básico', rows:[
+    [['7','7'],['8','8'],['9','9'],['(','('],[')',')'],['⌫','BS']],
+    [['4','4'],['5','5'],['6','6'],['x','x'],['xⁿ','^'],['◀','LEFT']],
+    [['1','1'],['2','2'],['3','3'],['+','+'],[MINUS,'-'],['▶','RIGHT']],
+    [['0','0'],['.','.'],['π','π'],['e','e'],['·','*'],['÷','/']],
+    [['x²','^2'],['√','sqrt(|)'],['ⁿ√','raiz(|, 3)'],['|x|','abs(|)'],['a/b','(|)/()'],['Borrar','CLR']]]},
+  {name:'Funciones', rows:[
+    [['sen','sen(|)'],['cos','cos(|)'],['tg','tg(|)'],['sec','sec(|)'],['cosec','cosec(|)'],['cotg','cotg(|)']],
+    [['arcsen','arcsen(|)'],['arccos','arccos(|)'],['arctg','arctg(|)'],['senh','senh(|)'],['cosh','cosh(|)'],['tgh','tgh(|)']],
+    [['ln','ln(|)'],['log','log(|)'],['log₂','log_2(|)'],['log_b','log_(|)'],['eˣ','e^(|)'],['∛','raiz(|, 3)']],
+    [['ent','ent(|)'],['sgn','sgn(|)'],['x',"x"],[',',', '],['◀','LEFT'],['▶','RIGHT']],
+    [['(','('],[')',')'],['xⁿ','^'],['·','*'],['⌫','BS'],['Borrar','CLR']]]},
+  {name:'Por tramos', rows:[
+    [['<',' < '],['>',' > '],['≤',' <= '],['≥',' >= '],['? si',' ? '],[': si no',' : ']],
+    [['y',' and '],['o',' or '],['x','x'],['(','('],[')',')'],['⌫','BS']],
+    [['1','1'],['2','2'],['3','3'],['+','+'],[MINUS,'-'],['◀','LEFT']],
+    [['0','0'],['.','.'],['x²','^2'],['·','*'],['÷','/'],['▶','RIGHT']],
+    [['2 tramos','x < 1 ? | : 3 - x'],['3 tramos','x < 0 ? | : (x < 2 ? x : 2)'],['salto','x < 1 ? x^2 : x + 1'],['Borrar','CLR']]]}
+];
+function kbKey(ed,k){
+  if(k==='BS'){
+    if(ed.cur===0) return;
+    const before=ed.text.slice(0,ed.cur);
+    const m=before.match(/(arcsen|arccos|arctg|cosec|cotg|senh|cosh|tgh|sen|cos|tg|sec|ln|log_\d*|log|ent|sgn|abs|sqrt|raiz|e\^)\($/) || before.match(/ (<=|>=|<|>|\?|:|and|or) $/);
+    const n=m?m[0].length:1; ed.text=ed.text.slice(0,ed.cur-n)+ed.text.slice(ed.cur); ed.cur-=n;
+  }
+  else if(k==='CLR'){ ed.text=''; ed.cur=0; }
+  else if(k==='LEFT') ed.cur=Math.max(0,ed.cur-1);
+  else if(k==='RIGHT') ed.cur=Math.min(ed.text.length,ed.cur+1);
+  else { const i=k.indexOf('|'), t=k.replace('|',''); ed.text=ed.text.slice(0,ed.cur)+t+ed.text.slice(ed.cur); ed.cur+=(i>=0?i:t.length); }
+}
+let kbTarget=null;
+function renderKbd2D(){
+  const box=document.getElementById('kbd2d'); if(!box) return;
+  const pg=KB_PAGES[st.kbPage];
+  box.innerHTML='<div class="kbtabs">'+KB_PAGES.map((p,i)=>'<button type="button" data-kbp="'+i+'" aria-pressed="'+(i===st.kbPage)+'">'+p.name+'</button>').join('')+'</div>'+
+    '<div class="kbkeys">'+pg.rows.map(r=>r.map(k=>'<button type="button" data-k="'+esc(k[1])+'">'+esc(k[0])+'</button>').join('')).join('')+'</div>';
+  box.querySelectorAll('[data-kbp]').forEach(b=>b.addEventListener('click',()=>{ st.kbPage=+b.dataset.kbp; renderKbd2D(); }));
+  box.querySelectorAll('[data-k]').forEach(b=>{
+    b.addEventListener('mousedown',e=>e.preventDefault());
+    b.addEventListener('click',()=>{
+      const inp=kbTarget&&document.body.contains(kbTarget)?kbTarget:document.getElementById('fnInput');
+      const ed={text:inp.value,cur:inp.selectionStart==null?inp.value.length:inp.selectionStart};
+      kbKey(ed,b.dataset.k); inp.value=ed.text; inp.focus(); inp.setSelectionRange(ed.cur,ed.cur);
+      showPreview(inp);
+    });
+  });
+}
+function showPreview(inp){
+  const pv=document.getElementById('fnPreview'); if(!pv) return;
+  const slot=+(inp.dataset.slot||0), s=inp.value.trim();
+  if(!s){ pv.innerHTML=''; return; }
+  try{ const n=normalizeNode(M.parse(preprocess(s))); pv.innerHTML=texHTML('\\displaystyle '+FSLOT[slot]+'(x)='+nodeTex(n),FSLOT[slot]+'(x) = '+pretty(n)); }
+  catch(e){ pv.innerHTML='<span class="small">Expresión incompleta</span>'; }
+}
+
 /* ---- tablero VR con botones ---- */
 const vrUI={buttons:[],hover:null};
-const FN_KEYS=[
-  [['7','7'],['8','8'],['9','9'],['(','('],[')',')'],['⌫','BS']],
-  [['4','4'],['5','5'],['6','6'],['x','x'],['xⁿ','^'],['Borrar','CLR']],
-  [['1','1'],['2','2'],['3','3'],['+','+'],[MINUS,'-'],['·','*']],
-  [['0','0'],['.','.'],['÷','/'],['π','π'],['e','e'],['√','sqrt(']],
-  [['sen','sen('],['cos','cos('],['tg','tg('],['ln','ln('],['|x|','abs('],['x²','^2']]
-];
-const WINS=[1,2,3,4,5,6,8,10,12,15,20,30,50];
+const WINS=[1,2,3,4,5,6,8,10,12,15,20,30,50,100];
+const TN_LABEL=['Rectas: no','Tangente','Normal','Tang. y normal'];
+const DERIV_LABEL=['Derivadas: no','Gráfica de f′','Gráfica de f″','f′ y f″'];
 function vrLayout(){
   const B=[], pad=24, gap=12;
   if(st.vrPanel==='fn'){
+    // espacios de función f, g, h, k
+    let sx=PW-pad; const slots=[];
+    st.funcs.forEach((f,k)=>{ if(f) slots.push({id:'slot:'+k,label:FSLOT[k],slot:k}); });
+    if(slots.length<4) slots.push({id:'slot:new',label:'+ nueva'});
+    for(let i=slots.length-1;i>=0;i--){ const w=slots[i].label.length>2?130:74; sx-=w; B.push(Object.assign(slots[i],{x:sx,y:18,w,h:54})); sx-=10; }
+    const tw=(PW-2*pad-2*10)/3;
+    KB_PAGES.forEach((p,i)=>B.push({id:'kbp:'+i,label:p.name,x:pad+i*(tw+10),y:282,w:tw,h:54,kbp:i}));
     const kw=(PW-2*pad-5*10)/6, kh=62;
-    FN_KEYS.forEach((row,r)=>row.forEach((k,c)=>B.push({id:'k:'+k[1], label:k[0], x:pad+c*(kw+10), y:272+r*(kh+10), w:kw, h:kh, key:true})));
-    const w4=(PW-2*pad-3*10)/4, y6=272+5*(kh+10);
+    KB_PAGES[st.kbPage].rows.forEach((row,r)=>{
+      const n=row.length, w=(PW-2*pad-(n-1)*10)/n;
+      row.forEach((k,c)=>B.push({id:'k:'+k[1], label:k[0], x:pad+c*(w+10), y:348+r*(kh+10), w:n===6?kw:w, h:kh, key:true}));
+    });
+    const w4=(PW-2*pad-3*10)/4, y6=348+5*(kh+10);
     [['fnprev','◀ Ejemplo'],['fnnext','Ejemplo ▶'],['winm','Ventana '+MINUS],['winp','Ventana +']].forEach((a,i)=>B.push({id:a[0],label:a[1],x:pad+i*(w4+10),y:y6,w:w4,h:kh}));
-    const w2=(PW-2*pad-10)/2, y7=y6+kh+16;
-    B.push({id:'fncancel',label:'Cancelar',x:pad,y:y7,w:w2,h:84});
-    B.push({id:'fnok',label:'Graficar',x:pad+w2+10,y:y7,w:w2,h:84,primary:true});
+    const y7=y6+kh+14, canRm=st.fnSlot>0 && st.funcs[st.fnSlot];
+    const w3=(PW-2*pad-2*10)/3;
+    B.push({id:'fncancel',label:'Cancelar',x:pad,y:y7,w:w3,h:84});
+    B.push({id:'fnremove',label:canRm?'Quitar '+FSLOT[st.fnSlot]:'—',x:pad+w3+10,y:y7,w:w3,h:84,dim:!canRm});
+    B.push({id:'fnok',label:'Graficar',x:pad+2*(w3+10),y:y7,w:w3,h:84,primary:true});
     vrUI.buttons=B; return;
   }
-  const tw=(PW-2*pad-2*gap)/3, th=62;
-  TABS.forEach((t,i)=>{ B.push({id:'tab:'+t.id, label:t.name, x:pad+(i%3)*(tw+gap), y:20+Math.floor(i/3)*(th+gap), w:tw, h:th, tab:t.id}); });
+  const tw=(PW-2*pad-3*gap)/4, th=62;
+  const tabs=TABS.map(t=>({id:'tab:'+t.id,label:t.name,tab:t.id})).concat([{id:'actfn',label:'Recorrer: '+FN()+'(x)'}]);
+  tabs.forEach((t,i)=>B.push(Object.assign(t,{x:pad+(i%4)*(tw+gap), y:20+Math.floor(i/4)*(th+gap), w:tw, h:th})));
+  const bh=78, by=PH-bh-20, ya=by-74, yc=ya-74;
   const acts=[
     {id:'ride', label: st.playing?'Pausar':'Subir y recorrer'},
     {id:'mode', label: st.xrKind==='ar'?'Centrar vista':(st.xrMode==='ride'?'Ver maqueta':'Montar curva')},
-    {id:'rectas', label: ['Rectas: no','Tangente','Tang. y normal'][st.tn]},
+    {id:'rectas', label: TN_LABEL[st.tn]},
     {id:'voz', label: 'Voz: '+(TTS.on?'sí':'no')},
     {id:'ayuda', label: 'Ayuda'}
   ];
-  const bw=(PW-2*pad-4*gap)/5, bh=78, by=PH-bh-20;
+  const bw=(PW-2*pad-4*gap)/5;
   acts.forEach((a,i)=>B.push(Object.assign(a,{x:pad+i*(bw+gap), y:by, w:bw, h:bh})));
-  const zb=[{id:'zin',label:'+'},{id:'zout',label:MINUS},{id:'up',label:'↑'},{id:'down',label:'↓'},{id:'reset',label:'Centrar'}];
-  const zw=[70,70,70,70,150]; let zx=PW-pad-zw.reduce((a,b)=>a+b,0)-gap*4;
-  zb.forEach((z,i)=>{ B.push(Object.assign(z,{x:zx, y:by-78, w:zw[i], h:62})); zx+=zw[i]+gap; });
-  B.push({id:'fnopen',label:'Cambiar función',x:pad,y:by-78,w:300,h:62,primary:true});
-  B.push({id:'thick',label:'Grosor: '+THICK_NAME[st.thick],x:pad+300+gap,y:by-78,w:250,h:62});
-  vrUI.buttons=B;
+  const rowA=[['fnopen','Cambiar función',250,true],['thick','Grosor: '+THICK_NAME[st.thick],200],['zin','Tamaño +',142],['zout','Tamaño '+MINUS,142],['up','↑',80],['down','↓',80],['reset','Centrar',150]];
+  let x=pad; rowA.forEach(r=>{ B.push({id:r[0],label:r[1],x,y:ya,w:r[2],h:62,primary:!!r[3]}); x+=r[2]+gap; });
+  const small=78, big=(PW-2*pad-4*small-8*gap)/5;
+  const rowC=[['w:left','◀',small],['w:right','▶',small],['w:up','▲',small],['w:down','▼',small],['w:out','Ver más',big],['w:in','Ver menos',big],['lupa',st.lupa.length?'Salir lupa':'Lupa',big],['w:fit','Ajustar y',big],['deriv',DERIV_LABEL[st.deriv].replace(/f/g,FN()),big]];
+  x=pad; rowC.forEach(r=>{ B.push({id:r[0],label:r[1],x,y:yc,w:r[2],h:62,win:true}); x+=r[2]+gap; });
+  vrUI.buttons=B; vrUI.textTop=196; vrUI.textBottom=yc-16;
 }
 // conserva la última fórmula ya dibujada mientras se prepara la nueva (evita parpadeo al moverse)
 const lastTex={};
@@ -1781,23 +2443,25 @@ function stableMx(slot,t,a,color,px){
 let fnPrev={src:null,v:null};
 function fnPreview(){
   const src=st.fnDraft; if(fnPrev.src===src) return fnPrev.v;
-  let v=null; try{ const n=M.parse(preprocess(src)); const t=nodeTex(n); if(t) v={tex:t,alt:pretty(n)}; }catch(e){ v=null; }
+  let v=null; try{ const n=normalizeNode(M.parse(preprocess(src))); const t=nodeTex(n); if(t) v={tex:t,alt:pretty(n)}; }catch(e){ v=null; }
   fnPrev={src,v}; return v;
 }
 const SANS='"Atkinson Hyperlegible", sans-serif';
 function drawFnPanel(g){
-  const W=PW;
-  g.fillStyle='#ffffff'; g.font='700 36px '+SANS; g.fillText('Cambiar la función',28,58);
-  g.fillStyle='#94a8ae'; g.font='400 28px '+SANS; g.textAlign='right'; g.fillText('Ventana: x de '+fmtS(st.fnA)+' a '+fmtS(st.fnB),W-28,58); g.textAlign='left';
-  g.fillStyle='#0f2229'; roundRect(g,24,78,W-48,160,16); g.fill();
-  g.strokeStyle='rgba(148,168,174,0.45)'; g.lineWidth=2; roundRect(g,24,78,W-48,160,16); g.stroke();
+  const W=PW, nm=FSLOT[st.fnSlot];
+  g.fillStyle='#ffffff'; g.font='700 36px '+SANS; g.fillText('Editar '+nm+'(x)',28,56);
+  g.fillStyle='#94a8ae'; g.font='400 26px '+SANS; g.fillText('Ventana: x de '+fmtS(st.fnA)+' a '+fmtS(st.fnB),250,56);
+  g.fillStyle='#0f2229'; roundRect(g,24,84,W-48,166,16); g.fill();
+  g.strokeStyle='rgba(148,168,174,0.45)'; g.lineWidth=2; roundRect(g,24,84,W-48,166,16); g.stroke();
   g.font='600 30px "JetBrains Mono", monospace'; g.fillStyle='#e3ecec';
-  let raw=st.fnDraft; while(raw.length>1 && g.measureText('…'+raw+'▏').width>W-96) raw=raw.slice(1);
-  g.fillText((raw!==st.fnDraft?'…':'')+raw+'▏',44,122);
+  let txt=st.fnDraft, cur=st.fnCur, off=0;
+  while(txt.length>1 && g.measureText(txt+'  ').width>W-96){ if(cur-off>txt.length/2){ txt=txt.slice(1); off++; } else txt=txt.slice(0,-1); }
+  const shown=(off?'…':'')+txt.slice(0,cur-off)+'▏'+txt.slice(cur-off);
+  g.fillText(shown,44,128);
   const pv=fnPreview();
-  if(pv && st.fnDraft.trim()) drawRich(g,[Mx('\\displaystyle f(x)='+pv.tex,'f(x) = '+pv.alt)],44,192,{px:36,color:'#7fdde3',maxW:W-96,fixedBaseline:true});
-  else { g.fillStyle='#94a8ae'; g.font='italic 400 27px '+SANS; g.fillText(st.fnDraft.trim()?'Expresión incompleta':'Escriba f(x) con el teclado',44,196); }
-  if(st.fnErr){ g.fillStyle='#f2887f'; g.font='400 24px '+SANS; const l=wrap(g,st.fnErr,W-56)[0]; g.fillText(l,28,262); }
+  if(pv && st.fnDraft.trim()) drawRich(g,[Mx('\\displaystyle '+nm+'(x)='+pv.tex,nm+'(x) = '+pv.alt)],44,204,{px:34,color:hex(FCOL[st.fnSlot]===0xd9e4e4?0x7fdde3:FCOL[st.fnSlot]),maxW:W-96,fixedBaseline:true});
+  else { g.fillStyle='#94a8ae'; g.font='italic 400 27px '+SANS; g.fillText(st.fnDraft.trim()?'Expresión incompleta':'Escriba '+nm+'(x) con el teclado',44,204); }
+  if(st.fnErr){ g.fillStyle='#f2887f'; g.font='400 24px '+SANS; const l=wrap(g,st.fnErr,W-56)[0]; g.fillText(l,28,274); }
 }
 function drawVRPanel(){
   vrLayout();
@@ -1807,45 +2471,45 @@ function drawVRPanel(){
   g.strokeStyle='rgba(148,168,174,0.4)'; g.lineWidth=3; roundRect(g,1.5,1.5,W-3,H-3,29); g.stroke();
   const drawBtn=(b,active)=>{
     const hov=vrUI.hover===b.id;
-    g.fillStyle= active ? '#0d7480' : b.primary ? (hov?'#1c5d66':'#154a52') : (hov ? '#24444d' : '#162c33');
+    g.fillStyle= active ? '#0d7480' : b.primary ? (hov?'#1c5d66':'#154a52') : b.win ? (hov?'#2a3f57':'#1b2c3d') : (hov ? '#24444d' : '#162c33');
     roundRect(g,b.x,b.y,b.w,b.h,14); g.fill();
     g.strokeStyle= hov ? '#9fe3e8' : 'rgba(148,168,174,0.45)'; g.lineWidth= hov?4:2; roundRect(g,b.x,b.y,b.w,b.h,14); g.stroke();
-    g.fillStyle='#eef5f5'; g.font=(b.key?'600 ':'700 ')+(b.key?34:(b.label.length>14?28:32))+'px '+SANS; g.textAlign='center'; g.textBaseline='middle';
+    g.fillStyle=b.dim?'#5d7076':'#eef5f5';
+    let fs=b.key?32:(b.label.length>14?26:30); g.font=(b.key?'600 ':'700 ')+fs+'px '+SANS;
+    while(g.measureText(b.label).width>b.w-14 && fs>16){ fs-=2; g.font=(b.key?'600 ':'700 ')+fs+'px '+SANS; }
+    g.textAlign='center'; g.textBaseline='middle';
     g.fillText(b.label,b.x+b.w/2,b.y+b.h/2+2); g.textAlign='left'; g.textBaseline='alphabetic';
   };
-  vrUI.buttons.forEach(b=>drawBtn(b, (b.tab&&b.tab===st.tab) || (b.id==='ride'&&st.playing)));
+  vrUI.buttons.forEach(b=>drawBtn(b, (b.tab&&b.tab===st.tab) || (b.id==='ride'&&st.playing) || (b.kbp!==undefined&&b.kbp===st.kbPage) || (b.slot!==undefined&&b.slot===st.fnSlot)));
   if(st.vrPanel==='fn'){ drawFnPanel(g); hudTex.needsUpdate=true; return; }
-  const F=st.F, x=curX(), y=F.f(x), d1=F.f1(x), d2=F.f2(x);
-  let yy=204;
-  drawRich(g,[Mx('f(x)='+F.tex,'f(x) = '+F.txt)],28,yy,{px:32,color:'#cfe0e3',maxW:W-56,fixedBaseline:true}); yy+=52;
-  g.font='600 32px "JetBrains Mono", monospace';
-  const labs=[[Mx('x'),'x'],[Mx('f(x)'),'f(x)'],[Mx("f'(x)"),'f′(x)'],[Mx("f''(x)"),'f″(x)']];
-  [fmtS(x,3),fmtS(y,3),fmtS(d1,3),fmtS(d2,3)].forEach((v,i)=>{ const cx=28+i*290; const r=drawRich(g,[labs[i][0]],cx,yy,{px:30,color:'#94a8ae',fixedBaseline:true}); g.font='600 32px "JetBrains Mono", monospace'; g.fillStyle='#e3ecec'; g.fillText(v,cx+r.w+14,yy); });
-  yy+=26;
-  let px=28; g.font='700 27px '+SANS;
-  stateAt(x).forEach(([t,col])=>{ g.font='700 27px '+SANS; const w=g.measureText(t).width+30; g.strokeStyle=col; g.lineWidth=3; roundRect(g,px,yy,w,42,21); g.stroke(); g.fillStyle=col; g.fillText(t,px+15,yy+30); px+=w+12; });
-  if(st.tn>0){ const e=tnEquations(tangentInfo());
-    if(e.tanT){ const r=drawRich(g,['tangente ',stableMx('tan',e.tanT,e.tan,hex(COL.tan),26)],px+8,yy+24,{px:26,color:hex(COL.tan),fixedBaseline:true});
-      if(st.tn>1&&e.norT) drawRich(g,['normal ',stableMx('nor',e.norT,e.nor,hex(COL.nor),26)],px+8,yy+62,{px:26,color:hex(COL.nor),fixedBaseline:true}); } }
-  yy+=100;
-  const maxY=PH-78-20-78-18;
+  const F=st.F, nm=FN(), x=curX(), y=F.f(x), d1=F.f1(x), d2=F.f2(x);
+  let yy=vrUI.textTop;
+  drawRich(g,[Mx(nm+'(x)='+F.tex,nm+'(x) = '+F.txt)],28,yy,{px:32,color:'#cfe0e3',maxW:W-56,fixedBaseline:true}); yy+=50;
+  const labs=[Mx('x'),Mx(nm+'(x)'),Mx(nm+"'(x)"),Mx(nm+"''(x)")];
+  [fmtS(x,3),fmtS(y,3),fmtS(d1,3),fmtS(d2,3)].forEach((v,i)=>{ const cx=28+i*290; const r=drawRich(g,[labs[i]],cx,yy,{px:30,color:'#94a8ae',fixedBaseline:true}); g.font='600 32px "JetBrains Mono", monospace'; g.fillStyle='#e3ecec'; g.fillText(v,cx+r.w+14,yy); });
+  yy+=24;
+  let px=28;
+  stateAt(x).forEach(([t,col])=>{ g.font='700 26px '+SANS; const w=g.measureText(t).width+30; g.strokeStyle=col; g.lineWidth=3; roundRect(g,px,yy,w,40,20); g.stroke(); g.fillStyle=col; g.fillText(t,px+15,yy+29); px+=w+12; });
+  { const e=tnEquations(tangentInfo()); let ly=yy+24;
+    if(showTan()&&e.tanT){ drawRich(g,['tangente ',stableMx('tan',e.tanT,e.tan,hex(COL.tan),26)],px+8,ly,{px:26,color:hex(COL.tan),fixedBaseline:true}); ly+=38; }
+    if(showNor()&&e.norT) drawRich(g,['normal ',stableMx('nor',e.norT,e.nor,hex(COL.nor),26)],px+8,ly,{px:26,color:hex(COL.nor),fixedBaseline:true}); }
+  yy+=96;
+  const maxY=vrUI.textBottom;
+  const vs=voiceStatusShort(); if(vs){ g.fillStyle='#f2c14e'; g.font='600 24px '+SANS; g.textAlign='right'; g.fillText(vs,W-28,yy-60); g.textAlign='left'; }
   if(st.msgTitle && st.msgTitle.length){
-    const r=drawRich(g,st.msgTitle,28,yy,{px:34,font:'700 34px '+SANS,color:'#ffffff',maxW:W-56,lineH:44,maxY,fixedBaseline:true});
+    const r=drawRich(g,st.msgTitle,28,yy,{px:33,font:'700 33px '+SANS,color:'#ffffff',maxW:W-56,lineH:42,maxY,fixedBaseline:true});
     yy=r.y;
-    for(const para of st.msgLines){ if(yy>maxY) break; const r2=drawRich(g,para,28,yy,{px:29,color:'#c9d6d8',maxW:W-56,lineH:38,maxY}); yy=r2.y; }
+    for(const para of st.msgLines){ if(yy>maxY) break; const r2=drawRich(g,para,28,yy,{px:28,color:'#c9d6d8',maxW:W-56,lineH:36,maxY}); yy=r2.y; }
   }
   hudTex.needsUpdate=true;
 }
-function openFnPanel(){
-  st.vrPanel='fn'; st.fnDraft=st.F?st.F.src:''; st.fnA=st.a; st.fnB=st.b; st.fnErr='';
-  setMsg('Cambiar la función',['Escriba f(x) con el teclado del tablero y pulse Graficar.']);
-  speak('Cambiar la función. Escriba la nueva función con el teclado del tablero, o elija un ejemplo, y pulse Graficar. Los botones Ventana cambian el intervalo de x.');
-}
-function fnKey(k){
-  if(k==='BS'){ const m=st.fnDraft.match(/(sen|cos|tg|ln|abs|sqrt)\($/); st.fnDraft = m ? st.fnDraft.slice(0,-m[0].length) : st.fnDraft.slice(0,-1); }
-  else if(k==='CLR') st.fnDraft='';
-  else st.fnDraft+=k;
-  st.fnErr='';
+function openFnPanel(slot){
+  if(slot===undefined) slot=st.act;
+  st.vrPanel='fn'; st.fnSlot=slot;
+  const fn=st.funcs[slot];
+  st.fnDraft=fn?fn.src:''; st.fnCur=st.fnDraft.length; st.fnA=st.a; st.fnB=st.b; st.fnErr='';
+  setMsg('Editar '+FSLOT[slot]+'(x)',['Escriba con el teclado del tablero y pulse Graficar.']);
+  speak('Editar la función '+FSLOT[slot]+'. Use las páginas Básico, Funciones y Por tramos del teclado, las flechas para mover el cursor, y pulse Graficar.');
 }
 function fnWindow(dir){
   const half=(st.fnB-st.fnA)/2;
@@ -1857,15 +2521,20 @@ function fnWindow(dir){
   speak('Ventana de x igual a '+sayNum(st.fnA)+' a '+sayNum(st.fnB)+'.');
 }
 function fnSubmit(){
-  const src=st.fnDraft;
-  const ok=loadFunction(src,st.fnA,st.fnB,null,null,true);
-  if(ok){
-    document.getElementById('fnInput').value=src; document.getElementById('ya').value=''; document.getElementById('yb').value='';
-    st.vrPanel='main'; st.fnErr='';
-  } else {
-    st.fnErr=document.getElementById('fnError').textContent||'No se pudo graficar esta función.';
-    speak(st.fnErr);
-  }
+  const src=st.fnDraft.trim(), slot=st.fnSlot;
+  if(!src){ st.fnErr='Escriba una expresión en x.'; speak(st.fnErr); return; }
+  const e=setFnSrc(slot,src);
+  if(e){ st.fnErr=e; speak('No pude leer la función. '+e); return; }
+  st.funcs[slot].visible=true;
+  const w=applyAll({a:st.fnA,b:st.fnB,act:slot,talk:true});
+  if(w && w.startsWith('La ventana')){ st.fnErr=w; speak(w); return; }
+  st.vrPanel='main'; st.fnErr='';
+}
+function removeFn(slot){
+  if(slot<=0||!st.funcs[slot]) return;
+  st.funcs[slot]=null; if(st.act===slot) st.act=0;
+  computeAll(); buildGraph(false); renderPanel(); renderFnList(); setTab(st.tab,{speak:false}); hudDirty=vrDirty=true;
+  speak('Se quitó la función '+FSLOT[slot]+'.');
 }
 function setThick(k,talk){
   st.thick=k;
@@ -1875,9 +2544,18 @@ function setThick(k,talk){
   hudDirty=true; vrDirty=true;
   if(talk) speak('Líneas '+['finas','medias','gruesas'][k]+'.');
 }
+function setDeriv(v,talk){
+  st.deriv=v; const c1=document.getElementById('chkD1'), c2=document.getElementById('chkD2');
+  if(c1) c1.checked=!!(v&1); if(c2) c2.checked=!!(v&2);
+  buildGraph(false); applyTabVisibility(); hudDirty=vrDirty=true;
+  const nm=FN();
+  if(talk) speak(v===0?'Sin gráficas de derivadas.':v===1?'Se muestra la gráfica de la derivada '+nm+' prima, con trazo discontinuo. Donde corta el eje x, '+nm+' tiene sus puntos críticos.':v===2?'Se muestra la gráfica de la segunda derivada, con puntos. Donde cambia de signo, '+nm+' tiene sus inflexiones.':'Se muestran las gráficas de la primera y de la segunda derivada.');
+}
 function vrAction(id){
   if(id.startsWith('tab:')){ setTab(id.slice(4),{speak:true}); return; }
-  if(id.startsWith('k:')){ fnKey(id.slice(2)); vrDirty=true; return; }
+  if(id.startsWith('k:')){ const ed={text:st.fnDraft,cur:st.fnCur}; kbKey(ed,id.slice(2)); st.fnDraft=ed.text; st.fnCur=ed.cur; st.fnErr=''; vrDirty=true; return; }
+  if(id.startsWith('kbp:')){ st.kbPage=+id.slice(4); vrDirty=true; return; }
+  if(id.startsWith('slot:')){ const k=id.slice(5); let s=k==='new'?st.funcs.findIndex((f,i)=>i>0&&!f):+k; if(k==='new'&&s<0) s=st.funcs.length<4?st.funcs.length:-1; if(s<0){ speak('Ya hay cuatro funciones.'); return; } openFnPanel(s); vrDirty=true; return; }
   switch(id){
     case 'ride': if(st.playing){ st.playing=false; updatePlayBtn(); speak('Recorrido en pausa.'); } else rideTour(); break;
     case 'mode': if(st.xrKind==='ar'){ resetView(); } else toggleMode(); break;
@@ -1890,11 +2568,22 @@ function vrAction(id){
     case 'down': moveBy(-0.1); break;
     case 'reset': resetView(); speak('Vista centrada.'); break;
     case 'fnopen': openFnPanel(); break;
+    case 'actfn': cycleActive(); break;
     case 'thick': setThick((st.thick+1)%3,true); break;
-    case 'fnprev': case 'fnnext': { const n=PRESETS.length; st.fnPreset=(st.fnPreset+(id==='fnnext'?1:-1)+n)%n; const p=PRESETS[st.fnPreset]; st.fnDraft=p.f; st.fnA=p.a; st.fnB=p.b; st.fnErr=''; break; }
+    case 'w:left': panWin(-0.25,0,true); break;
+    case 'w:right': panWin(0.25,0,true); break;
+    case 'w:up': panWin(0,0.25,true); break;
+    case 'w:down': panWin(0,-0.25,true); break;
+    case 'w:out': zoomWin(2,true); break;
+    case 'w:in': zoomWin(0.5,true); break;
+    case 'w:fit': fitWin(true); break;
+    case 'lupa': lupa(); break;
+    case 'deriv': setDeriv((st.deriv+1)%4,true); break;
+    case 'fnprev': case 'fnnext': { const n=PRESETS.length; st.fnPreset=(st.fnPreset+(id==='fnnext'?1:-1)+n)%n; const p=PRESETS[st.fnPreset]; st.fnDraft=p.f; st.fnCur=p.f.length; st.fnA=p.a; st.fnB=p.b; st.fnErr=''; break; }
     case 'winm': fnWindow(-1); break;
     case 'winp': fnWindow(1); break;
-    case 'fncancel': st.vrPanel='main'; st.fnErr=''; speak('Se mantiene la función actual.'); break;
+    case 'fncancel': st.vrPanel='main'; st.fnErr=''; speak('Sin cambios.'); break;
+    case 'fnremove': if(st.fnSlot>0&&st.funcs[st.fnSlot]){ removeFn(st.fnSlot); st.vrPanel='main'; } break;
     case 'fnok': fnSubmit(); break;
   }
   vrDirty=true;
@@ -1904,15 +2593,19 @@ function toggleMode(){
   const t= st.xrMode==='ride' ? ['Modo montar','Está sentado sobre la curva. Use el stick derecho para avanzar.'] : ['Modo maqueta','La función está frente a usted a escala de mesa. Puede agarrarla y moverla.'];
   setMsg(t[0],[t[1]]); speak(t[0]+'. '+t[1]);
 }
+function syncTnRadios(){ const r=document.querySelector('input[name="tn"][value="'+st.tn+'"]'); if(r) r.checked=true; hudDirty=true; vrDirty=true; }
 function cycleRectas(){
-  st.tn=(st.tn+1)%3; const r=document.querySelector('input[name="tn"][value="'+st.tn+'"]'); if(r) r.checked=true; hudDirty=true; vrDirty=true;
-  speak(st.tn===0?'Rectas ocultas.':(st.tn===1?'Se muestra la recta tangente. ':'Se muestran la tangente y la normal. ')+(st.tn>0?tnSay():''));
+  st.tn=(st.tn+1)%4; syncTnRadios();
+  speak(['Rectas ocultas.','Se muestra la recta tangente. ','Se muestra la recta normal. ','Se muestran la tangente y la normal. '][st.tn]+(st.tn>0?tnSay():''));
 }
 
 /* ================= panel lateral ================= */
 function updateLegend(){
   const el=document.getElementById('legend');
-  const L = st.color==='mono'? [['creciente',COL.crec],['decreciente',COL.decr]] : st.color==='conc'? [['cóncava hacia arriba',COL.up],['cóncava hacia abajo',COL.down]] : [];
+  const L = st.color==='mono'? [['creciente',COL.crec]  ,['decreciente',COL.decr]] : st.color==='conc'? [['cóncava hacia arriba',COL.up],['cóncava hacia abajo',COL.down]] : [];
+  st.funcs.forEach((f,k)=>{ if(f&&f.F&&f.visible&&k!==st.act) L.push([FSLOT[k]+'(x)',FCOL[k]]); });
+  if(st.deriv&1) L.push([FN()+'′(x), trazos',0xf0f4f4]);
+  if(st.deriv&2) L.push([FN()+'″(x), puntos',0x9fb6bc]);
   el.hidden=!L.length;
   el.innerHTML=L.map(([t,c])=>'<span><i style="background:'+hex(c)+'"></i>'+t+'</span>').join('');
 }
@@ -1921,26 +2614,48 @@ function renderTabBar(){
   bar.innerHTML=TABS.map(t=>'<button type="button" role="tab" data-tab="'+t.id+'" aria-selected="'+(t.id===st.tab)+'">'+t.name+'</button>').join('');
   bar.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab,{speak:true})));
 }
+function renderFnList(){
+  const box=document.getElementById('fnList'); if(!box) return;
+  const focusedSlot=document.activeElement&&document.activeElement.classList.contains('fnin')?document.activeElement.dataset.slot:null;
+  box.innerHTML=st.funcs.map((fn,k)=>{ if(!fn) return '';
+    return '<div class="fnrow" data-slot="'+k+'">'+
+      '<label class="act" title="Función que recorre el vagón"><input type="radio" name="actfn" value="'+k+'"'+(k===st.act?' checked':'')+(fn.F?'':' disabled')+' aria-label="Recorrer '+FSLOT[k]+'"><span class="fname" style="--c:'+hex(FCOL[k]===0xd9e4e4?0x4cc2c9:FCOL[k])+'">'+FSLOT[k]+'(x) =</span></label>'+
+      '<input class="fnin"'+(k===0?' id="fnInput"':'')+' data-slot="'+k+'" value="'+esc(fn.src)+'" spellcheck="false" autocomplete="off" aria-label="Expresión de '+FSLOT[k]+'(x)">'+
+      (k>0?'<label class="vis" title="Mostrar u ocultar"><input type="checkbox" class="fvis"'+(fn.visible?' checked':'')+' aria-label="Mostrar '+FSLOT[k]+'"></label><button type="button" class="frm" aria-label="Quitar '+FSLOT[k]+'">×</button>':'')+
+      '</div>'; }).join('');
+  box.querySelectorAll('input[name="actfn"]').forEach(r=>r.addEventListener('change',()=>setActive(+r.value,true)));
+  box.querySelectorAll('.fvis').forEach(c=>c.addEventListener('change',()=>{ const k=+c.closest('.fnrow').dataset.slot; st.funcs[k].visible=c.checked; computeAll(); buildGraph(false); applyTabVisibility(); buildTour(); renderTab(); updateLegend(); }));
+  box.querySelectorAll('.frm').forEach(b=>b.addEventListener('click',()=>removeFn(+b.closest('.fnrow').dataset.slot)));
+  box.querySelectorAll('.fnin').forEach(i=>{ i.addEventListener('focus',()=>{ kbTarget=i; showPreview(i); }); i.addEventListener('input',()=>showPreview(i)); });
+  const add=document.getElementById('bAddFn'); if(add) add.disabled=st.funcs.filter(Boolean).length>=4;
+  if(focusedSlot!==null){ const el=box.querySelector('.fnin[data-slot="'+focusedSlot+'"]'); if(el) el.focus(); }
+}
 function renderPanel(){
-  const F=st.F;
-  document.getElementById('fxTitle').innerHTML=texHTML('f(x)='+F.tex,'f(x) = '+F.txt);
-  document.getElementById('d1Txt').innerHTML=F.symbolic?texHTML(F.x1,F.t1):esc(F.t1);
+  const F=st.F, nm=FN();
+  document.getElementById('fxTitle').innerHTML=texHTML(nm+'(x)='+F.tex,nm+'(x) = '+F.txt);
+  document.getElementById('d1Lbl').innerHTML=texHTML(nm+"'(x)=",nm+'′(x) =');
+  document.getElementById('d2Lbl').innerHTML=texHTML(nm+"''(x)=",nm+'″(x) =');
+  document.getElementById('d1Txt').innerHTML=F.symbolic?texHTML(F.x1.replace(/(^|[^a-zA-Z\\])f(?=\\left|'|\()/g,'$1'+nm),F.t1):esc(F.t1);
   document.getElementById('d2Txt').innerHTML=F.symbolic?texHTML(F.x2,F.t2):esc(F.t2);
+  const l1=document.getElementById('lblD1'), l2=document.getElementById('lblD2');
+  if(l1) l1.innerHTML='Gráfica de '+texHTML(nm+"'",nm+'′')+' (trazos)'; if(l2) l2.innerHTML='Gráfica de '+texHTML(nm+"''",nm+'″')+' (puntos)';
+  updateLegend();
 }
 function applyStaticTex(){
   document.querySelectorAll('[data-tex]').forEach(el=>{ if(el.dataset.alt==null) el.dataset.alt=el.textContent; el.innerHTML=texHTML(el.dataset.tex,el.dataset.alt); });
 }
 function onMathJax(){
   MJ.ready=true; MJ.cache.clear(); MJ.img.clear();
-  applyStaticTex();
+  applyStaticTex(); hudName='';
   if(!st.F) return;
   renderPanel();
   buildGraph(false); applyTabVisibility(); buildTour(); renderTab();
   if(document.getElementById('limOut').innerHTML) computeLimit();
+  const inp=document.activeElement; if(inp&&inp.classList&&inp.classList.contains('fnin')) showPreview(inp);
   hudDirty=true; vrDirty=true;
 }
 function renderTab(){
-  const A=st.A;
+  const A=st.A, nm=FN();
   document.querySelectorAll('#tabBar button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===st.tab));
   const info=tabInfo(st.tab);
   document.getElementById('tabInfo').innerHTML='<strong>'+esc(info.title)+'</strong>'+info.lines.map(l=>'<div>'+richHTML(l)+'</div>').join('');
@@ -1950,13 +2665,14 @@ function renderTab(){
     : '<li class="small">No hay elementos de este tipo en la ventana.</li>';
   ol.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>jumpToTour(+b.dataset.i)));
   const ex=[];
+  if(A.empty){ document.getElementById('tabExtra').innerHTML=''; return; }
   const absBlock=()=>'<div><span class="lbl">Extremos absolutos en la ventana</span><div>'+richHTML(extTxt(A.absMax,'máximo'))+'<br>'+richHTML(extTxt(A.absMin,'mínimo'))+'</div></div>';
   if(st.tab==='todo'){
     ex.push('<div><span class="lbl">Dominio en la ventana</span><div>'+texHTML(domTeX(A),A.domTxt)+'</div></div>');
     ex.push(absBlock());
   }
   if(st.tab==='todo'||st.tab==='asint'){
-    ex.push('<div><span class="lbl">Comportamiento en los extremos</span><div>'+richHTML(infLine(A.infNeg,-1))+'<br>'+richHTML(infLine(A.infPos,1))+'</div><div class="small">Estimado evaluando f en '+texHTML('x=\\pm\\sqrt{2}\\cdot 10^{k},\\ k=1,\\dots,9','x = ±√2·10ᵏ con k = 1, …, 9')+'.</div></div>');
+    ex.push('<div><span class="lbl">Comportamiento en los extremos</span><div>'+richHTML(infLine(A.infNeg,-1))+'<br>'+richHTML(infLine(A.infPos,1))+'</div><div class="small">Estimado evaluando '+nm+' en '+texHTML('x=\\pm\\sqrt{2}\\cdot 10^{k},\\ k=1,\\dots,9','x = ±√2·10ᵏ con k = 1, …, 9')+'.</div></div>');
   }
   const mName={crec:['creciente',CSSCOL.crec],decr:['decreciente',CSSCOL.decr],const:['constante','var(--muted)']};
   const cName={up:['cóncava hacia arriba',CSSCOL.up],down:['cóncava hacia abajo',CSSCOL.down],lin:['lineal','var(--muted)']};
@@ -1970,33 +2686,33 @@ function renderTab(){
 function numCell(v,p){ const d=dec(v,p); return d.indexOf('×')>=0 ? texHTML(texDec(v,p),d) : d; }
 function computeLimit(){
   const raw=document.getElementById('limC').value.trim();
-  const out=document.getElementById('limOut');
+  const out=document.getElementById('limOut'), nm=FN();
   let c;
   const r=raw.replace(/∞/g,'inf').toLowerCase().replace(/\s/g,'');
   if(r==='inf'||r==='+inf'||r==='infinito'||r==='+infinito') c=Infinity;
   else if(r==='-inf'||r==='-infinito') c=-Infinity;
   else { try{ c=toNum(M.evaluate(preprocess(raw))); }catch(e){ c=NaN; } }
   if(!(isFinite(c)||Math.abs(c)===Infinity)){ out.innerHTML='<p class="err">No reconozco ese valor. Pruebe 2, pi/2, inf o -inf.</p>'; st.limit=null; buildLimitVisual(); return null; }
-  const f=st.F.f, res=limitAt(f,c);
+  const f=st.F.f, res=limitAt(f,c), fx=nm+'(x)';
   let html='', say='';
   if(res.inf){
     const xs=[1,2,3,4,6,8].map(k=>Math.sign(c)*Math.pow(10,k));
-    html+='<div class="ltwrap"><table class="lt"><tr><th>'+texHTML('x','x')+'</th><th>'+texHTML('f(x)','f(x)')+'</th></tr>'+xs.map(x=>'<tr><td>'+numCell(x,0)+'</td><td>'+numCell(f(x),6)+'</td></tr>').join('')+'</table></div>';
+    html+='<div class="ltwrap"><table class="lt"><tr><th>'+texHTML('x','x')+'</th><th>'+texHTML(fx,fx)+'</th></tr>'+xs.map(x=>'<tr><td>'+numCell(x,0)+'</td><td>'+numCell(f(x),6)+'</td></tr>').join('')+'</table></div>';
     const si=c>0?'+':'-', ss=c>0?'+∞':MINUS+'∞';
-    html+='<p class="facts"><span>'+texHTML('\\displaystyle\\lim_{x\\to '+si+'\\infty} f(x)='+texLim(res.L),'lím x→'+ss+' f(x) = '+limTxt(res.L))+'</span>'+(res.oblique?'<span>Asíntota oblicua '+texHTML('y='+linEqTeX(res.oblique.m,res.oblique.n),'y = '+linEq(res.oblique.m,res.oblique.n))+'</span>':'')+'</p>';
+    html+='<p class="facts"><span>'+texHTML('\\displaystyle\\lim_{x\\to '+si+'\\infty} '+fx+'='+texLim(res.L),'lím x→'+ss+' '+fx+' = '+limTxt(res.L))+'</span>'+(res.oblique?'<span>Asíntota oblicua '+texHTML('y='+linEqTeX(res.oblique.m,res.oblique.n),'y = '+linEq(res.oblique.m,res.oblique.n))+'</span>':'')+'</p>';
     say=infSay({L:res.L,oblique:res.oblique},c>0?1:-1);
     st.limit=null;
   } else {
     const hs=[1e-1,1e-2,1e-3,1e-4,1e-5,1e-6].map(h=>h*Math.max(1,Math.abs(c)));
-    html+='<div class="ltwrap"><table class="lt"><tr><th>'+texHTML('x\\to c^{-}','x → c⁻')+'</th><th>'+texHTML('f(x)','f(x)')+'</th><th>'+texHTML('x\\to c^{+}','x → c⁺')+'</th><th>'+texHTML('f(x)','f(x)')+'</th></tr>'+hs.map(h=>'<tr><td>'+numCell(c-h,6)+'</td><td>'+numCell(f(c-h),6)+'</td><td>'+numCell(c+h,6)+'</td><td>'+numCell(f(c+h),6)+'</td></tr>').join('')+'</table></div>';
+    html+='<div class="ltwrap"><table class="lt"><tr><th>'+texHTML('x\\to c^{-}','x → c⁻')+'</th><th>'+texHTML(fx,fx)+'</th><th>'+texHTML('x\\to c^{+}','x → c⁺')+'</th><th>'+texHTML(fx,fx)+'</th></tr>'+hs.map(h=>'<tr><td>'+numCell(c-h,6)+'</td><td>'+numCell(f(c-h),6)+'</td><td>'+numCell(c+h,6)+'</td><td>'+numCell(f(c+h),6)+'</td></tr>').join('')+'</table></div>';
     const ct=fmtS(c), tc=texNum(c);
     let concl, csay;
-    if(res.both && !res.both.onlyLeft && !res.both.onlyRight){ concl=texHTML('\\displaystyle\\lim_{x\\to '+tc+'} f(x)='+texLim(res.both),'lím x→'+ct+' f(x) = '+limTxt(res.both)); csay='El límite existe y vale '+sayLim(res.both)+'.'; }
-    else if(res.both){ concl='Solo existe el límite lateral '+(res.both.onlyLeft?'izquierdo':'derecho')+', porque f no está definida al otro lado de '+texHTML('x='+tc,'x = '+ct)+'.'; csay='Solo existe el límite por la '+(res.both.onlyLeft?'izquierda':'derecha')+'.'; }
+    if(res.both && !res.both.onlyLeft && !res.both.onlyRight){ concl=texHTML('\\displaystyle\\lim_{x\\to '+tc+'} '+fx+'='+texLim(res.both),'lím x→'+ct+' '+fx+' = '+limTxt(res.both)); csay='El límite existe y vale '+sayLim(res.both)+'.'; }
+    else if(res.both){ concl='Solo existe el límite lateral '+(res.both.onlyLeft?'izquierdo':'derecho')+', porque '+nm+' no está definida al otro lado de '+texHTML('x='+tc,'x = '+ct)+'.'; csay='Solo existe el límite por la '+(res.both.onlyLeft?'izquierda':'derecha')+'.'; }
     else { concl='El límite no existe, porque los límites laterales no coinciden.'; csay='El límite no existe, porque los límites laterales no coinciden.'; }
     const fc=f(c);
-    html+='<div class="facts"><span>'+texHTML('\\displaystyle\\lim_{x\\to '+tc+'^{-}} f(x)='+texLim(res.L),'lím x→'+ct+'⁻ f(x) = '+limTxt(res.L))+'</span><span>'+texHTML('\\displaystyle\\lim_{x\\to '+tc+'^{+}} f(x)='+texLim(res.R),'lím x→'+ct+'⁺ f(x) = '+limTxt(res.R))+'</span><span>'+concl+'</span><span class="small">'+(isFinite(fc)?texHTML('f\\left('+tc+'\\right)='+texNum(fc),'f('+ct+') = '+fmtS(fc))+'.':texHTML('f\\left('+tc+'\\right)','f('+ct+')')+' no está definida.')+'</span></div>';
-    say='Cuando x tiende a '+sayNum(c)+' por la izquierda, f tiende a '+sayLim(res.L)+'. Por la derecha, tiende a '+sayLim(res.R)+'. '+csay;
+    html+='<div class="facts"><span>'+texHTML('\\displaystyle\\lim_{x\\to '+tc+'^{-}} '+fx+'='+texLim(res.L),'lím x→'+ct+'⁻ '+fx+' = '+limTxt(res.L))+'</span><span>'+texHTML('\\displaystyle\\lim_{x\\to '+tc+'^{+}} '+fx+'='+texLim(res.R),'lím x→'+ct+'⁺ '+fx+' = '+limTxt(res.R))+'</span><span>'+concl+'</span><span class="small">'+(isFinite(fc)?texHTML(nm+'\\left('+tc+'\\right)='+texNum(fc),nm+'('+ct+') = '+fmtS(fc))+'.':texHTML(nm+'\\left('+tc+'\\right)',nm+'('+ct+')')+' no está definida.')+'</span></div>';
+    say='Cuando x tiende a '+sayNum(c)+' por la izquierda, '+nm+' tiende a '+sayLim(res.L)+'. Por la derecha, tiende a '+sayLim(res.R)+'. '+csay;
     st.limit={c,res};
   }
   out.innerHTML=html;
@@ -2004,60 +2720,52 @@ function computeLimit(){
   return say;
 }
 
-/* ================= carga de funciones ================= */
+/* ================= formularios y controles 2D ================= */
 function num(id){ const v=document.getElementById(id).value.trim(); if(v==='') return null; try{ const r=toNum(M.evaluate(preprocess(v))); return isFinite(r)?r:null; }catch(e){ return null; } }
-function loadFunction(src,a,b,ymin,ymax,talk){
-  const err=document.getElementById('fnError');
-  let F;
-  try{ F=buildF(src); }catch(e){ err.textContent=e.message; err.hidden=false; speak('No pude leer la función. '+e.message); return false; }
-  if(!(b>a)){ err.textContent='La ventana necesita x mín menor que x máx.'; err.hidden=false; return false; }
-  const A=analyze(F,a,b);
-  if(A.empty){ err.textContent='La función no toma valores reales en esta ventana. Cambie x mín y x máx.'; err.hidden=false; return false; }
-  err.hidden=true;
-  st.F=F; st.A=A; st.a=a; st.b=b;
-  let lo=ymin, hi=ymax;
-  if(lo===null||hi===null||!(hi>lo)){ const r=autoY(A); if(lo===null||!(hi>lo)) lo=r[0]; if(hi===null||!(hi>lo)) hi=r[1]; }
-  st.ymin=lo; st.ymax=hi;
-  document.getElementById('xa').value=fmtNum(a); document.getElementById('xb').value=fmtNum(b);
-  document.getElementById('ya').placeholder='auto '+fmtNum(lo); document.getElementById('yb').placeholder='auto '+fmtNum(hi);
-  st.limit=null; document.getElementById('limOut').innerHTML='';
-  buildGraph();
-  renderPanel();
-  st.piece=0; st.s=0; st.playing=false; updatePlayBtn(); curTourIdx=-1; curStopIdx=-1; snapCam=true; pendingJump=null;
-  setTab(st.tab,{speak:false});
-  if(talk) speak(tabInfo(st.tab).say);
-  computeLimit();
-  hudDirty=true; vrDirty=true;
-  return true;
-}
 function fmtNum(v){ return String(Math.round(v*1e6)/1e6); }
-
 document.getElementById('fnForm').addEventListener('submit',e=>{ e.preventDefault();
+  const err=document.getElementById('fnError');
   const a=num('xa'), b=num('xb');
-  loadFunction(document.getElementById('fnInput').value, a===null?-5:a, b===null?5:b, num('ya'), num('yb'), true);
+  const rows=[...document.querySelectorAll('#fnList .fnin')];
+  for(const inp of rows){
+    const k=+inp.dataset.slot, src=inp.value.trim();
+    if(!src){ if(k===0){ err.textContent='Escriba f(x).'; err.hidden=false; return; } st.funcs[k].src=''; st.funcs[k].F=null; continue; }
+    const m=setFnSrc(k,src); if(m){ err.textContent=FSLOT[k]+'(x): '+m; err.hidden=false; speak('No pude leer la función '+FSLOT[k]+'. '+m); return; }
+  }
+  const w=applyAll({a:a===null?-5:a,b:b===null?5:b,ymin:num('ya'),ymax:num('yb'),talk:true});
+  err.textContent=w; err.hidden=!w;
+});
+document.getElementById('bAddFn').addEventListener('click',()=>{
+  let k=st.funcs.findIndex((f,i)=>i>0&&!f); if(k<0) k=st.funcs.length; if(k>3) return;
+  st.funcs[k]=makeFn(k,''); renderFnList();
+  const el=document.querySelector('#fnList .fnin[data-slot="'+k+'"]'); if(el){ el.focus(); kbTarget=el; }
 });
 ['xa','xb','ya','yb'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); document.getElementById('fnForm').requestSubmit(); } }));
 const presetBox=document.getElementById('presets');
 PRESETS.forEach((p,i)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=p.f; b.addEventListener('click',()=>applyPreset(i)); presetBox.appendChild(b); });
 let presetIdx=0;
-function applyPreset(i){ presetIdx=i; const p=PRESETS[i]; document.getElementById('fnInput').value=p.f; document.getElementById('ya').value=''; document.getElementById('yb').value=''; loadFunction(p.f,p.a,p.b,null,null,true); }
-document.getElementById('limForm').addEventListener('submit',e=>{ e.preventDefault(); const s=computeLimit(); if(s) speak(s); });
+function applyPreset(i){ presetIdx=i; const p=PRESETS[i]; loadFunction(p.f,p.a,p.b,null,null,true,st.act); }
+document.getElementById('limForm').addEventListener('submit',e=>{ e.preventDefault(); st.limitUsed=true; const s=computeLimit(); if(s) speak(s); });
 document.querySelectorAll('input[name="tn"]').forEach(r=>r.addEventListener('change',()=>{ st.tn=+r.value; hudDirty=true; vrDirty=true; }));
 document.querySelectorAll('input[name="tnsrc"]').forEach(r=>r.addEventListener('change',()=>{ st.tnFollow=r.value==='follow'; readTnX(); hudDirty=true; }));
 function readTnX(){ const v=num('tnX'); if(v!==null) st.tnX=v; }
 document.getElementById('tnX').addEventListener('input',()=>{ readTnX(); if(!st.tnFollow) hudDirty=true; });
 document.getElementById('tnX').addEventListener('focus',()=>{ document.querySelector('input[name="tnsrc"][value="fixed"]').checked=true; st.tnFollow=false; });
 document.getElementById('bSpeakTn').addEventListener('click',()=>speak(tnSay()));
-
+document.getElementById('bLupa').addEventListener('click',lupa);
+document.getElementById('chkD1').addEventListener('change',e=>setDeriv((st.deriv&~1)|(e.target.checked?1:0),false));
+document.getElementById('chkD2').addEventListener('change',e=>setDeriv((st.deriv&~2)|(e.target.checked?2:0),false));
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 document.querySelectorAll('[data-color]').forEach(b=>b.addEventListener('click',()=>setColor(b.dataset.color)));
-document.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',()=>{ const k=b.dataset.move; if(k==='in') zoomBy(1.25); else if(k==='out') zoomBy(0.8); else if(k==='up') moveBy(0.08); else if(k==='down') moveBy(-0.08); else resetView(); }));
+document.querySelectorAll('[data-win]').forEach(b=>b.addEventListener('click',()=>{ const k=b.dataset.win;
+  if(k==='left') panWin(-0.25,0); else if(k==='right') panWin(0.25,0); else if(k==='up') panWin(0,0.25); else if(k==='down') panWin(0,-0.25);
+  else if(k==='out') zoomWin(2); else if(k==='in') zoomWin(0.5); else if(k==='fit') fitWin(); else resetView(); }));
 function setView(v){ st.view=v; document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v)); controls.enabled=(v==='orbit'); if(v==='orbit') placeGraph(); snapCam=true; }
 function setColor(c){ st.color=c; document.querySelectorAll('[data-color]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.color===c)); recolor(); }
 function updatePlayBtn(){ document.getElementById('bPlay').textContent = st.playing?'❚❚ Pausa':'▶ Recorrer'; vrDirty=true; }
 function togglePlay(){
   st.playing=!st.playing;
-  if(st.playing){ const pc=pieces[st.piece]; if(pc && st.s>=pc.L-1e-12 && st.piece===pieces.length-1){ st.piece=0; st.s=0; } st.pauseUntil=0; st.waitSpeech=false; }
+  if(st.playing){ const pc=pieces[st.piece]; if(pc && st.s>=pc.L-1e-12 && st.piece===pieces.length-1){ st.piece=0; st.s=0; } st.pauseUntil=0; st.waitSpeech=false; st.follow=0; }
   else stopSpeech();
   updatePlayBtn();
 }
@@ -2071,16 +2779,22 @@ document.getElementById('btnFn').addEventListener('click',()=>{ const inp=docume
 document.querySelectorAll('[data-thick]').forEach(b=>b.addEventListener('click',()=>setThick(+b.dataset.thick,false)));
 document.getElementById('btnHelp').addEventListener('click',()=>{ setMsg('Ayuda',[HELP_2D]); speak(HELP_2D); });
 document.getElementById('speed').addEventListener('input',e=>{ st.speed=+e.target.value; });
-document.getElementById('xslider').addEventListener('input',e=>{ const x=st.a+(st.b-st.a)*(+e.target.value)/1000; st.playing=false; updatePlayBtn(); moveTo(nearestReach(x),false); hudDirty=true; });
+document.getElementById('xslider').addEventListener('input',e=>{ const x=st.a+(st.b-st.a)*(+e.target.value)/1000; st.playing=false; st.jump=null; updatePlayBtn(); moveTo(nearestReach(x),false); hudDirty=true; });
+document.getElementById('ttsEngine').addEventListener('change',e=>setEngine(e.target.value));
+document.getElementById('ttsVoice').addEventListener('change',e=>setNeuralVoice(e.target.value));
+document.getElementById('ttsRate').addEventListener('change',e=>{ setRate(+e.target.value); speak('Velocidad de la voz ajustada.'); });
+document.getElementById('ttsRate').value=String(TTS.rate);
 const keys={};
 window.addEventListener('keydown',e=>{
   if(e.target.closest('input,textarea,select')) return;
   if(e.key===' '){ e.preventDefault(); togglePlay(); }
+  else if(e.shiftKey && e.key.startsWith('Arrow')){ e.preventDefault(); const d={ArrowLeft:[-0.25,0],ArrowRight:[0.25,0],ArrowUp:[0,0.25],ArrowDown:[0,-0.25]}[e.key]; panWin(d[0],d[1]); }
   else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){ keys[e.key]=true; e.preventDefault(); }
   else if(e.key==='ArrowUp'){ e.preventDefault(); moveBy(0.08); }
   else if(e.key==='ArrowDown'){ e.preventDefault(); moveBy(-0.08); }
-  else if(e.key==='+'||e.key==='='){ zoomBy(1.25); }
-  else if(e.key==='-'){ zoomBy(0.8); }
+  else if(e.key==='+'||e.key==='='){ zoomWin(0.5); }
+  else if(e.key==='-'){ zoomWin(2); }
+  else if(e.key==='l'||e.key==='L'){ lupa(); }
   else if(e.key==='n'||e.key==='N'||e.key==='PageDown') stepStop(1);
   else if(e.key==='p'||e.key==='P'||e.key==='PageUp') stepStop(-1);
 });
@@ -2107,17 +2821,19 @@ async function enterXR(kind){
   if(renderer.xr.isPresenting){ renderer.xr.getSession().end(); return; }
   try{
     const session=await navigator.xr.requestSession(kind==='ar'?'immersive-ar':'immersive-vr',{optionalFeatures:['local-floor','bounded-floor']});
-    st.xrKind=kind; st.xrMode = kind==='ar' ? 'maqueta' : 'maqueta';
+    st.xrKind=kind; st.xrMode='maqueta';
     session.addEventListener('end',onXREnd);
     if(kind==='ar'){ scene.background=null; renderer.setClearAlpha(0); }
     await renderer.xr.setSession(session);
+    try{ const bl=session.renderState.baseLayer; if(bl) RES.set(bl.framebufferWidth/2,bl.framebufferHeight); }catch(e){}
+    refreshLineMats();
     controls.enabled=false;
     savedCam={p:camera.position.clone(),q:camera.quaternion.clone()};
     camera.position.set(0,0,0); camera.quaternion.identity();
     hudMesh.visible=st.hudVisible; st.vrPanel='main';
     placeGraph(); snapCam=true; hudDirty=true; vrDirty=true;
-    const intro=(kind==='ar'?'Realidad mixta. ':'Realidad virtual. ')+'La función f de x igual a '+sayExpr(st.F.node)+' está frente a usted. A su izquierda está el tablero con las pestañas. Apunte con el mando y pulse el gatillo para elegir. Pulse Subir y recorrer para montarse en la curva. El botón Cambiar función abre un teclado para escribir otra función. Para escuchar todos los controles, haga clic con el stick derecho.';
-    setMsg(kind==='ar'?'Realidad mixta':'Realidad virtual',['La función está frente a usted. Apunte al tablero y pulse el gatillo para elegir una pestaña o un botón.','Cambiar función abre un teclado para escribir f(x). El clic del stick derecho repite la ayuda.']);
+    const intro=(kind==='ar'?'Realidad mixta. ':'Realidad virtual. ')+'La función '+FN()+' de x igual a '+sayExpr(st.F.node)+' está frente a usted. A su izquierda está el tablero. Apunte con el mando y pulse el gatillo para elegir. Pulse Subir y recorrer para montarse en la curva. La fila Ventana desplaza la región visible por todo el dominio. Para escuchar todos los controles, haga clic con el stick derecho.';
+    setMsg(kind==='ar'?'Realidad mixta':'Realidad virtual',['La función está frente a usted. Apunte al tablero y pulse el gatillo para elegir una pestaña o un botón.','La fila Ventana mueve y amplía la región visible. El clic del stick derecho repite la ayuda.']);
     speak(intro);
   }catch(e){
     xrStatus.textContent='No se pudo iniciar la sesión inmersiva ('+(e&&e.name?e.name:'error')+'). Si abrió la página dentro de otra aplicación, ábrala directamente en el navegador del Quest.';
@@ -2132,6 +2848,7 @@ function onXREnd(){
   if(savedCam){ camera.position.copy(savedCam.p); camera.quaternion.copy(savedCam.q); }
   controls.enabled = st.view==='orbit';
   st.vrPanel='main';
+  resize(); refreshLineMats();
   placeGraph(); snapCam=true; hudDirty=true;
 }
 btnVR.addEventListener('click',()=>enterXR('vr'));
@@ -2141,6 +2858,7 @@ btnAR.addEventListener('click',()=>enterXR('ar'));
 const prevBtns={};
 const raycaster=new THREE.Raycaster(), tmpM=new THREE.Matrix4();
 const grab={held:[false,false], start:[new THREE.Vector3(),new THREE.Vector3()], base:null};
+let panNext=0;
 function rayHit(ctrl){
   if(!hudMesh.visible) return null;
   tmpM.identity().extractRotation(ctrl.matrixWorld);
@@ -2159,7 +2877,7 @@ function grabBaseline(){
 }
 function pollXR(dt){
   const s=renderer.xr.getSession(); if(!s) return;
-  let move=0, zoomAxis=0, hoverAny=null;
+  let move=0, zoomAxis=0, panAxis=0, hoverAny=null;
   rig.updateMatrixWorld(true);
   let gripChanged=false;
   ctrls.forEach((ctrl,idx)=>{
@@ -2167,20 +2885,17 @@ function pollXR(dt){
     const h=src.handedness||('i'+idx);
     const pr=gp.buttons.map(b=>b&&b.pressed); const was=prevBtns[h]||[];
     const edge=i=>pr[i]&&!was[i];
-    const ay=gp.axes.length>=4?gp.axes[3]:(gp.axes[1]||0);
-    if(h==='left'){ if(Math.abs(ay)>0.2) zoomAxis+=-ay; }
+    const ay=gp.axes.length>=4?gp.axes[3]:(gp.axes[1]||0), ax=gp.axes.length>=4?gp.axes[2]:(gp.axes[0]||0);
+    if(h==='left'){ if(Math.abs(ay)>0.2 && Math.abs(ay)>Math.abs(ax)) zoomAxis+=-ay; if(Math.abs(ax)>0.6 && Math.abs(ax)>Math.abs(ay)) panAxis=ax; }
     else { if(Math.abs(ay)>0.2) move+=-ay; }
-    // rayo
     const hit=rayHit(ctrl);
     const dot=ctrl.userData.dot, line=ctrl.userData.line;
     if(hit){ dot.visible=true; dot.position.copy(rig.worldToLocal(hit.point.clone())); line.scale.z=hit.dist; if(hit.btn) hoverAny=hit.btn; }
     else { dot.visible=false; line.scale.z=1.2; }
-    // gatillo
     if(edge(0)){
       if(hit && hit.btn) vrAction(hit.btn);
       else if(!hit) stepStop(h==='left'?-1:1);
     }
-    // agarre
     const held=!!pr[1];
     if(held!==grab.held[idx]){ grab.held[idx]=held; gripChanged=true; }
     if(h==='right'){
@@ -2208,7 +2923,9 @@ function pollXR(dt){
     else { st.offset.copy(grab.base.offset).add(d); placeGraph(false); }
   }
   if(zoomAxis!==0) zoomBy(Math.exp(zoomAxis*dt*1.2));
-  if(move!==0){ if(st.playing){ st.playing=false; updatePlayBtn(); } advance(dt,Math.max(-1.5,Math.min(1.5,move)),true); hudDirty=true; vrDirty=true; }
+  const now=performance.now();
+  if(panAxis!==0 && now>panNext){ panNext=now+450; panWin(panAxis>0?0.2:-0.2,0,false); }
+  if(move!==0 && !st.jump){ if(st.playing){ st.playing=false; updatePlayBtn(); } advance(dt,Math.max(-1.5,Math.min(1.5,move)),true); hudDirty=true; vrDirty=true; }
 }
 
 /* ================= bucle ================= */
@@ -2221,12 +2938,21 @@ function loop(){
   if(renderer.xr.isPresenting) pollXR(dt);
   else {
     const kd=(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0);
-    if(kd){ st.playing=false; updatePlayBtn(); advance(dt,kd,true); hudDirty=true; }
+    if(kd && !st.jump){ st.playing=false; updatePlayBtn(); advance(dt,kd,true); hudDirty=true; }
   }
   if(fadeAnim){ fadeAnim.t+=dt; const h=fadeAnim.dur/2; if(fadeAnim.t>=h && !fadeAnim.done){ fadeAnim.mid(); fadeAnim.done=true; }
     fade.material.opacity = fadeAnim.t<h ? fadeAnim.t/h : Math.max(0,1-(fadeAnim.t-h)/h);
     if(fadeAnim.t>=fadeAnim.dur){ fadeAnim=null; fade.material.opacity=0; } }
-  if(st.playing){
+  // animación del salto
+  if(st.jump){
+    const j=st.jump; j.t+=dt;
+    const k=Math.max(0,Math.min(1,(j.t-j.hold)/j.dur)), e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    j.y=j.y0+(j.y1-j.y0)*e;
+    if(G.jumpLine){ setLine2(G.jumpLine,[j.x,j.y0,G.u*0.2,j.x,j.y+(Math.abs(j.y-j.y0)<1e-12?1e-9:0),G.u*0.2]); G.jumpLine.visible=Math.abs(j.y1-j.y0)>1e-12; }
+    hudDirty=true; vrDirty=true;
+    if(j.t>=j.hold+j.dur+0.2){ st.jump=null; if(G.jumpLine) G.jumpLine.visible=false; moveTo(j.next,false); snapCam=false; if(!j.manual){ st.pauseUntil=now+400; st.waitSpeech=true; } }
+  }
+  if(st.playing && !st.jump){
     const waiting = now<st.pauseUntil || (st.waitSpeech && isSpeaking() && now-(TTS.last||0)<30000);
     if(!waiting){
       st.waitSpeech=false;
@@ -2236,8 +2962,10 @@ function loop(){
   }
   // posición del vagón
   const pc=pieces[st.piece];
-  if(pc){
-    const p=posAt(pc,st.s), p2=posAt(pc,Math.min(pc.L,st.s+pc.L*1e-3+G.u*0.5)), p1=posAt(pc,Math.max(0,st.s-G.u*0.5));
+  if(pc || st.jump){
+    let p, p1, p2;
+    if(st.jump){ const j=st.jump; p={x:j.x,y:j.y}; p1={x:j.x,y:j.y0}; p2={x:j.x,y:j.y1}; if(Math.abs(j.y1-j.y0)<1e-12){ p1={x:j.x-1,y:j.y}; p2={x:j.x+1,y:j.y}; } }
+    else { p=posAt(pc,st.s); p2=posAt(pc,Math.min(pc.L,st.s+pc.L*1e-3+G.u*0.5)); p1=posAt(pc,Math.max(0,st.s-G.u*0.5)); }
     G.rider.position.set(p.x,p.y,0);
     tmpT.set(p2.x-p1.x,p2.y-p1.y,0); if(tmpT.lengthSq()<1e-20) tmpT.set(1,0,0); tmpT.normalize();
     G.rider.children[1].quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),tmpT);
@@ -2246,10 +2974,10 @@ function loop(){
       if(isRide()){
         const target=new THREE.Vector3(pw.x,pw.y-1.15+st.seat,pw.z);
         rig.rotation.set(0,-Math.PI/2,0);
-        if(snapCam) rig.position.copy(target); else rig.position.lerp(target,Math.min(1,dt*10));
+        if(snapCam) rig.position.copy(target); else rig.position.lerp(target,Math.min(1,dt*(st.jump?5:10)));
       } else { rig.position.set(0,0,0); rig.rotation.set(0,0,0); }
     } else if(st.view==='board'){
-      const S=G.S, tw=new THREE.Vector3(tmpT.x,tmpT.y,0);
+      const S=G.S, tw=st.jump?new THREE.Vector3(1,0,0):new THREE.Vector3(tmpT.x,tmpT.y,0);
       const desired=pw.clone().addScaledVector(tw,-G.u*26*S).add(new THREE.Vector3(0,G.u*9*S,G.u*20*S));
       const look=pw.clone().addScaledVector(tw,G.u*16*S);
       if(snapCam) camera.position.copy(desired); else camera.position.lerp(desired,Math.min(1,dt*6));
@@ -2257,18 +2985,17 @@ function loop(){
     }
     snapCam=false;
   }
-  // tangente y normal
+  // tangente y normal (líneas finas en el mismo plano de la curva)
   const t=tangentInfo(), y0=st.ymin, y1=st.ymax;
-  if(st.tn>0 && t.ok && t.y0>=y0-1e-9 && t.y0<=y1+1e-9){
+  if(st.tn>0 && !st.jump && t.ok && t.y0>=y0-1e-9 && t.y0<=y1+1e-9){
     let dx=1, dy=t.m; if(t.vertical){ dx=0; dy=1; }
-    const cl=clipLine(t.x0,t.y0,dx,dy,st.a,st.b,y0,y1);
-    if(cl) setRod(G.tan,new THREE.Vector3(t.x0+dx*cl[0],t.y0+dy*cl[0],0),new THREE.Vector3(t.x0+dx*cl[1],t.y0+dy*cl[1],0)); else G.tan.visible=false;
-    G.tanPt.visible=true; G.tanPt.position.set(t.x0,t.y0,0);
-    if(st.tn>1){ const nx=-dy, ny=dx; const c2=clipLine(t.x0,t.y0,nx,ny,st.a,st.b,y0,y1); if(c2) setRod(G.nor,new THREE.Vector3(t.x0+nx*c2[0],t.y0+ny*c2[0],0),new THREE.Vector3(t.x0+nx*c2[1],t.y0+ny*c2[1],0)); else G.nor.visible=false; }
-    else G.nor.visible=false;
+    const z=G.u*0.03;
+    if(showTan()){ const cl=clipLine(t.x0,t.y0,dx,dy,st.a,st.b,y0,y1); if(cl){ setLine2(G.tan,[t.x0+dx*cl[0],t.y0+dy*cl[0],z,t.x0+dx*cl[1],t.y0+dy*cl[1],z]); G.tan.visible=true; } else G.tan.visible=false; } else G.tan.visible=false;
+    if(showNor()){ const nx=-dy, ny=dx; const c2=clipLine(t.x0,t.y0,nx,ny,st.a,st.b,y0,y1); if(c2){ setLine2(G.nor,[t.x0+nx*c2[0],t.y0+ny*c2[0],z,t.x0+nx*c2[1],t.y0+ny*c2[1],z]); G.nor.visible=true; } else G.nor.visible=false; } else G.nor.visible=false;
+    G.tanPt.visible=true; G.tanPt.position.set(t.x0,t.y0,z);
   } else { G.tan.visible=false; G.nor.visible=false; G.tanPt.visible=false; }
-  // el vagón se vuelve translúcido cuando la tangente pasa por él, para que se aprecie el contacto
-  { const op=(st.tn>0 && st.tnFollow)?0.35:1; G.rider.children[0].material.opacity=op; G.rider.children[1].material.opacity=op; G.rider.children[0].material.depthWrite=op===1; }
+  // el vagón se vuelve translúcido cuando la recta pasa por él, para que se aprecie el contacto
+  { const op=(st.tn>0 && st.tnFollow && !st.jump)?0.3:1; G.rider.children[0].material.opacity=op; G.rider.children[1].material.opacity=op; G.rider.children[0].material.depthWrite=op===1; }
   // cuentas del límite
   if(st.limit && isFinite(st.limit.c) && st.limit.c>=st.a && st.limit.c<=st.b){
     const ph=((now/1000)%3.2)/3.2, h=(st.b-st.a)*0.22*Math.pow(1-ph,2.2)+1e-9;
@@ -2284,14 +3011,21 @@ function loop(){
   renderer.render(scene,camera);
 }
 
-function resize(){ const r=renderer.domElement.getBoundingClientRect(); const w=Math.max(1,r.width), h=Math.max(1,r.height); if(!renderer.xr.isPresenting){ renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); } }
+function resize(){ const r=renderer.domElement.getBoundingClientRect(); const w=Math.max(1,r.width), h=Math.max(1,r.height); if(!renderer.xr.isPresenting){ renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); RES.set(w,h); refreshLineMats(); } }
 new ResizeObserver(resize).observe(stage); window.addEventListener('resize',resize);
 resize();
 
-function start(){ renderTabBar(); updateTTSStatus(); if(IS_QUEST||!TTS.web) loadMeSpeak(); applyStaticTex(); setThick(st.thick); loadFunction(PRESETS[0].f,PRESETS[0].a,PRESETS[0].b,null,null,false); renderer.setAnimationLoop(loop); }
+function start(){
+  renderTabBar(); renderKbd2D(); updateTTSStatus();
+  if(TTS.engine==='neural') nvStart(); else if(TTS.engine==='mespeak') loadMeSpeak();
+  applyStaticTex(); setThick(st.thick);
+  st.funcs=[makeFn(0,PRESETS[0].f)];
+  loadFunction(PRESETS[0].f,PRESETS[0].a,PRESETS[0].b,null,null,false,0);
+  renderer.setAnimationLoop(loop);
+}
 const fontsReady = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]) : Promise.resolve();
 fontsReady.then(start);
-window.__fab={st,drawVRPanel,vrAction,hudCanvas,TTS,speak,MJ};
+window.__fab={setEngine,nvStart,st,drawVRPanel,vrAction,hudCanvas,TTS,speak,MJ,setWindow,panWin,zoomWin,lupa,advance,loadFunction,setFnSrc,applyAll,setDeriv,cycleRectas,pieces:()=>pieces,G:()=>G};
 })();
 </script>
 
