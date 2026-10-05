@@ -52,6 +52,7 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 400px;min-height:0}
 #hud{position:absolute;top:12px;left:12px;max-width:min(320px,calc(100% - 24px));max-height:42%;overflow:auto;background:var(--stage-panel);border:1px solid rgba(148,168,174,.25);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45;backdrop-filter:blur(4px)}
 #hud .row{display:grid;grid-template-columns:3.2em 1fr;gap:6px;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
 #hud .row b{color:var(--stage-muted);font-weight:400}
+#hud .row[hidden]{display:none}
 #hud .state{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 2px}
 .pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700;border:1px solid currentColor}
 #hud .msg{margin-top:6px;color:var(--stage-ink);font-size:13px}
@@ -170,6 +171,8 @@ ol.stops .xy .mj{font-size:108%}
 .axsel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .axsel label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted,#5b6b70)}
 .axsel select{font:inherit;font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid var(--line,#cfd8da);background:var(--surface);color:var(--ink)}
+body:not([data-mode="fx"]) .only-fx{display:none !important}
+body[data-mode="surf"] .no-surf{display:none !important}
 @media (max-width:900px){
   html,body{height:auto}
   #app{height:auto}
@@ -201,10 +204,11 @@ ol.stops .xy .mj{font-size:108%}
   <main>
     <section id="stage" aria-label="Gráfico tridimensional de la función">
       <div id="hud" aria-live="polite">
-        <div class="row"><b data-tex="x">x</b><span id="hX">0</span></div>
+        <div class="row"><b id="hLx">x</b><span id="hX">0</span></div>
         <div class="row"><b id="hLy">f(x)</b><span id="hY">0</span></div>
         <div class="row"><b id="hLd1">f′(x)</b><span id="hD1">0</span></div>
         <div class="row"><b id="hLd2">f″(x)</b><span id="hD2">0</span></div>
+        <div class="row" id="hR5" hidden><b id="hL5"></b><span id="h5">0</span></div>
         <div class="state" id="hState"></div>
         <div class="eq" id="hEq"></div>
         <div class="msg" id="hMsg"></div>
@@ -215,7 +219,7 @@ ol.stops .xy .mj{font-size:108%}
           <button type="button" data-view="orbit" aria-pressed="true">Órbita</button>
           <button type="button" data-view="board" aria-pressed="false">A bordo</button>
         </div>
-        <div class="seg" role="group" aria-label="Color de la curva">
+        <div class="seg only-fx" role="group" aria-label="Color de la curva">
           <button type="button" data-color="mono" aria-pressed="true">Monotonía</button>
           <button type="button" data-color="conc" aria-pressed="false">Concavidad</button>
           <button type="button" data-color="none" aria-pressed="false">Sin color</button>
@@ -228,7 +232,7 @@ ol.stops .xy .mj{font-size:108%}
           <button type="button" data-win="down" aria-label="Desplazar la ventana hacia abajo" title="Mayúsculas + ↓">↓</button>
           <button type="button" data-win="out" title="Tecla −">Ver más</button>
           <button type="button" data-win="in" title="Tecla +">Ver menos</button>
-          <button type="button" data-win="fit">Ajustar y</button>
+          <button type="button" data-win="fit" id="bFit">Ajustar y</button>
           <button type="button" data-win="reset">Centrar</button>
         </div>
         <div class="seg" role="group" aria-label="Grosor de las líneas">
@@ -260,7 +264,7 @@ ol.stops .xy .mj{font-size:108%}
           </form>
           <div class="fnprev" id="fnPreview" aria-live="polite"></div>
           <details class="kbd" open><summary>Teclado matemático</summary><div id="kbd2d"></div></details>
-          <p class="small">Además de sen, cos, tg, ln, e^x y |x|, acepta log(x) decimal, log_b(x) en base b, raiz(x, n) para la raíz n-ésima, arcsen, arccos, arctg, sec, cosec, cotg, senh, cosh, tgh, ent(x) (parte entera), sgn(x) y funciones por tramos como x &lt; 1 ? x^2 : 2x + 1. El círculo de la izquierda elige la función que recorre el vagón.</p>
+          <p class="small">Además de sen, cos, tg, ln, e^x y |x|, acepta log(x) decimal, log_b(x) en base b, raiz(x, n) para la raíz n-ésima, arcsen, arccos, arctg, sec, cosec, cotg, senh, cosh, tgh, ent(x) (parte entera), sgn(x) y funciones por tramos como x &lt; 1 ? x^2 : 2x + 1. Una ecuación en x e y, como x^2 + y^2 = 4, se grafica como curva implícita; z = f(x, y), o una expresión en x e y, como superficie. El círculo de la izquierda elige qué se estudia y recorre.</p>
           <p class="err" id="fnError" hidden></p>
           <div class="grid4">
             <label for="xa">x mín<input id="xa" value="-3" inputmode="decimal"></label>
@@ -280,7 +284,7 @@ ol.stops .xy .mj{font-size:108%}
             <dt id="d1Lbl">f′(x) =</dt><dd id="d1Txt"></dd>
             <dt id="d2Lbl">f″(x) =</dt><dd id="d2Txt"></dd>
           </dl>
-          <div class="radio">
+          <div class="radio only-fx">
             <label><input type="checkbox" id="chkD1"> <span id="lblD1">Gráfica de f′</span></label>
             <label><input type="checkbox" id="chkD2"> <span id="lblD2">Gráfica de f″</span></label>
           </div>
@@ -303,27 +307,27 @@ ol.stops .xy .mj{font-size:108%}
       </details>
 
       <details class="card" open>
-        <summary>Tangente y normal</summary>
+        <summary id="tnTitle">Tangente y normal</summary>
         <div class="body">
           <div class="radio" role="radiogroup" aria-label="Rectas visibles">
             <label><input type="radio" name="tn" value="0"> Ninguna</label>
-            <label><input type="radio" name="tn" value="1" checked> Tangente</label>
-            <label><input type="radio" name="tn" value="2"> Normal</label>
-            <label><input type="radio" name="tn" value="3"> Ambas</label>
+            <label><input type="radio" name="tn" value="1" checked> <span id="tnL1">Tangente</span></label>
+            <label><input type="radio" name="tn" value="2"> <span id="tnL2">Normal</span></label>
+            <label><input type="radio" name="tn" value="3"> <span id="tnL3">Ambas</span></label>
           </div>
-          <div class="radio">
+          <div class="radio only-fx">
             <label><input type="radio" name="tnsrc" value="follow" checked> En la posición del vagón</label>
             <label><input type="radio" name="tnsrc" value="fixed"> En <span data-tex="x_0=">x₀ =</span></label>
             <input id="tnX" value="1.5" style="width:84px;font-family:var(--mono);padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg)" aria-label="Valor de x cero">
           </div>
           <div class="eqbox" id="tnBox"></div>
           <div class="tabactions"><button class="btn" id="bSpeakTn" type="button">Escuchar pendientes</button><button class="btn" id="bLupa" type="button">Lupa en el punto</button></div>
-          <p class="small">La lupa acerca la ventana al punto de tangencia (tecla L). Cada nivel amplía cinco veces y muestra cómo la curva se confunde con su tangente.</p>
-          <p class="small">Los ejes usan la misma escala en x e y, de modo que la normal se ve perpendicular a la tangente.</p>
+          <p class="small">La lupa acerca la ventana al punto de tangencia (tecla L). Cada nivel amplía cinco veces y muestra cómo la curva se confunde con su tangente; en una superficie, cómo se confunde con su plano tangente.</p>
+          <p class="small no-surf">Los ejes usan la misma escala en x e y, de modo que la normal se ve perpendicular a la tangente.</p>
         </div>
       </details>
 
-      <details class="card" open>
+      <details class="card only-fx" open>
         <summary>Límites</summary>
         <div class="body">
           <form class="limrow" id="limForm" autocomplete="off">
@@ -382,6 +386,7 @@ ol.stops .xy .mj{font-size:108%}
             <dt>Tablero, Cambiar función</dt><dd>Teclado para escribir f(x), elegir ejemplos y ajustar la ventana en x</dd>
             <dt>Tablero, Grosor</dt><dd>Líneas finas, medias o gruesas</dd>
             <dt>Tablero, Ventana</dt><dd>Mover, ampliar o reducir la región visible; Lupa en la tangencia</dd>
+            <dt>Superficies</dt><dd>El stick derecho mueve el explorador en la dirección en que mira; X alterna entre caminar sobre la superficie y verla como maqueta; B muestra trazas, plano tangente o ambos</dd>
           </dl>
           <p class="small">Dentro de la inmersión, el botón Cambiar función del tablero abre un teclado para escribir f(x) sin salir de VR. La narración usa la voz del sistema si hay una en español y, en el Quest, una voz sintética integrada que se descarga la primera vez.</p>
         </div>
@@ -968,7 +973,7 @@ function sayExpr(n){
   if(!n) return '';
   if(n.isParenthesisNode) return sayExpr(n.content);
   if(n.isConstantNode) return sayNum(Number(n.value));
-  if(n.isSymbolNode) return n.name==='pi'?'pi':n.name;
+  if(n.isSymbolNode) return n.name==='pi'?'pi':n.name==='y'?'ye':n.name==='z'?'zeta':n.name;
   if(n.isOperatorNode){
     const A=n.args;
     if(A.length===1) return (n.op==='-'?'menos ':'')+sayExpr(A[0]);
@@ -1050,6 +1055,369 @@ function describeStop(s,F){
   s.lines=lines;
   s.say=say.join(' ');
 }
+
+/* ================= dos variables: curvas implícitas F(x,y) = G(x,y) y superficies z = f(x,y) ================= */
+// '=' de ecuación al nivel superior (no forma parte de <=, >=, != ni ==)
+function splitEq(s){
+  let d=0;
+  for(let i=0;i<s.length;i++){
+    const c=s[i];
+    if(c==='('||c==='['||c==='{') d++;
+    else if(c===')'||c===']'||c==='}') d--;
+    else if(c==='='&&d===0){ const p=s[i-1], n=s[i+1]; if(p==='<'||p==='>'||p==='!'||p==='='||n==='=') continue; return [s.slice(0,i),s.slice(i+1)]; }
+  }
+  return null;
+}
+const RX_Y=/(^|[^a-zA-Z_áéíóúñ])([xy]*y[xy]*)(?![a-zA-Z_(áéíóúñ])/;
+// y = f(x) | curva implícita (ecuación en x e y) | superficie (z = …, o expresión en x e y sin signo igual)
+function srcKind(src){
+  const s=String(src||'').trim(), eq=splitEq(s), hasY=t=>RX_Y.test(t);
+  if(eq){
+    const L=eq[0].trim(), R=eq[1].trim();
+    if(/^(z|[fghk]\s*\(\s*x\s*,\s*y\s*\))$/i.test(L)) return {kind:'surf',expr:R};
+    if(/^(y|[fghk]\s*\(\s*x\s*\))$/i.test(L) && !hasY(R)) return {kind:'fx',expr:R};
+    return {kind:'imp',L,R};
+  }
+  return hasY(s)?{kind:'surf',expr:s}:{kind:'fx',expr:s};
+}
+// xy se lee como x·y
+function prep2(s){ return preprocess(s).replace(/(^|[^a-zA-Z_])([xy]{2,})(?![a-zA-Z_(])/g,(m,p,w)=>p+w.split('').join('*')); }
+function parse2(s,vars){
+  const pre=prep2(s); if(!pre) throw new Error('Falta una expresión a uno de los lados del signo igual.');
+  let node; try{ node=normalizeNode(M.parse(pre)); }catch(e){ throw new Error('No se pudo leer la expresión. Revise paréntesis y operadores.'); }
+  const bad=new Set();
+  node.traverse((n,path,parent)=>{
+    if(n.isSymbolNode && !(parent && parent.isFunctionNode && path==='fn')){ if(!vars.includes(n.name) && !(n.name in M)) bad.add(n.name); }
+    if(n.isFunctionNode && n.fn && n.fn.isSymbolNode && !(n.fn.name in M)) bad.add(n.fn.name+'( )');
+  });
+  if(bad.size) throw new Error('No reconozco '+[...bad].join(', ')+'. Use x e y como variables.');
+  return node;
+}
+// traducción a JavaScript nativo (unas cien veces más rápida que evaluar con mathjs); si algo no se puede traducir, se usa mathjs
+function rpowN(a,b){
+  if(!(isFinite(a)&&isFinite(b))) return Math.pow(a,b);
+  if(a>=0 || Number.isInteger(b)) return Math.pow(a,b);
+  for(let d=1; d<=99; d++){ const n=Math.round(b*d); if(Math.abs(b-n/d)<1e-12){ if(d%2===0) return NaN; return (Math.abs(n)%2===1?-1:1)*Math.pow(-a,b); } }
+  return NaN;
+}
+const JSH={rpow:rpowN,sec:x=>1/Math.cos(x),csc:x=>1/Math.sin(x),cot:x=>1/Math.tan(x),asec:x=>Math.acos(1/x),acsc:x=>Math.asin(1/x),acot:x=>Math.atan(1/x),coth:x=>1/Math.tanh(x)};
+const JSF={sin:'Math.sin',cos:'Math.cos',tan:'Math.tan',asin:'Math.asin',acos:'Math.acos',atan:'Math.atan',sinh:'Math.sinh',cosh:'Math.cosh',tanh:'Math.tanh',asinh:'Math.asinh',acosh:'Math.acosh',atanh:'Math.atanh',
+  exp:'Math.exp',log:'Math.log',log10:'Math.log10',log2:'Math.log2',sqrt:'Math.sqrt',cbrt:'Math.cbrt',abs:'Math.abs',floor:'Math.floor',ceil:'Math.ceil',sign:'Math.sign',
+  sec:'H.sec',csc:'H.csc',cot:'H.cot',asec:'H.asec',acsc:'H.acsc',acot:'H.acot',coth:'H.coth',rpow:'H.rpow'};
+const JSOP={'+':'+','-':'-','*':'*','/':'/','<':'<','>':'>','<=':'<=','>=':'>=','==':'==','!=':'!=','and':'&&','or':'||'};
+function toJS(n){
+  if(n.isParenthesisNode) return '('+toJS(n.content)+')';
+  if(n.isConstantNode){ const v=n.value; if(typeof v==='number') return '('+v+')'; if(typeof v==='boolean') return v?'1':'0'; throw 0; }
+  if(n.isSymbolNode){ if(n.name==='x'||n.name==='y') return n.name; if(n.name==='pi') return 'Math.PI'; if(n.name==='e'||n.name==='E') return 'Math.E'; if(n.name==='Infinity') return 'Infinity'; throw 0; }
+  if(n.isOperatorNode){
+    const A=n.args.map(toJS);
+    if(A.length===1){ if(n.fn==='unaryMinus') return '(-'+A[0]+')'; if(n.fn==='unaryPlus') return A[0]; if(n.fn==='not') return '(!'+A[0]+')'; throw 0; }
+    if(n.op==='^') return 'H.rpow('+A[0]+','+A[1]+')';
+    const o=JSOP[n.op]; if(!o) throw 0;
+    return '('+A.join(o)+')';
+  }
+  if(n.isConditionalNode) return '(('+toJS(n.condition)+')?('+toJS(n.trueExpr)+'):('+toJS(n.falseExpr)+'))';
+  if(n.isFunctionNode && n.fn && n.fn.isSymbolNode){
+    const nm=n.fn.name, A=n.args.map(toJS);
+    if(nm==='log'&&A.length===2) return '(Math.log('+A[0]+')/Math.log('+A[1]+'))';
+    if(nm==='nthRoot'&&A.length===2) return 'H.rpow('+A[0]+',1/('+A[1]+'))';
+    const f=JSF[nm]; if(!f||A.length!==(nm==='rpow'?2:1)) throw 0;
+    return f+'('+A.join(',')+')';
+  }
+  throw 0;
+}
+const TEST_P=[[0.37,-1.21],[2.3,0.7],[-1.9,-2.6],[0.5,0.5],[-3.7,1.3],[1.1,4.2],[0,0],[1,-1],[-0.8,0.3],[3.3,-2.2]];
+function fastFn2(node){
+  const rn=realPow(node);
+  const slow=(()=>{ const c=rn.compile(), sc={x:0,y:0}; return (x,y)=>{ sc.x=x; sc.y=y; try{ return toNum(c.evaluate(sc)); }catch(e){ return NaN; } }; })();
+  let fast=null;
+  try{
+    const g=new Function('H','return function(x,y){ const v='+toJS(rn)+'; return typeof v==="number"?v:(v===true?1:(v===false?0:NaN)); }')(JSH);
+    let ok=true;
+    for(const [x,y] of TEST_P){ const p=g(x,y), q=slow(x,y); if(Number.isNaN(p)!==Number.isNaN(q)){ ok=false; break; } if(isFinite(p)&&isFinite(q)&&Math.abs(p-q)>1e-9*(1+Math.abs(q))){ ok=false; break; } }
+    if(ok) fast=g;
+  }catch(e){ fast=null; }
+  const f=fast||slow; f.fast=!!fast; return f;
+}
+function derivV(node,v){ const n=unP(node); if(n.isConditionalNode) return new M.ConditionalNode(n.condition,derivV(n.trueExpr,v),derivV(n.falseExpr,v)); if(hasCond(n)) throw new Error('tramos anidados'); return M.derivative(n,v); }
+// función de dos variables con sus derivadas parciales (simbólicas cuando se puede, numéricas si no)
+function build2(node){
+  const f=fastFn2(node);
+  let sym=false, nx=null, ny=null, gx, gy, gxx=null, gxy=null, gyy=null;
+  try{
+    const bases=[], hn=hideLogBases(node,bases), S=n=>{ try{ return M.simplify(n); }catch(e){ return n; } };
+    const dx=S(derivV(hn,'x')), dy=S(derivV(hn,'y'));
+    nx=flattenDiv(showLogBases(dx,bases)); ny=flattenDiv(showLogBases(dy,bases));
+    gx=fastFn2(nx); gy=fastFn2(ny); sym=true;
+    try{ gxx=fastFn2(showLogBases(derivV(dx,'x'),bases)); gxy=fastFn2(showLogBases(derivV(dx,'y'),bases)); gyy=fastFn2(showLogBases(derivV(dy,'y'),bases)); }catch(e){ gxx=gxy=gyy=null; }
+  }catch(e){ sym=false; nx=ny=null; }
+  const h1=v=>1e-5*Math.max(1,Math.abs(v)), h2=v=>1e-4*Math.max(1,Math.abs(v));
+  const nfx=(x,y)=>{ const h=h1(x); return (f(x+h,y)-f(x-h,y))/(2*h); };
+  const nfy=(x,y)=>{ const h=h1(y); return (f(x,y+h)-f(x,y-h))/(2*h); };
+  const pick=(g,n)=>g?(x,y)=>{ const v=g(x,y); return isFinite(v)?v:n(x,y); }:n;
+  const fx=sym?pick(gx,nfx):nfx, fy=sym?pick(gy,nfy):nfy;
+  const nxx=(x,y)=>{ const h=h2(x); return (fx(x+h,y)-fx(x-h,y))/(2*h); };
+  const nxy=(x,y)=>{ const h=h2(y); return (fx(x,y+h)-fx(x,y-h))/(2*h); };
+  const nyy=(x,y)=>{ const h=h2(y); return (fy(x,y+h)-fy(x,y-h))/(2*h); };
+  return {f,fx,fy,fxx:pick(gxx,nxx),fxy:pick(gxy,nxy),fyy:pick(gyy,nyy),sym,nx,ny,fast:f.fast};
+}
+function hasSym(node,nm){ let h=false; node.traverse(n=>{ if(n.isSymbolNode&&n.name===nm) h=true; }); return h; }
+function buildImp(Ls,Rs,src){
+  if(!String(Ls).trim()||!String(Rs).trim()) throw new Error('La ecuación necesita una expresión a cada lado del signo igual.');
+  const Ln=parse2(Ls,['x','y']), Rn=parse2(Rs,['x','y']);
+  const r0=unP(Rn), zeroR=r0.isConstantNode && Number(r0.value)===0;
+  const node=zeroR?Ln:new M.OperatorNode('-','subtract',[Ln,new M.ParenthesisNode(Rn)]);
+  if(!hasSym(node,'x')&&!hasSym(node,'y')) throw new Error('La ecuación debe contener x o y.');
+  const D=build2(node);
+  const tex=(nodeTex(Ln)||pretty(Ln))+'='+(nodeTex(Rn)||pretty(Rn)), txt=pretty(Ln)+' = '+pretty(Rn);
+  return Object.assign({kind:'imp',src,node,L:Ln,R:Rn,tex,txt},D);
+}
+function buildSurf(expr,src){
+  const node=parse2(expr,['x','y']);
+  const D=build2(node);
+  return Object.assign({kind:'surf',src,node,tex:nodeTex(node)||pretty(node),txt:pretty(node)},D);
+}
+function buildAny(src){
+  const k=srcKind(src);
+  if(k.kind==='imp') return buildImp(k.L,k.R,src);
+  if(k.kind==='surf') return buildSurf(k.expr,src);
+  const F=buildF(src); F.kind='fx'; return F;
+}
+/* ---- curvas de nivel por cuadrados marchantes, con cada cruce refinado sobre su arista ---- */
+function gridVals(g,a,b,c,d,nx,ny){
+  const V=new Float64Array((nx+1)*(ny+1)), hx=(b-a)/nx, hy=(d-c)/ny; let k=0;
+  for(let j=0;j<=ny;j++){ const y=c+j*hy; for(let i=0;i<=nx;i++) V[k++]=g(a+i*hx,y); }
+  return {V,a,b,c,d,nx,ny,hx,hy};
+}
+function gridN(W,H,fast,N){ N=N||(fast?260:150); const m=Math.max(W,H); return [Math.max(8,Math.round(N*W/m)),Math.max(8,Math.round(N*H/m))]; }
+function contourGrid(GV,lev,g){
+  const V=GV.V, a=GV.a, c=GV.c, nx=GV.nx, ny=GV.ny, hx=GV.hx, hy=GV.hy, N1=nx+1;
+  const pts=new Map();
+  const crossing=(i,j,vert)=>{
+    const key=((j*N1+i)*2)+(vert?1:0); if(pts.has(key)) return key;
+    const k0=j*N1+i, k1=vert?k0+N1:k0+1, v0=V[k0]-lev, v1=V[k1]-lev;
+    const x0=a+i*hx, y0=c+j*hy, dx=vert?0:hx, dy=vert?hy:0;
+    let t=v0/(v0-v1); if(!(t>=0&&t<=1)) t=0.5;
+    let p=null;
+    if(g){
+      let lo=0, hi=1, flo=v0, fhi=v1, last=0;
+      for(let it=0;it<8;it++){
+        const fm=g(x0+dx*t,y0+dy*t)-lev; if(!isFinite(fm)) break;
+        if(fm===0) break;
+        if((fm>0)===(flo>0)){ lo=t; flo=fm; if(last===1) fhi*=0.5; last=1; } else { hi=t; fhi=fm; if(last===-1) flo*=0.5; last=-1; }
+        const nt=lo-flo*(hi-lo)/(fhi-flo); t=(nt>lo&&nt<hi)?nt:(lo+hi)/2;
+        if(hi-lo<1e-13) break;
+      }
+      // en un polo o un salto el "cruce" no es un cero: se descarta
+      const fe=g(x0+dx*t,y0+dy*t)-lev, sc=Math.max(Math.abs(v0),Math.abs(v1));
+      if(isFinite(fe) && Math.abs(fe)<=0.2*sc+1e-300) p=[x0+dx*t,y0+dy*t];
+    } else p=[x0+dx*t,y0+dy*t];
+    pts.set(key,p); return key;
+  };
+  const segs=[];
+  for(let j=0;j<ny;j++) for(let i=0;i<nx;i++){
+    const k=j*N1+i, a0=V[k]-lev, a1=V[k+1]-lev, a2=V[k+N1+1]-lev, a3=V[k+N1]-lev;
+    if(!(isFinite(a0)&&isFinite(a1)&&isFinite(a2)&&isFinite(a3))) continue;
+    const idx=(a0>=0?1:0)|(a1>=0?2:0)|(a2>=0?4:0)|(a3>=0?8:0);
+    if(idx===0||idx===15) continue;
+    const E=e=> e===0?crossing(i,j,false): e===1?crossing(i+1,j,true): e===2?crossing(i,j+1,false): crossing(i,j,true);
+    const add=(p,q)=>segs.push([E(p),E(q)]);
+    switch(idx){
+      case 1: case 14: add(3,0); break;
+      case 2: case 13: add(0,1); break;
+      case 3: case 12: add(3,1); break;
+      case 4: case 11: add(1,2); break;
+      case 6: case 9: add(0,2); break;
+      case 7: case 8: add(3,2); break;
+      case 5: { const cen=a0+a1+a2+a3; if(cen>=0){ add(0,1); add(2,3); } else { add(3,0); add(1,2); } break; }
+      case 10: { const cen=a0+a1+a2+a3; if(cen>=0){ add(3,0); add(1,2); } else { add(0,1); add(2,3); } break; }
+    }
+  }
+  const adj=new Map(), link=(p,q)=>{ let l=adj.get(p); if(!l){ l=[]; adj.set(p,l); } l.push(q); };
+  for(const [p,q] of segs){ if(p===q||!pts.get(p)||!pts.get(q)) continue; link(p,q); link(q,p); }
+  const used=new Set(), out=[];
+  const walk=start=>{
+    const K=[start]; used.add(start); let cur=start;
+    for(;;){ const nb=adj.get(cur)||[]; let nxt=-1; for(const q of nb){ if(!used.has(q)){ nxt=q; break; } }
+      if(nxt<0) return {K,closed:K.length>2&&nb.includes(start)};
+      K.push(nxt); used.add(nxt); cur=nxt; }
+  };
+  const lines=[];
+  for(const [k,nb] of adj) if(nb.length===1&&!used.has(k)) lines.push(walk(k));
+  for(const [k] of adj) if(!used.has(k)) lines.push(walk(k));
+  for(const w of lines){
+    const X=[],Y=[]; for(const k of w.K){ const p=pts.get(k); X.push(p[0]); Y.push(p[1]); }
+    if(w.closed){ X.push(X[0]); Y.push(Y[0]); }
+    if(X.length>=2) out.push({X,Y,closed:w.closed});
+  }
+  return out;
+}
+function withArc(pc){ pc.S=[0]; for(let i=1;i<pc.X.length;i++) pc.S.push(pc.S[i-1]+Math.hypot(pc.X[i]-pc.X[i-1],pc.Y[i]-pc.Y[i-1])); pc.L=pc.S[pc.S.length-1]; return pc; }
+/* ---- puntos críticos de una función de dos variables (∇f = 0), por Newton desde una grilla ---- */
+function critPoints2(D,a,b,c,d,n){
+  n=n||44; const hx=(b-a)/n, hy=(d-c)/n, N1=n+1, W=Math.max(b-a,d-c);
+  const GX=new Float64Array(N1*N1), GY=new Float64Array(N1*N1), Q=new Float64Array(N1*N1);
+  for(let j=0;j<=n;j++) for(let i=0;i<=n;i++){ const x=a+i*hx, y=c+j*hy, k=j*N1+i, p=D.fx(x,y), q=D.fy(x,y); GX[k]=p; GY[k]=q; Q[k]=(isFinite(p)&&isFinite(q))?p*p+q*q:Infinity; }
+  const seeds=[];
+  const chg=(A,ks)=>{ let lo=Infinity,hi=-Infinity; for(const q of ks){ const v=A[q]; if(!isFinite(v)) return false; if(v<lo) lo=v; if(v>hi) hi=v; } return lo<=0&&hi>=0; };
+  for(let j=0;j<n;j++) for(let i=0;i<n;i++){ const k=j*N1+i, ks=[k,k+1,k+N1,k+N1+1]; if(chg(GX,ks)&&chg(GY,ks)) seeds.push([a+(i+0.5)*hx,c+(j+0.5)*hy]); }
+  for(let j=1;j<n;j++) for(let i=1;i<n;i++){ const k=j*N1+i, v=Q[k]; if(!isFinite(v)) continue; let m=true; for(const dk of [-1,1,-N1,N1,-N1-1,-N1+1,N1-1,N1+1]){ if(!(Q[k+dk]>v)){ m=false; break; } } if(m) seeds.push([a+i*hx,c+j*hy]); }
+  const gs=[]; for(let k=0;k<Q.length;k+=5) if(isFinite(Q[k])) gs.push(Math.sqrt(Q[k])); gs.sort((p,q)=>p-q);
+  const gsc=gs.length?Math.max(gs[Math.floor(gs.length/2)],1e-9):1;
+  const out=[];
+  for(const s of seeds.slice(0,400)){
+    let x=s[0], y=s[1];
+    for(let it=0;it<70;it++){
+      const p=D.fx(x,y), q=D.fy(x,y); if(!isFinite(p)||!isFinite(q)) break;
+      if(Math.hypot(p,q)<1e-14*gsc) break;
+      const A=D.fxx(x,y), B=D.fxy(x,y), C=D.fyy(x,y), det=A*C-B*B;
+      if(!isFinite(det)||Math.abs(det)<1e-300) break;
+      let dx=-(C*p-B*q)/det, dy=-(A*q-B*p)/det;
+      const L=Math.hypot(dx,dy), lim=2*Math.max(hx,hy); if(L>lim){ dx*=lim/L; dy*=lim/L; }
+      x+=dx; y+=dy;
+      if(L<1e-15*(1+Math.abs(x)+Math.abs(y))) break;
+    }
+    const p=D.fx(x,y), q=D.fy(x,y);
+    if(!(Math.hypot(p,q)<1e-6*gsc)) continue;
+    if(x<a-1e-9*W||x>b+1e-9*W||y<c-1e-9*W||y>d+1e-9*W) continue;
+    if(out.some(o=>Math.hypot(o.x-x,o.y-y)<2e-5*W)) continue;
+    out.push({x:snap(x,W),y:snap(y,W)});
+  }
+  return out;
+}
+function hessKind(A,B,C){ const D=A*C-B*B, s=Math.abs(A)+Math.abs(B)+Math.abs(C); if(!isFinite(D)) return {D,kind:'deg'}; if(Math.abs(D)<=1e-8*s*s+1e-12) return {D,kind:'deg'}; return {D,kind:D<0?'silla':(A<0?'max':'min')}; }
+/* ---- análisis de una curva implícita en la ventana ---- */
+function roots1(h,lo,hi,n,sc){
+  const out=[], xs=[], vs=[];
+  for(let i=0;i<=n;i++){ const x=lo+(hi-lo)*i/n; xs.push(x); vs.push(h(x)); }
+  for(let i=1;i<=n;i++){
+    const pv=vs[i-1], v=vs[i]; if(!isFinite(pv)||!isFinite(v)) continue;
+    if(v===0){ out.push(xs[i]); continue; }
+    if(pv*v<0){ let l=xs[i-1],r=xs[i],fl=pv; for(let it=0;it<80;it++){ const m=(l+r)/2, fm=h(m); if(!isFinite(fm)) break; if(fl*fm<=0) r=m; else { l=m; fl=fm; } }
+      const m=(l+r)/2, fm=h(m); if(isFinite(fm)&&Math.abs(fm)<=1e-6*(Math.abs(pv)+Math.abs(v))) out.push(m); }
+  }
+  // ceros dobles (la curva toca la recta sin cruzarla)
+  for(let i=1;i<n;i++){
+    const v=Math.abs(vs[i]); if(!(v<Math.abs(vs[i-1])&&v<Math.abs(vs[i+1]))||!(v<0.05*sc)) continue;
+    let l=xs[i-1], r=xs[i+1]; const g=0.6180339887;
+    for(let it=0;it<90;it++){ const m1=r-g*(r-l), m2=l+g*(r-l); if(Math.abs(h(m1))<Math.abs(h(m2))) r=m2; else l=m1; }
+    const m=(l+r)/2, fm=Math.abs(h(m)); if(isFinite(fm)&&fm<1e-9*sc && !out.some(z=>Math.abs(z-m)<1e-6*(hi-lo))) out.push(m);
+  }
+  return out.sort((p,q)=>p-q);
+}
+function analyzeImp(F,a,b,c,d){
+  const W=b-a, H=d-c, span=Math.max(W,H), nn=gridN(W,H,F.fast);
+  const GV=gridVals(F.f,a,b,c,d,nn[0],nn[1]);
+  const polys=contourGrid(GV,0,F.f).map(withArc).filter(p=>p.L>1e-7*span);
+  // orientación: cerradas en sentido antihorario, abiertas de izquierda a derecha (o de abajo hacia arriba)
+  polys.forEach(pc=>{
+    let rev=false;
+    if(pc.closed){ let A=0; for(let i=1;i<pc.X.length;i++) A+=pc.X[i-1]*pc.Y[i]-pc.X[i]*pc.Y[i-1]; rev=A<0; }
+    else { const dx=pc.X[pc.X.length-1]-pc.X[0], dy=pc.Y[pc.Y.length-1]-pc.Y[0]; rev=Math.abs(dx)>=Math.abs(dy)?dx<0:dy<0; }
+    if(rev){ pc.X.reverse(); pc.Y.reverse(); withArc(pc); }
+  });
+  polys.sort((p,q)=>Math.min(...p.X)-Math.min(...q.X));
+  const fs=[]; for(let k=0;k<GV.V.length;k+=11){ const v=GV.V[k]; if(isFinite(v)) fs.push(Math.abs(v)); } fs.sort((p,q)=>p-q);
+  const sc=fs.length?Math.max(fs[Math.floor(fs.length/2)],1e-12):1;
+  const gs=[]; polys.forEach(pc=>{ for(let i=0;i<pc.X.length;i+=5){ const g=Math.hypot(F.fx(pc.X[i],pc.Y[i]),F.fy(pc.X[i],pc.Y[i])); if(isFinite(g)) gs.push(g); } }); gs.sort((p,q)=>p-q);
+  const gsc=gs.length?Math.max(gs[Math.floor(gs.length/2)],1e-12):1;
+  const inWin=(x,y)=>x>=a-1e-9*span&&x<=b+1e-9*span&&y>=c-1e-9*span&&y<=d+1e-9*span;
+  const pts=[];
+  const addPt=o=>{ if(!inWin(o.x,o.y)) return; const e=pts.find(p=>Math.hypot(p.x-o.x,p.y-o.y)<1e-5*span); if(e){ o.kinds.forEach(k=>{ if(!e.kinds.includes(k)) e.kinds.push(k); }); Object.assign(e.info,o.info); return; } pts.push(o); };
+  // puntos singulares: F = 0 y ∇F = 0
+  const sing=critPoints2(F,a,b,c,d,40).filter(p=>{ const v=F.f(p.x,p.y); return isFinite(v)&&Math.abs(v)<1e-7*sc; });
+  sing.forEach(p=>{ const h=hessKind(F.fxx(p.x,p.y),F.fxy(p.x,p.y),F.fyy(p.x,p.y)); addPt({x:p.x,y:p.y,kinds:['sing'],info:{sing:h.kind==='silla'?'doble':(h.kind==='deg'?'cuspide':'aislado')}}); });
+  const isSing=(x,y)=>sing.some(p=>Math.hypot(p.x-x,p.y-y)<1e-4*span);
+  // cortes con los ejes
+  if(c<=0&&d>=0) roots1(x=>F.f(x,0),a,b,900,sc).forEach(x=>addPt({x:snap(x,span),y:0,kinds:['xcut'],info:{}}));
+  if(a<=0&&b>=0) roots1(y=>F.f(0,y),c,d,900,sc).forEach(y=>addPt({x:0,y:snap(y,span),kinds:['ycut'],info:{}}));
+  // tangentes horizontales (Fx = 0) y verticales (Fy = 0), refinadas con Newton sobre el sistema
+  const newton2=(G,Gx,Gy,x,y)=>{
+    for(let it=0;it<50;it++){
+      const f=F.f(x,y), g=G(x,y); if(!isFinite(f)||!isFinite(g)) return null;
+      const a11=F.fx(x,y), a12=F.fy(x,y), a21=Gx(x,y), a22=Gy(x,y), det=a11*a22-a12*a21;
+      if(!isFinite(det)||Math.abs(det)<1e-300) break;
+      let dx=-(a22*f-a12*g)/det, dy=-(a11*g-a21*f)/det;
+      const L=Math.hypot(dx,dy), lim=0.02*span; if(L>lim){ dx*=lim/L; dy*=lim/L; }
+      x+=dx; y+=dy; if(L<1e-15*(1+Math.abs(x)+Math.abs(y))) break;
+    }
+    return [x,y];
+  };
+  const tanPts=(G,Gx,Gy,other,kind)=>{
+    polys.forEach(pc=>{
+      let pv=G(pc.X[0],pc.Y[0]);
+      for(let i=1;i<pc.X.length;i++){
+        const v=G(pc.X[i],pc.Y[i]);
+        if(isFinite(pv)&&isFinite(v)&&pv*v<=0&&!(pv===0&&v===0)){
+          const r=newton2(G,Gx,Gy,(pc.X[i]+pc.X[i-1])/2,(pc.Y[i]+pc.Y[i-1])/2);
+          if(r){ const [x,y]=r, f=F.f(x,y), g=G(x,y), o=other(x,y);
+            if(isFinite(f)&&Math.abs(f)<1e-7*sc&&Math.abs(g)<1e-7*gsc&&Math.abs(o)>1e-4*gsc&&!isSing(x,y)&&Math.hypot(x-pc.X[i],y-pc.Y[i])<3*Math.max(GV.hx,GV.hy)){
+              const xs=snap(x,span), ys=snap(y,span);
+              const sec=kind==='htan' ? -F.fxx(x,y)/F.fy(x,y) : -F.fyy(x,y)/F.fx(x,y);
+              addPt({x:xs,y:ys,kinds:[kind],info:{[kind]:sec<0?'max':sec>0?'min':'plano'}});
+            } }
+        }
+        pv=v;
+      }
+    });
+  };
+  tanPts(F.fx,F.fxx,F.fxy,F.fy,'htan');
+  tanPts(F.fy,F.fxy,F.fyy,F.fx,'vtan');
+  let bb=null; polys.forEach(pc=>pc.X.forEach((x,i)=>{ const y=pc.Y[i]; if(!bb) bb={x0:x,x1:x,y0:y,y1:y}; else { bb.x0=Math.min(bb.x0,x); bb.x1=Math.max(bb.x1,x); bb.y0=Math.min(bb.y0,y); bb.y1=Math.max(bb.y1,y); } }));
+  return {empty:!polys.length&&!pts.length, polys, pts, bbox:bb, GV, sc, gsc};
+}
+/* ---- análisis de una superficie en el rectángulo [a,b]×[c,d] ---- */
+function analyzeSurf(F,a,b,c,d,keepZ){
+  const n=F.fast?120:72;
+  const GV=gridVals(F.f,a,b,c,d,n,n);
+  const fin=[]; for(let k=0;k<GV.V.length;k++){ const v=GV.V[k]; if(isFinite(v)) fin.push(v); }
+  if(!fin.length) return {empty:true,GV,crit:[],zmin:-1,zmax:1};
+  const W=Math.max(b-a,d-c);
+  let crit=critPoints2(F,a,b,c,d,44).map(p=>{ const z=F.f(p.x,p.y), A=F.fxx(p.x,p.y), B=F.fxy(p.x,p.y), C=F.fyy(p.x,p.y), h=hessKind(A,B,C);
+    return {x:p.x,y:p.y,z:snap(z,1+Math.abs(z)),A,B,C,D:h.D,kind:h.kind}; }).filter(p=>isFinite(p.z));
+  // curvas enteras de puntos críticos (como en sen(√(x²+y²))): se informan aparte y no se marcan uno por uno
+  let degCurve=false;
+  if(crit.filter(p=>p.kind==='deg').length>6){ degCurve=true; crit=crit.filter(p=>p.kind!=='deg'); }
+  if(crit.length>24){ const cx=(a+b)/2, cy=(c+d)/2; crit.sort((p,q)=>Math.hypot(p.x-cx,p.y-cy)-Math.hypot(q.x-cx,q.y-cy)); crit=crit.slice(0,24); }
+  fin.sort((p,q)=>p-q);
+  let zlo, zhi;
+  if(keepZ){ zlo=keepZ[0]; zhi=keepZ[1]; }
+  else {
+    let lo=fin[Math.floor(fin.length*0.02)], hi=fin[Math.min(fin.length-1,Math.floor(fin.length*0.98))];
+    const mn=fin[0], mx=fin[fin.length-1];
+    let whole=false;
+    if(mx-mn<=1.6*(hi-lo)+1e-12){ lo=mn; hi=mx; whole=true; }
+    crit.forEach(p=>{ if(Math.abs(p.z)<1e9){ lo=Math.min(lo,p.z); hi=Math.max(hi,p.z); } });
+    if(hi-lo<1e-9*(1+Math.abs(hi))){ lo-=1; hi+=1; }
+    if(!whole){ const pad=(hi-lo)*0.03, l0=lo, h0=hi; lo-=pad; hi+=pad; if(l0>=0&&lo<0) lo=0; if(h0<=0&&hi>0) hi=0; }
+    let s=niceStep(hi-lo); if((Math.ceil(hi/s-1e-9)-Math.floor(lo/s+1e-9))<4) s/=2;
+    zlo=Math.floor(lo/s+1e-9)*s; zhi=Math.ceil(hi/s-1e-9)*s;
+  }
+  // extremos absolutos en el rectángulo (la grilla, mejorada con los puntos críticos)
+  let M_={z:-Infinity}, m_={z:Infinity};
+  const N1=n+1;
+  for(let j=0;j<=n;j++) for(let i=0;i<=n;i++){ const v=GV.V[j*N1+i]; if(!isFinite(v)) continue; const o={x:a+i*GV.hx,y:c+j*GV.hy,z:v,border:i===0||j===0||i===n||j===n}; if(v>M_.z) M_=o; if(v<m_.z) m_=o; }
+  crit.forEach(p=>{ if(p.z>=M_.z-1e-9*(1+Math.abs(p.z))&&p.kind==='max') M_={x:p.x,y:p.y,z:p.z,border:false,exact:true}; if(p.z<=m_.z+1e-9*(1+Math.abs(p.z))&&p.kind==='min') m_={x:p.x,y:p.y,z:p.z,border:false,exact:true}; });
+  return {empty:false,GV,crit,zmin:zlo,zmax:zhi,absMax:M_,absMin:m_,degCurve};
+}
+// rasgos trigonométricos en x y en y (para graduar los ejes en múltiplos de π)
+function traits2(F){
+  if(F._traits2) return F._traits2;
+  const T={x:{trig:false,periods:[],ok:true},y:{trig:false,periods:[],ok:true}};
+  const lin=(arg,v)=>{ let g; try{ const c=realPow(arg).compile(); g=t=>toNum(c.evaluate(v==='x'?{x:t,y:0.3}:{x:0.3,y:t})); }catch(e){ return null; }
+    const g0=g(0), k=g(1)-g0; if(!isFinite(k)||Math.abs(k)<1e-12) return null; for(const t of [2,-1.7,0.37]){ const w=g(t); if(!isFinite(w)||Math.abs(w-g0-k*t)>1e-9*(1+Math.abs(w))) return null; } return k; };
+  const visit=n=>{
+    if(n.isFunctionNode && n.fn && TRIG_FN[n.fn.name] && n.args[0]){
+      ['x','y'].forEach(v=>{ if(hasSym(n.args[0],v)){ T[v].trig=true; const k=lin(n.args[0],v); if(k) T[v].periods.push(TRIG_FN[n.fn.name]*Math.PI/Math.abs(k)); else T[v].ok=false; } });
+      return;
+    }
+    n.forEach(ch=>visit(ch));
+  };
+  try{ visit(F.node); }catch(e){}
+  const pi=v=>T[v].trig&&T[v].ok&&T[v].periods.length>0&&T[v].periods.every(P=>piRational(P/Math.PI));
+  T.piX=pi('x'); T.piY=pi('y');
+  F._traits2=T; return T;
+}
 /*ANALYSIS-END*/
 
 if(typeof THREE==='undefined'){ document.getElementById('hMsg').textContent='No se pudo cargar la biblioteca 3D. Revise la conexión y recargue.'; return; }
@@ -1066,7 +1434,20 @@ const PRESETS=[
   {f:'x^2 e^(-x)', a:-1, b:10},
   {f:'cbrt(x)', a:-4, b:4},
   {f:'tg(x)', a:-4, b:4},
-  {f:'x^4 - 4x^3', a:-2, b:5}
+  {f:'x^4 - 4x^3', a:-2, b:5},
+  {f:'x^2 + y^2 = 4', a:-4, b:4, c:-3, d:3, k:'imp'},
+  {f:'x^2/9 + y^2/4 = 1', a:-5, b:5, c:-3.5, d:3.5, k:'imp'},
+  {f:'y^2 = x^3 - x', a:-2.5, b:3, c:-3, d:3, k:'imp'},
+  {f:'x^3 + y^3 = 3xy', a:-3, b:3, c:-2.5, d:2.5, k:'imp'},
+  {f:'(x^2 + y^2)^2 = 4(x^2 - y^2)', a:-3, b:3, c:-2, d:2, k:'imp'},
+  {f:'y^2 = x^2 (x + 1)', a:-2, b:2, c:-1.6, d:1.6, k:'imp'},
+  {f:'x y = 1', a:-5, b:5, c:-4, d:4, k:'imp'},
+  {f:'z = x^2 - y^2', a:-2, b:2, c:-2, d:2, k:'surf'},
+  {f:'z = x^2 + y^2', a:-2, b:2, c:-2, d:2, k:'surf'},
+  {f:'z = sen(x) cos(y)', a:-Math.PI, b:Math.PI, c:-Math.PI, d:Math.PI, k:'surf'},
+  {f:'z = e^(-(x^2 + y^2))', a:-2.5, b:2.5, c:-2.5, d:2.5, k:'surf'},
+  {f:'z = x^3 - 3x + y^2', a:-2, b:2, c:-2, d:2, k:'surf'},
+  {f:'z = x y e^(-(x^2 + y^2)/2)', a:-3, b:3, c:-3, d:3, k:'surf'}
 ];
 const COL={cero:0xeae6d6,max:0xe5534b,min:0x3d9be0,silla:0xe8923f,infl:0xa879e6,disc:0xe0a526,
   crec:0x2fae9b,decr:0xe27a3f,up:0x5b8def,down:0xcc5ea8,neutral:0xd9e4e4,tan:0xf2c14e,nor:0x7fcf6a,rider:0x4cc2c9};
@@ -1078,7 +1459,8 @@ const st={F:null,A:null,a:-3,b:3,ymin:-3,ymax:3,color:'mono',tn:1,tnFollow:true,
   playing:false,speed:1,piece:0,s:0,pauseUntil:0,msgTitle:'',msgLines:[],limit:null,xrKind:null,hudVisible:true,
   tab:'todo',tour:[],zoom:1,zoomRide:1,offset:new THREE.Vector3(),seat:0,waitSpeech:false,
   thick:0,vrPanel:'main',fnDraft:'',fnCur:0,fnErr:'',fnA:-3,fnB:3,fnPreset:0,fnSlot:0,kbPage:0,
-  funcs:[],act:0,inter:[],deriv:0,lupa:[],jump:null,follow:0,axis:{x:'auto',y:'auto'},winEdited:false,fnWinEdited:false};
+  funcs:[],act:0,inter:[],deriv:0,lupa:[],jump:null,follow:0,axis:{x:'auto',y:'auto'},winEdited:false,fnWinEdited:false,
+  I:null,Sf:null,probe:{x:0,y:0},heading:Math.PI/2,glide:null,levels:false,lastMode:'fx',rideS:null};
 const THICK=[0.35,0.6,1], THICK_NAME=['fino','medio','grueso'];
 const TK=()=>THICK[st.thick];
 
@@ -1336,7 +1718,7 @@ function traitsOf(F){
 // graduación: 'auto' decide según la función; 'num' decimal; 'pi' múltiplos de π
 function axisPi(axis){
   const m=st.axis[axis]; if(m==='pi') return true; if(m==='num') return false;
-  const fs=st.funcs.filter((fn,k)=>fn&&fn.F&&(k===st.act||fn.visible));
+  const fs=st.funcs.filter((fn,k)=>fn&&fn.F&&(fn.F.kind||'fx')==='fx'&&(k===st.act||fn.visible));
   if(!fs.length) return false;
   const act=st.funcs[st.act], Ta=traitsOf(act&&act.F);
   if(axis==='x') return Ta.piX || (!Ta.trig && fs.some(fn=>traitsOf(fn.F).piX) && !fs.some(fn=>{ const t=traitsOf(fn.F); return t.trig&&!t.piX; }));
@@ -1360,7 +1742,9 @@ function axisTicks(lo,hi,pi,numStep){
     for(let k=Math.ceil(lo/step-1e-9); k*step<=hi+1e-9; k++){ const t=piTick(k*p,q); out.push({v:k*step,tex:t.tex,txt:t.txt}); if(out.length>40) break; }
     out.step=step; return out;
   }
-  for(let k=Math.ceil(lo/numStep-1e-9); k*numStep<=hi+1e-9; k++){ const v=k*numStep; out.push({v:Math.abs(v)<numStep*1e-9?0:v,tex:null,txt:fmtS(v,2)}); if(out.length>60) break; }
+  const dg=Math.max(0,Math.min(6,-Math.floor(Math.log10(numStep)+1e-9)));
+  const tt=v=>{ if(Math.abs(v)<numStep*1e-9) return '0'; if(Math.abs(v)>=1e5||Math.abs(v)<1e-4) return fmtS(v,2); return (v<0?MINUS:'')+Math.abs(v).toFixed(dg); };
+  for(let k=Math.ceil(lo/numStep-1e-9); k*numStep<=hi+1e-9; k++){ const v=k*numStep; out.push({v:Math.abs(v)<numStep*1e-9?0:v,tex:null,txt:tt(v)}); if(out.length>60) break; }
   out.step=numStep; return out;
 }
 /* ---- vista estándar: la ventana tradicional de cada función ---- */
@@ -1375,7 +1759,7 @@ function standardX(){
     const P=Math.max(...T.periods), half=P*(T.tanLike?1.5:1);
     return T.piX ? roundOut(-half,half,true) : roundOut(-half,half,false);
   }
-  const fs=st.funcs.filter((fn,k)=>fn&&fn.F&&(k===st.act||fn.visible));
+  const fs=st.funcs.filter((fn,k)=>fn&&fn.F&&(fn.F.kind||'fx')==='fx'&&(k===st.act||fn.visible));
   let feats=[], lb=-Infinity, rb=Infinity, hasInf=false;
   for(const fn of fs){
     const A=analyze(fn.F,-30,30); if(A.empty) continue;
@@ -1474,6 +1858,7 @@ function colorFor(x){
 }
 function curveColors(X){ const c=new THREE.Color(), out=new Float32Array(X.length*3); X.forEach((x,i)=>{ c.setHex(colorFor(x)); out[i*3]=c.r; out[i*3+1]=c.g; out[i*3+2]=c.b; }); return out; }
 function recolor(){
+  if(MODE()!=='fx'||G.surf){ updateLegend(); return; }
   (G.curves||[]).forEach(l=>{ l.geometry.setColors(curveColors(l.userData.X)); });
   if(G.holes) G.holes.forEach(h=>{ if(h.userData.side){ const x=h.userData.x+h.userData.side*1e-4*(st.b-st.a); const c=h.userData.fixed!==undefined?h.userData.fixed:colorFor(x); h.userData.ring.material.color.setHex(c); if(!h.userData.open) h.userData.disc.material.color.setHex(c); } });
   updateLegend();
@@ -1507,11 +1892,15 @@ function addHoles(A,parent,fixed){
 // intersecciones de la función activa con las demás visibles
 function computeIntersections(){
   st.inter=[];
+  if(MODE()==='imp') return computeIntersectionsImp();
+  if(MODE()==='surf') return;
   const act=st.funcs[st.act], A=st.A; if(!act||!A||A.empty) return;
   const f=act.F.f, W=st.b-st.a;
   st.funcs.forEach((fn,k)=>{
-    if(k===st.act||!fn.F||!fn.visible) return;
-    const g=fn.F.f, h=x=>{ const u=f(x), v=g(x); return (isFinite(u)&&isFinite(v)&&Math.abs(u)<1e12&&Math.abs(v)<1e12)?u-v:NaN; };
+    if(k===st.act||!fn||!fn.F||!fn.visible) return;
+    const K=fn.F.kind||'fx'; if(K==='surf') return;
+    const g=K==='imp'?null:fn.F.f, G2=fn.F.f;
+    const h=K==='imp' ? x=>{ const u=f(x); if(!isFinite(u)||Math.abs(u)>1e12) return NaN; const v=G2(x,u); return isFinite(v)?v:NaN; } : x=>{ const u=f(x), v=g(x); return (isFinite(u)&&isFinite(v)&&Math.abs(u)<1e12&&Math.abs(v)<1e12)?u-v:NaN; };
     const xs=A.xs; let px=xs[0], ph=h(px);
     const found=[];
     const add=x=>{ if(found.some(z=>Math.abs(z-x)<1e-6*W)) return; const y=f(x); if(isFinite(y)) found.push(x); };
@@ -1521,8 +1910,9 @@ function computeIntersections(){
         if(v===0) add(x);
         else if(ph*v<0){
           let l=px,r=x,hl=ph; for(let it=0;it<60;it++){ const m=(l+r)/2, hm=h(m); if(!isFinite(hm)) break; if(hl*hm<=0) r=m; else { l=m; hl=hm; } }
-          const xm=(l+r)/2, fm=f(xm), gm=g(xm), sc=1+Math.abs(fm);
-          if(isFinite(fm)&&isFinite(gm)&&Math.abs(fm-gm)<1e-6*sc && Math.abs(f(l)-f(r))<1e-3*sc && Math.abs(g(l)-g(r))<1e-3*sc) add(xm);
+          const xm=(l+r)/2, fm=f(xm), sc=1+Math.abs(fm);
+          if(K==='imp'){ const hm=h(xm); if(isFinite(fm)&&isFinite(hm)&&Math.abs(hm)<=1e-6*(Math.abs(ph)+Math.abs(v)) && Math.abs(f(l)-f(r))<1e-3*sc) add(xm); }
+          else { const gm=g(xm); if(isFinite(fm)&&isFinite(gm)&&Math.abs(fm-gm)<1e-6*sc && Math.abs(f(l)-f(r))<1e-3*sc && Math.abs(g(l)-g(r))<1e-3*sc) add(xm); }
         }
       }
       px=x; ph=v;
@@ -1543,6 +1933,7 @@ function derivRuns(fd){
   return out;
 }
 function buildGraph(resetCam){
+  if(MODE()==='surf') return buildSurfGraph(resetCam);
   disposeTree(graph); while(graph.children.length) graph.remove(graph.children[0]);
   lineMats.clear(); G={};
   const A=st.A, a=st.a, b=st.b, y0=st.ymin, y1=st.ymax, W=b-a, H=y1-y0;
@@ -1557,7 +1948,7 @@ function buildGraph(resetCam){
   board.position.set((a+b)/2,(y0+y1)/2,-u*1.2); graph.add(board); G.board=board;
   // cuadrícula
   const step=niceStep(Math.max(W,H)*0.9), gp=[];
-  const piX=axisPi('x'), piY=axisPi('y');
+  const piX=MODE()==='imp'?axisPi2('x'):axisPi('x'), piY=MODE()==='imp'?axisPi2('y'):axisPi('y');
   const TX=axisTicks(a,b,piX,step), TY=axisTicks(y0,y1,piY,step);
   G.piX=piX; G.piY=piY;
   for(const t of TX){ gp.push(new THREE.Vector3(t.v,y0,-u*0.6),new THREE.Vector3(t.v,y1,-u*0.6)); }
@@ -1582,8 +1973,11 @@ function buildGraph(resetCam){
   // otras funciones visibles, cada una con su color
   G.others=new THREE.Group(); graph.add(G.others);
   st.funcs.forEach((fn,k)=>{
-    if(k===st.act||!fn.visible||!fn.A||fn.A.empty) return;
-    const col=FCOL[k];
+    if(k===st.act||!fn||!fn.F||!fn.visible) return;
+    const col=FCOL[k], K=fn.F.kind||'fx';
+    if(K==='surf') return;
+    if(K==='imp'){ drawImpOverlay(fn,k,col,lw,u,lu); return; }
+    if(!fn.A||fn.A.empty) return;
     piecesOf(fn.A,y0,y1).forEach(pc=>{ const pos=[]; pc.X.forEach((x,i)=>pos.push(x,pc.Y[i],-u*0.02)); G.others.add(line2(pos,{color:col,w:lw*0.85})); });
     addHoles(fn.A,G.others,col);
     const xl=Math.min(b,Math.max(a, b-W*0.06)); const yl=fn.F.f(xl);
@@ -1591,6 +1985,9 @@ function buildGraph(resetCam){
   });
   // gráficas de f′ y f″ de la función activa
   G.derivs=new THREE.Group(); graph.add(G.derivs);
+  const inWin=(x,y)=>x>=a-1e-9&&x<=b+1e-9&&y>=y0&&y<=y1;
+  if(MODE()==='imp'){ buildImpContent(lw,u,lu,ks); G.asyGroup=new THREE.Group(); graph.add(G.asyGroup); }
+  else {
   if(A && !A.empty){
     const nm=FSLOT[st.act];
     [[1,st.F.f1,0xf0f4f4,"'",u*1.6],[2,st.F.f2,0x9fb6bc,"''",u*0.7]].forEach(([bit,fd,col,pr,dash])=>{
@@ -1609,7 +2006,6 @@ function buildGraph(resetCam){
   }
 
   // asíntotas verticales y discontinuidades de la función activa
-  const inWin=(x,y)=>x>=a-1e-9&&x<=b+1e-9&&y>=y0&&y<=y1;
   const AG=new THREE.Group(); graph.add(AG); G.asyGroup=AG;
   const HG=new THREE.Group(); graph.add(HG); G.holeGroup=HG;
   if(A && !A.empty){
@@ -1653,13 +2049,14 @@ function buildGraph(resetCam){
     G.labels.push({sp:l,prio:1,px:s.x,py:s.y,g:gp2,pref:above?'up':'down'});
     G.markers.push(mk); G.markerGroups.push(grp);
   });
+  }
   // intersecciones
   G.inter=new THREE.Group(); graph.add(G.inter);
   (st.inter||[]).forEach(p=>{
     if(!inWin(p.x,p.y)) return;
     const mk=new THREE.Mesh(new THREE.OctahedronGeometry(u*1.1*ks*G.mk),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:0.3}));
     mk.position.set(p.x,p.y,0); G.inter.add(mk);
-    const l=makeRichLabel([Mx(FSLOT[st.act]+'='+FSLOT[p.slot]),'  ',Mx(texPt(p.x,p.y),'('+fmtS(p.x)+', '+fmtS(p.y)+')')],'#ffffff',lu*2.3,{center:[0.5,0],onResize:relayout}); l.position.set(p.x,p.y+u*2.2,u*1.5); G.inter.add(l); G.labels.push({sp:l,prio:2,px:p.x,py:p.y,g:u*1.2*ks*G.mk+lu*0.6,pref:'up'});
+    const l=makeRichLabel([Mx(MODE()==='imp'||kindOf(p.slot)==='imp'?FSLOT[st.act]+'\\cap '+FSLOT[p.slot]:FSLOT[st.act]+'='+FSLOT[p.slot]),'  ',Mx(texPt(p.x,p.y),'('+fmtS(p.x)+', '+fmtS(p.y)+')')],'#ffffff',lu*2.3,{center:[0.5,0],onResize:relayout}); l.position.set(p.x,p.y+u*2.2,u*1.5); G.inter.add(l); G.labels.push({sp:l,prio:2,px:p.x,py:p.y,g:u*1.2*ks*G.mk+lu*0.6,pref:'up'});
   });
 
   // vagón
@@ -1735,13 +2132,13 @@ function buildLimitVisual(){
 /* ---- colocación en el mundo ---- */
 function isRide(){ return renderer.xr.isPresenting && st.xrMode==='ride' && st.xrKind!=='ar'; }
 // zona del lienzo que no tapan los paneles superpuestos (datos, botones, barra de recorrido, leyenda)
-function freeRect(bw,bh){
+function freeRect(bw,bh,noHud){
   const cr=renderer.domElement.getBoundingClientRect(), W=cr.width, H=cr.height;
   const full={x:0,y:0,w:W,h:H};
   if(W<60||H<60) return full;
   const R=id=>{ const e=document.getElementById(id); if(!e||e.hidden||getComputedStyle(e).position!=='absolute') return null; const r=e.getBoundingClientRect(); if(r.width<2||r.height<2) return null;
     const o={l:r.left-cr.left-6,t:r.top-cr.top-6,r:r.right-cr.left+6,b:r.bottom-cr.top+6}; return (o.r>0&&o.l<W&&o.b>0&&o.t<H)?o:null; };
-  const hud=R('hud'), vb=R('viewbar'), rb=R('ridebar'), lg=R('legend');
+  const hud=noHud?null:R('hud'), vb=R('viewbar'), rb=R('ridebar'), lg=R('legend');
   if(hud){ hud.b=Math.max(hud.b, hud.t+Math.min(H*0.42, 250)); }
   const obs=[hud,vb,rb,lg].filter(Boolean);
   if(!obs.length) return full;
@@ -1765,6 +2162,7 @@ function freeRect(bw,bh){
 }
 const CAM_C=new THREE.Vector3(0,1.3,-0.95), CAM_D=1.33;
 function placeGraph(resetCam){
+  if(G.surf) return placeSurf(resetCam);
   if(resetCam===undefined) resetCam=true;
   const W=st.b-st.a, H=st.ymax-st.ymin, u=G.u||Math.max(W,H*0.6)/100;
   const inXR=renderer.xr.isPresenting;
@@ -2280,8 +2678,8 @@ function setTTS(on){
   vrDirty=true;
 }
 function sayList(arr){ if(!arr.length) return ''; if(arr.length===1) return arr[0]; return arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1]; }
-const HELP_VR='Controles en realidad virtual. El stick derecho avanza o retrocede sobre la curva; si llega al borde, la ventana avanza con usted. El stick izquierdo hacia adelante o atrás cambia el tamaño de la maqueta, y hacia los lados desplaza la ventana por el dominio. Mantenga apretado el botón de agarre y mueva la mano para subir, bajar o desplazar la función. Apunte al tablero y pulse el gatillo para elegir una pestaña o un botón. Fuera del tablero, el gatillo derecho salta al punto siguiente y el izquierdo al anterior. El botón A inicia o pausa el recorrido. El botón B alterna entre tangente, normal, ambas o ninguna. El botón X cambia entre montar la curva y verla como maqueta. El botón Y muestra u oculta el tablero. En el tablero, Vista estándar devuelve en cualquier momento la ventana tradicional de la función, Eje x alterna la graduación entre automática, múltiplos de pi y decimal, la fila Ventana mueve y amplía el trozo visible de la función, Lupa acerca el punto de tangencia, y Cambiar función abre un teclado con funciones trigonométricas, logaritmos, raíces y funciones por tramos. El clic del stick izquierdo vuelve a la vista estándar. El clic del stick derecho repite esta ayuda.';
-const HELP_2D='Vista estándar, o la tecla Inicio, devuelve siempre la ventana tradicional de la función. Arrastre sobre el gráfico para girarlo y use la rueda para acercar la cámara. Los botones de ventana, o Mayúsculas con las flechas, desplazan la región visible por todo el dominio y el recorrido; Ver más y Ver menos cambian su tamaño. Las flechas izquierda y derecha mueven el vagón, que empuja la ventana al llegar al borde. Elija una pestaña y pulse Subir y recorrer para que el vagón visite los elementos mientras la narración los explica.';
+const HELP_VR='Controles en realidad virtual. El stick derecho avanza o retrocede sobre la curva; si llega al borde, la ventana avanza con usted. El stick izquierdo hacia adelante o atrás cambia el tamaño de la maqueta, y hacia los lados desplaza la ventana por el dominio. Mantenga apretado el botón de agarre y mueva la mano para subir, bajar o desplazar la función. Apunte al tablero y pulse el gatillo para elegir una pestaña o un botón. Fuera del tablero, el gatillo derecho salta al punto siguiente y el izquierdo al anterior. El botón A inicia o pausa el recorrido. El botón B alterna entre tangente, normal, ambas o ninguna. El botón X cambia entre montar la curva y verla como maqueta. El botón Y muestra u oculta el tablero. En el tablero, Vista estándar devuelve en cualquier momento la ventana tradicional de la función, Eje x alterna la graduación entre automática, múltiplos de pi y decimal, la fila Ventana mueve y amplía el trozo visible de la función, Lupa acerca el punto de tangencia, y Cambiar función abre un teclado con funciones trigonométricas, logaritmos, raíces y funciones por tramos. El clic del stick izquierdo vuelve a la vista estándar. Con una superficie, el stick derecho mueve el explorador en la dirección en que usted mira, el botón X alterna entre caminar sobre la superficie y verla como maqueta, y el botón B muestra las trazas, el plano tangente o ambos. El clic del stick derecho repite esta ayuda.';
+const HELP_2D='Una ecuación en x e y, como x al cuadrado más ye al cuadrado igual a 4, se dibuja como curva implícita, y el vagón la recorre rama por rama. Zeta igual a una expresión en x e ye se dibuja como superficie: las flechas mueven el explorador, y arrastrar el gráfico lo gira. Vista estándar, o la tecla Inicio, devuelve siempre la ventana tradicional de la función. Arrastre sobre el gráfico para girarlo y use la rueda para acercar la cámara. Los botones de ventana, o Mayúsculas con las flechas, desplazan la región visible por todo el dominio y el recorrido; Ver más y Ver menos cambian su tamaño. Las flechas izquierda y derecha mueven el vagón, que empuja la ventana al llegar al borde. Elija una pestaña y pulse Subir y recorrer para que el vagón visite los elementos mientras la narración los explica.';
 
 /* ================= varias funciones ================= */
 const FN=()=>FSLOT[st.act];
@@ -2293,18 +2691,31 @@ function renameF(x,nm){
   return x;
 }
 function renameStops(A,nm){ if(nm==='f'||!A||A.empty) return; A.stops.forEach(s=>{ s.lines=renameF(s.lines,nm); }); }
-function syncActive(){ let fn=st.funcs[st.act]; if(!fn||!fn.F){ st.act=0; fn=st.funcs[0]; } st.F=fn.F; st.A=fn.A||emptyA(st.a,st.b); }
+function syncActive(){ let fn=st.funcs[st.act]; if(!fn||!fn.F){ st.act=0; fn=st.funcs[0]; } st.F=fn.F;
+  st.I=fn.I||null; st.Sf=fn.Sf||null;
+  const k=MODE();
+  if(k==='imp') st.A=Object.assign(emptyA(st.a,st.b),{empty:!st.I||st.I.empty});
+  else if(k==='surf') st.A=Object.assign(emptyA(st.a,st.b),{empty:!st.Sf||st.Sf.empty});
+  else st.A=fn.A||emptyA(st.a,st.b);
+  document.body.dataset.mode=k;
+  if(st.lastMode!==k){ st.lastMode=k; if(!curTabs().some(t=>t.id===st.tab)) st.tab='todo'; renderTabBar(); }
+}
 function computeAll(){
+  const am=kindOf(st.act);
   st.funcs.forEach((fn,k)=>{
     if(!fn) return;
-    if(!fn.F || (!fn.visible && k!==st.act)){ fn.A=null; return; }
+    fn.I=null; fn.Sf=null;
+    const K=fn.F?(fn.F.kind||'fx'):'fx';
+    if(fn.F && k===st.act && K==='imp') fn.I=analyzeImp(fn.F,st.a,st.b,st.ymin,st.ymax);
+    if(fn.F && k===st.act && K==='surf'){ const keep=isRide()&&st.rideS&&st.Sf?[st.Sf.zmin,st.Sf.zmax]:null; fn.Sf=analyzeSurf(fn.F,st.a,st.b,st.ymin,st.ymax,keep); }
+    if(!fn.F || (!fn.visible && k!==st.act) || K!=='fx' || am==='surf'){ fn.A=null; return; }
     let A=analyze(fn.F,st.a,st.b); if(A.empty) A=emptyA(st.a,st.b);
     renameStops(A,FSLOT[k]); fn.A=A;
   });
   syncActive(); computeIntersections();
 }
 function setFnSrc(slot,src){
-  let F; try{ F=buildF(src); }catch(e){ return e.message; }
+  let F; try{ F=buildAny(src); }catch(e){ return e.message; }
   F.name=FSLOT[slot];
   st.funcs[slot]=Object.assign(st.funcs[slot]||makeFn(slot),{src,F});
   return '';
@@ -2321,11 +2732,21 @@ function applyAll(o){
   if(o.act!==undefined) st.act=o.act;
   const a=o.a!==undefined?o.a:st.a, b=o.b!==undefined?o.b:st.b;
   if(!(b>a)) return 'La ventana necesita x mín menor que x máx.';
+  const pm=st.lastMode;
   st.a=a; st.b=b;
-  computeAll();
   let lo=o.ymin==null?null:o.ymin, hi=o.ymax==null?null:o.ymax;
-  if(lo===null||hi===null||!(hi>lo)){ const r=autoY(st.A); if(lo===null||!(hi>lo)) lo=r[0]; if(hi===null||!(hi>lo)) hi=r[1]; }
-  st.ymin=lo; st.ymax=hi; st.lupa=[];
+  const kd=kindOf(st.act);
+  if(kd!=='fx'){
+    if(lo===null||hi===null||!(hi>lo)){ if(kd==='surf'){ lo=a; hi=b; } else { const H=(b-a)*0.8; lo=-H/2; hi=H/2; } }
+    st.ymin=lo; st.ymax=hi; st.rideS=null; computeAll();
+    if(kd==='surf'){ st.probe.x=snap((a+b)/2,b-a); st.probe.y=snap((lo+hi)/2,hi-lo); st.glide=null; }
+  } else {
+    computeAll();
+    if(lo===null||hi===null||!(hi>lo)){ const r=autoY(st.A); if(lo===null||!(hi>lo)) lo=r[0]; if(hi===null||!(hi>lo)) hi=r[1]; }
+    st.ymin=lo; st.ymax=hi;
+  }
+  if(pm!==MODE()) o.resetCam=true;
+  st.lupa=[];
   syncWindowInputs();
   st.limit=null; document.getElementById('limOut').innerHTML='';
   buildGraph(o.resetCam!==false);
@@ -2333,16 +2754,18 @@ function applyAll(o){
   st.piece=0; st.s=0; st.playing=false; st.jump=null; updatePlayBtn(); curTourIdx=-1; curStopIdx=-1; snapCam=true; pendingJump=null;
   setTab(st.tab,{speak:false});
   if(o.talk) speak(tabInfo(st.tab).say);
-  if(st.limitUsed) computeLimit();
+  if(st.limitUsed && MODE()==='fx') computeLimit();
   syncWindowInputs();
   hudDirty=true; vrDirty=true;
-  return st.A.empty ? 'La función '+FN()+' no toma valores reales en esta ventana. Desplace o amplíe la ventana.' : '';
+  if(!st.A.empty) return '';
+  const md=MODE();
+  return md==='imp'?'La curva no tiene puntos en esta ventana. Desplace o amplíe la ventana.':md==='surf'?'La superficie no toma valores reales en esta ventana.':'La función '+FN()+' no toma valores reales en esta ventana. Desplace o amplíe la ventana.';
 }
 function loadFunction(src,a,b,ymin,ymax,talk,slot){
   if(slot===undefined) slot=st.act;
   const err=document.getElementById('fnError');
   const e=setFnSrc(slot,src);
-  if(e){ err.textContent=FSLOT[slot]+'(x): '+e; err.hidden=false; speak('No pude leer la función. '+e); return false; }
+  if(e){ err.textContent=FSLOT[slot]+': '+e; err.hidden=false; speak('No pude leer la expresión. '+e); return false; }
   const w=applyAll({a,b,ymin,ymax,talk,act:slot});
   if(w && w.startsWith('La ventana')){ err.textContent=w; err.hidden=false; return false; }
   err.textContent=w; err.hidden=!w;
@@ -2350,33 +2773,37 @@ function loadFunction(src,a,b,ymin,ymax,talk,slot){
 }
 function setActive(k,talk){
   if(!st.funcs[k]||!st.funcs[k].F) return;
+  const pm=MODE(), nk=kindOf(k);
   st.act=k; st.funcs[k].visible=true;
+  if(nk!==pm || nk!=='fx'){ const w=stdWindow(); st.lupa=[]; applyAll({a:w.a,b:w.b,ymin:w.c,ymax:w.d,act:k,resetCam:true}); if(talk) speak('Ahora se estudia '+sayFn()+'. '+tabInfo(st.tab).say); return; }
   computeAll(); buildGraph(false); renderPanel(); renderFnList();
   const r=nearestReach(curX()); if(r){ st.piece=r.piece; st.s=r.s; } else { st.piece=0; st.s=0; }
   setTab(st.tab,{speak:false}); if(st.limitUsed) computeLimit(); hudDirty=vrDirty=true;
-  if(talk) speak('Ahora se recorre la función '+FN()+' de x, igual a '+sayExpr(st.F.node)+'.');
+  if(talk) speak('Ahora se recorre '+sayFn()+'.');
 }
 function cycleActive(){
   const ks=st.funcs.map((f,k)=>f&&f.F?k:-1).filter(k=>k>=0);
-  if(ks.length<2){ speak('Solo hay una función. Use Cambiar función para agregar otra.'); return; }
+  if(ks.length<2){ speak('Solo hay una función. Use Cambiar función para agregar otra, una curva o una superficie.'); return; }
   setActive(ks[(ks.indexOf(st.act)+1)%ks.length],true);
 }
 
 /* ================= ventana: desplazar, ampliar y lupa ================= */
 function setWindow(a,b,y0,y1,o){
   o=o||{};
-  const x=o.x!==undefined?o.x:curX();
+  const x=o.x!==undefined?o.x:curX(), prev=o.p||curPos();
   st.a=a; st.b=b; st.ymin=y0; st.ymax=y1;
   computeAll(); buildGraph(false);
+  if(MODE()==='imp'){ const r=prev?reachXY(prev.x,prev.y):null; if(r){ st.piece=r.piece; st.s=r.s; if(o.mdir) orientPiece(o.mdir); } else { st.piece=0; st.s=0; } }
+  else if(MODE()==='surf'){ st.probe.x=Math.max(a,Math.min(b,st.probe.x)); st.probe.y=Math.max(y0,Math.min(y1,st.probe.y)); }
+  else { const r=nearestReach(x); if(r){ st.piece=r.piece; st.s=r.s; } else { st.piece=0; st.s=0; } }
   applyTabVisibility(); buildTour(); curTourIdx=-1; curStopIdx=-1; renderTab();
-  const r=nearestReach(x); if(r){ st.piece=r.piece; st.s=r.s; } else { st.piece=0; st.s=0; }
   pendingJump=null; st.jump=null; snapCam=true;
   if(!o.keepPlay){ st.playing=false; updatePlayBtn(); }
   syncWindowInputs();
   hudDirty=true; vrDirty=true;
 }
 const rnd=v=>{ const s=Math.pow(10,Math.floor(Math.log10(Math.abs(v)||1))-3); return Math.round(v/s)*s; };
-function winSay(){ return 'Ventana de x entre '+sayNum(st.a)+' y '+sayNum(st.b)+', y de y entre '+sayNum(st.ymin)+' y '+sayNum(st.ymax)+'.'; }
+function winSay(){ return 'Ventana de x entre '+sayNum(st.a)+' y '+sayNum(st.b)+', y de ye entre '+sayNum(st.ymin)+' y '+sayNum(st.ymax)+'.'; }
 const rx=v=>G.piX?v:rnd(v), ry=v=>G.piY?v:rnd(v);
 function panWin(fx,fy,talk){ const W=st.b-st.a,H=st.ymax-st.ymin; setWindow(rx(st.a+fx*W),rx(st.b+fx*W),ry(st.ymin+fy*H),ry(st.ymax+fy*H)); if(talk) speak(winSay()); }
 function zoomWin(k,talk){
@@ -2387,12 +2814,13 @@ function zoomWin(k,talk){
 // vuelve a la ventana tradicional de la función activa, con la cámara de frente
 function stdView(talk){
   st.lupa=[]; st.follow=0; st.jump=null;
-  const xr=standardX(), yr=standardY(xr[0],xr[1]);
-  st.zoom=1; st.zoomRide=1; st.offset.set(0,0,0); st.seat=0;
-  setWindow(xr[0],xr[1],yr[0],yr[1]);
+  const w=stdWindow();
+  st.zoom=1; st.zoomRide=1; st.offset.set(0,0,0); st.seat=0; st.rideS=null; st.glide=null;
+  if(MODE()==='surf'){ st.probe.x=snap((w.a+w.b)/2,w.b-w.a); st.probe.y=snap((w.c+w.d)/2,w.d-w.c); }
+  setWindow(w.a,w.b,w.c,w.d);
   placeGraph(!renderer.xr.isPresenting); snapCam=true;
-  setMsg('Vista estándar',['Ventana ',MxWin(),'.']);
-  if(talk) speak('Vista estándar de '+FN()+'. '+winSay());
+  setMsg('Vista estándar',[['Ventana ',MxWin(),' por ',MxWinY(),'.']]);
+  if(talk) speak('Vista estándar de '+sayFn()+'. '+winSay());
 }
 function setAxisMode(axis,m,talk){
   st.axis[axis]=m;
@@ -2401,17 +2829,23 @@ function setAxisMode(axis,m,talk){
   if(talk) speak('Eje '+(axis==='x'?'x':'y')+': '+(m==='pi'?'graduado en múltiplos de pi':m==='num'?'graduación decimal':'graduación automática')+'.');
 }
 function cycleAxisX(){ const o=['auto','pi','num'], m=o[(o.indexOf(st.axis.x)+1)%3]; setAxisMode('x',m,true); }
-function fitWin(talk){ const r=autoY(st.A); setWindow(st.a,st.b,r[0],r[1]); if(talk) speak('Rango de y ajustado a la función. '+winSay()); }
+function fitWin(talk){
+  const md=MODE();
+  if(md==='surf'){ setWindow(st.a,st.b,st.ymin,st.ymax); if(talk) speak('Alturas ajustadas a la superficie: zeta entre '+sayNum(G.z0)+' y '+sayNum(G.z1)+'.'); return; }
+  if(md==='imp'){ const H=st.ymax-st.ymin, A=analyzeImp(st.F,st.a,st.b,st.ymin-2*H,st.ymax+2*H); if(!A.bbox){ if(talk) speak('La curva no tiene puntos en este rango de x.'); return; }
+    let y0=A.bbox.y0, y1=A.bbox.y1; const pd=Math.max(0.12*(y1-y0),0.05*(st.b-st.a)); y0-=pd; y1+=pd; const sp=niceStep(y1-y0)/2; setWindow(st.a,st.b,Math.floor(y0/sp)*sp,Math.ceil(y1/sp)*sp); if(talk) speak('Rango de ye ajustado a la curva. '+winSay()); return; }
+  const r=autoY(st.A); setWindow(st.a,st.b,r[0],r[1]); if(talk) speak('Rango de ye ajustado a la función. '+winSay()); }
 function lupa(){
+  if(MODE()==='surf'){ surfLupa(); return; }
   if(st.lupa.length){ const w=st.lupa.pop(); setWindow(w[0],w[1],w[2],w[3]); speak(st.lupa.length?'Se aleja un nivel.':'Fin de la lupa. Vuelve la ventana anterior.'); return; }
   lupaIn();
 }
 function lupaIn(){
-  const t=tangentInfo(); if(!t.ok){ speak('En este punto la función no está definida.'); return; }
+  const t=tangentInfo(); if(!t.ok){ speak(t.sing?'En un punto singular la curva no tiene una tangente única.':'En este punto la función no está definida.'); return; }
   if(st.tn===0){ st.tn=1; syncTnRadios(); }
   st.lupa.push([st.a,st.b,st.ymin,st.ymax]);
   const W=(st.b-st.a)/5, H=(st.ymax-st.ymin)/5;
-  setWindow(t.x0-W/2,t.x0+W/2,t.y0-H/2,t.y0+H/2,{x:t.x0});
+  setWindow(t.x0-W/2,t.x0+W/2,t.y0-H/2,t.y0+H/2,{x:t.x0,p:{x:t.x0,y:t.y0}});
   speak(st.lupa.length===1?'Lupa sobre el punto de tangencia. Al acercarse, la curva se confunde cada vez más con su recta tangente.':'Más cerca todavía. La curva y la tangente casi coinciden.');
 }
 
@@ -2436,9 +2870,11 @@ function stopInTab(s,tab){
   }
   return false;
 }
-function tabName(id){ return (TABS.find(t=>t.id===id)||TABS[0]).name; }
+function tabName(id){ const T=curTabs(); return (T.find(t=>t.id===id)||T[0]).name; }
 function ivTxt(p,q){ return '('+fmtS(p)+', '+fmtS(q)+')'; }
 function buildTour(){
+  if(MODE()==='imp') return buildTourImp();
+  if(MODE()==='surf') return buildTourSurf();
   const A=st.A, tab=st.tab, W=st.b-st.a, items=[], nm=FN();
   A.stops.forEach(s=>{ if(stopInTab(s,tab)) items.push({x:s.x, kind:s.kind, title:s.title, pt:s.pt, ptTeX:s.ptTeX, lines:s.lines, say:s.say, stop:s}); });
   const addIv=(list,names,sayFn,lineFn)=>{
@@ -2456,6 +2892,7 @@ function buildTour(){
     o=>[Mx(nm+"''(x)"+({up:'>0',down:'<0',lin:'=0'}[o.kind]),nm+'″(x) '+({up:'> 0',down:'< 0',lin:'= 0'}[o.kind])),' en ',Mx(texIv(o.p,o.q),ivTxt(o.p,o.q)),'.']);
   if(tab==='todo'||tab==='inter') (st.inter||[]).forEach(p=>{
     const gn=FSLOT[p.slot], tx=texNum(p.x), ty=texNum(p.y);
+    if(kindOf(p.slot)==='imp'){ items.push({x:p.x,kind:'inter',title:'Intersección con la curva '+gn,pt:'('+fmtS(p.x)+', '+fmtS(p.y)+')',ptTeX:texPt(p.x,p.y),lines:[['El punto ',Mx(texPt(p.x,p.y),'('+fmtS(p.x)+', '+fmtS(p.y)+')'),' está en la gráfica de '+nm+' y en la curva '+gn+'.']],say:'Intersección con la curva '+gn+', en el punto '+sayPt(p.x,p.y)+'.',inter:p}); return; }
     items.push({x:p.x, kind:'inter', title:'Intersección con '+gn, pt:'('+fmtS(p.x)+', '+fmtS(p.y)+')', ptTeX:texPt(p.x,p.y),
       lines:[[Mx(nm+'\\left('+tx+'\\right)='+gn+'\\left('+tx+'\\right)='+ty, nm+'('+fmtS(p.x)+') = '+gn+'('+fmtS(p.x)+') = '+fmtS(p.y)),'. Las dos curvas se cortan.']],
       say:'Intersección con la función '+gn+', en x igual a '+sayNum(p.x)+'. Ambas funciones valen '+sayNum(p.y)+'.', inter:p});
@@ -2481,7 +2918,11 @@ function domTeX(A){ return A.dom.length? A.dom.map(d=>(d.pc?'\\left[':'\\left(')
 const MxX=xs=>Mx('x='+xs.map(v=>texNum(v)).join(',\\ '),'x = '+xs.map(v=>fmtS(v)).join(', '));
 const MxV=v=>Mx(texNum(v),fmtS(v));
 const MxIvs=l=>Mx(l.map(o=>texIv(o.p,o.q)).join('\\cup '),l.map(o=>ivTxt(o.p,o.q)).join(' ∪ '));
-const MxWin=()=>Mx('\\left['+texNum(st.a)+',\\ '+texNum(st.b)+'\\right]','['+fmtS(st.a)+', '+fmtS(st.b)+']');
+// extremos de ventana: enteros, múltiplos de π o decimales cortos (no fracciones como 13/10)
+function texW(v,pi){ if(Math.abs(v-Math.round(v))<1e-9) return texNum(Math.round(v)); if(pi) return texNum(v); return texDec(v,3); }
+function txtW(v,pi){ if(Math.abs(v-Math.round(v))<1e-9) return fmtS(Math.round(v)); if(pi) return fmtS(v); return dec(v,3); }
+const MxWin=()=>Mx('\\left['+texW(st.a,G.piX)+',\\ '+texW(st.b,G.piX)+'\\right]','['+txtW(st.a,G.piX)+', '+txtW(st.b,G.piX)+']');
+const MxWinY=()=>Mx('\\left['+texW(st.ymin,G.piY)+',\\ '+texW(st.ymax,G.piY)+'\\right]','['+txtW(st.ymin,G.piY)+', '+txtW(st.ymax,G.piY)+']');
 function infLine(r,sgn){
   const nm=FN();
   const out=[Mx('\\lim_{x\\to '+(sgn>0?'+':'-')+'\\infty} '+nm+'(x)='+texLim(r.L),'lím x→'+(sgn>0?'+∞':MINUS+'∞')+' '+nm+'(x) = '+limTxt(r.L))];
@@ -2498,6 +2939,8 @@ function extTxt(o,word){
 function extSay(o,word){ return o.empty ? '' : o.none ? 'No hay '+word+' absoluto en la ventana, porque la función no está acotada cerca de x igual a '+sayNum(o.x)+'.'
     : (o.attained ? 'El '+word+' absoluto en la ventana es '+sayNum(o.v)+', en x igual a '+sayNum(o.x)+'.' : 'La función se acerca a '+sayNum(o.v)+' cerca de x igual a '+sayNum(o.x)+', sin alcanzarlo.'); }
 function tabInfo(tab){
+  if(MODE()==='imp') return tabInfoImp(tab);
+  if(MODE()==='surf') return tabInfoSurf(tab);
   const A=st.A, F=st.F, nm=FN();
   if(A.empty && tab!=='inter') return {title:'Sin gráfica en la ventana', lines:['La función '+nm+' no toma valores reales en esta ventana. Desplace o amplíe la ventana.'], say:'La función no toma valores reales en esta ventana. Desplace o amplíe la ventana.'};
   const ivs=(list,k)=>list.filter(o=>o.kind===k);
@@ -2568,7 +3011,7 @@ function tabInfo(tab){
       const others=st.funcs.filter((f,k)=>f&&f.F&&k!==st.act&&f.visible);
       if(!others.length) return {title:'Intersecciones', lines:['Agregue otra función, por ejemplo g(x), para estudiar dónde se cortan las curvas.'], say:'Intersecciones. Agregue otra función con Cambiar función para estudiar dónde se cortan las curvas.'};
       const I=st.inter||[];
-      const lines=I.length? I.map(p=>[Mx(nm+'(x)='+FSLOT[p.slot]+'(x)'),' en ',MxX([p.x]),', con ',Mx('y='+texNum(p.y),'y = '+fmtS(p.y)),'.']) : ['Las curvas no se cortan en la ventana.'];
+      const lines=I.length? I.map(p=>kindOf(p.slot)==='imp'?['Con la curva ',Mx(FSLOT[p.slot]),' en ',Mx(texPt(p.x,p.y),'('+fmtS(p.x)+', '+fmtS(p.y)+')'),'.']:[Mx(nm+'(x)='+FSLOT[p.slot]+'(x)'),' en ',MxX([p.x]),', con ',Mx('y='+texNum(p.y),'y = '+fmtS(p.y)),'.']) : ['Las curvas no se cortan en la ventana.'];
       const say=I.length? 'Intersecciones. Las curvas se cortan en '+(I.length===1?'un punto':I.length+' puntos')+': '+sayList(I.map(p=>'con '+FSLOT[p.slot]+' en x igual a '+sayNum(p.x)))+'.' : 'Las curvas no se cortan en esta ventana.';
       return {title:'Intersecciones', lines, say};
     }
@@ -2577,14 +3020,18 @@ function tabInfo(tab){
 }
 function applyTabVisibility(){
   const tab=st.tab;
+  if(MODE()==='surf'){ applyTabVisSurf(); return; }
+  if(MODE()==='imp'){ if(G.markerGroups&&st.I) G.markerGroups.forEach((g,i)=>{ if(g&&st.I.pts[i]) g.visible=impInTab(st.I.pts[i],tab); }); if(G.inter) G.inter.visible=(tab==='todo'||tab==='inter'); return; }
   if(G.markerGroups) G.markerGroups.forEach((g,i)=>{ if(g) g.visible=stopInTab(st.A.stops[i],tab); });
   if(G.asyGroup) G.asyGroup.visible=(tab==='todo'||tab==='asint');
   if(G.inter) G.inter.visible=(tab==='todo'||tab==='inter');
 }
 function setTab(id,opts){
   opts=opts||{};
+  const TT=curTabs(); if(!TT.some(t=>t.id===id)) id='todo';
   st.tab=id;
-  const T=TABS.find(t=>t.id===id)||TABS[0];
+  const T=TT.find(t=>t.id===id)||TT[0];
+  if(MODE()==='surf'){ if(id==='trazas'&&st.tn!==1&&st.tn!==3){ st.tn=1; syncTnRadios(); } if(id==='plano'&&st.tn<2){ st.tn=2; syncTnRadios(); } }
   setColor(T.color);
   applyTabVisibility();
   buildTour();
@@ -2597,7 +3044,9 @@ function setTab(id,opts){
 }
 
 /* ================= recorrido ================= */
-function curPos(){ if(st.jump) return {x:st.jump.x,y:st.jump.y}; const pc=pieces[st.piece]; if(!pc) return null; return posAt(pc,st.s); }
+function curPos(){ if(MODE()==='surf') return {x:st.probe.x,y:st.probe.y};
+  if(MODE()==='imp'&&curTourIdx>=0){ const it=st.tour[curTourIdx], pc=pieces[st.piece]; if(it&&it.reach&&it.reach.piece===st.piece&&pc&&Math.abs(it.reach.s-st.s)<1e-6*(pc.L||1)) return {x:it.x,y:it.y}; }
+  if(st.jump) return {x:st.jump.x,y:st.jump.y}; const pc=pieces[st.piece]; if(!pc) return null; return posAt(pc,st.s); }
 function curX(){ const p=curPos(); return p?p.x:st.a; }
 function setMsg(title,lines){ st.msgTitle=title||''; st.msgLines=lines||[]; hudDirty=true; vrDirty=true; }
 function stopReach(s){
@@ -2620,7 +3069,8 @@ let curTourIdx=-1, curStopIdx=-1;
 function announce(it,talk){
   setMsg([it.title+'  ',Mx(it.ptTeX||it.pt,it.pt)], it.lines);
   curTourIdx=st.tour.indexOf(it);
-  curStopIdx=it.stop?st.A.stops.indexOf(it.stop):-1;
+  if(it.dyn){ const p=probeState(); it.lines=[[Mx(planeTeX(p.x,p.y,p.z,p.fx,p.fy),planeTxt(p.x,p.y,p.z,p.fx,p.fy))],[Mx('\\nabla f='+texPt(p.fx,p.fy),'∇f = ('+fmtS(p.fx,3)+', '+fmtS(p.fy,3)+')')]]; it.say=surfTnSay(); }
+  curStopIdx=it.mi!==undefined?it.mi:(it.stop?st.A.stops.indexOf(it.stop):-1);
   st.follow=0;
   document.querySelectorAll('#stopList button').forEach((b,i)=>b.classList.toggle('cur',i===curTourIdx));
   if(talk!==false) speak(it.say);
@@ -2629,11 +3079,19 @@ function announce(it,talk){
 function jumpToTour(i){
   const it=st.tour[i]; if(!it) return;
   st.playing=false; st.jump=null; updatePlayBtn();
+  if(MODE()==='surf'){ st.glide=null; glideTo(it.x,it.y,0.7); announce(it); return; }
   let r=it.reach;
+  if(MODE()==='imp'){ if(r) moveTo(r,true); announce(it); return; }
   if(!r) r=nearestReach(it.x - (it.kind==='disc'?1e-3*(st.b-st.a):0));
   moveTo(r,true); announce(it);
 }
 function stepStop(dir){
+  if(MODE()!=='fx'){ const T=st.tour; if(!T.length){ speak('No hay elementos en esta pestaña.'); return; }
+    let i=curTourIdx+dir;
+    if(MODE()==='imp' && curTourIdx<0){ const c={piece:st.piece,s:st.s}, key=it=>it.reach?[it.reach.piece,it.reach.s]:[1e9,0], cmp=(p,q)=>p[0]-q[0]||p[1]-q[1];
+      if(dir>0){ i=T.findIndex(it=>cmp(key(it),[c.piece,c.s+1e-9])>0); if(i<0) i=0; } else { i=-1; T.forEach((it,k)=>{ if(cmp(key(it),[c.piece,c.s-1e-9])<0) i=k; }); if(i<0) i=T.length-1; } }
+    if(i<0||i>=T.length){ setMsg(dir>0?'Último elemento':'Primer elemento',['Vuelve al '+(dir>0?'primero':'último')+' de la lista.']); i=dir>0?0:T.length-1; }
+    jumpToTour(i); return; }
   const x=curX(), eps=1e-5*(st.b-st.a), T=st.tour;
   if(dir>0){ const i=T.findIndex(s=>s.x>x+eps); if(i>=0) jumpToTour(i); else { setMsg('Último elemento',['No hay más elementos de esta pestaña hacia la derecha.']); speak('No hay más elementos hacia la derecha.'); } }
   else { let i=-1; T.forEach((s,k)=>{ if(s.x<x-eps) i=k; }); if(i>=0) jumpToTour(i); else { setMsg('Primer elemento',['No hay elementos de esta pestaña a la izquierda.']); speak('No hay elementos hacia la izquierda.'); } }
@@ -2654,10 +3112,12 @@ function startJump(br,x,y0,y1,next,manual){
   G.jumpLine.visible=true;
 }
 function canExtend(dir){ const W=st.b-st.a, x=dir>0?st.b+W*0.02:st.a-W*0.02, v=st.F.f(x); return isFinite(v); }
-function shiftX(dir,x){ const W=st.b-st.a; setWindow(rx(st.a+dir*W/2),rx(st.b+dir*W/2),st.ymin,st.ymax,{x,keepPlay:true}); setMsg('La ventana avanza',['Ahora se ve ',MxWin(),'.']); }
+function shiftX(dir,x){ const W=st.b-st.a; setWindow(rx(st.a+dir*W/2),rx(st.b+dir*W/2),st.ymin,st.ymax,{x,keepPlay:true}); setMsg('La ventana avanza',[['Ahora se ve ',MxWin(),'.']]); }
 function followY(dir,x){ const H=st.ymax-st.ymin; setWindow(st.a,st.b,ry(st.ymin+dir*H/2),ry(st.ymax+dir*H/2),{x,keepPlay:true}); }
 function exitDir(y){ const H=st.ymax-st.ymin; return Math.abs(y-st.ymax)<1e-7*H ? 1 : Math.abs(y-st.ymin)<1e-7*H ? -1 : 0; }
 function advance(dt,dir,manual){
+  if(MODE()==='imp'){ advanceImp(dt,dir,manual); return; }
+  if(MODE()==='surf') return;
   if(st.jump) return;
   const pc=pieces[st.piece]; if(!pc) return;
   const prevS=st.s; let ns=st.s+dir*speedUnits()*dt;
@@ -2722,10 +3182,11 @@ let pendingJump=null, snapCam=true;
 function rideTour(){
   if(renderer.xr.isPresenting){ if(st.xrKind!=='ar'){ st.xrMode='ride'; placeGraph(); } }
   else setView('board');
-  pendingJump=null; st.jump=null; st.follow=0;
+  pendingJump=null; st.jump=null; st.follow=0; st.travel=0;
+  const n=st.tour.length;
+  if(MODE()==='surf'){ curTourIdx=-1; st.glide=null; st.playing=true; updatePlayBtn(); speak('Recorrido de '+tabName(st.tab)+' sobre la superficie, con '+n+(n===1?' parada':' paradas')+'.'); holdFor(1500); vrDirty=true; return; }
   moveTo({piece:0,s:0},true);
   st.playing=true; updatePlayBtn();
-  const n=st.tour.length;
   speak('Subimos a la curva. Recorrido de '+tabName(st.tab)+', con '+n+(n===1?' parada':' paradas')+'.');
   holdFor(1500);
   vrDirty=true;
@@ -2734,6 +3195,8 @@ function rideTour(){
 /* ================= HUD ================= */
 let hudDirty=true, hudT=0, vrDirty=true, vrT=0;
 function tangentInfo(){
+  if(MODE()==='imp'){ const p=curPos(); if(!p) return {x0:st.a,ok:false}; const q=impSlope(p.x,p.y); if(!q.ok) return {x0:p.x,y0:p.y,ok:false,sing:true}; return {x0:p.x,y0:p.y,m:q.m,ok:true,vertical:q.vertical}; }
+  if(MODE()==='surf') return {x0:st.probe.x,ok:false};
   const F=st.F; const x0 = st.tnFollow? curX() : st.tnX;
   const y0=F.f(x0), m=F.f1(x0);
   if(!isFinite(y0)) return {x0,ok:false};
@@ -2753,7 +3216,7 @@ function linEqTeX(m,b){
   return s;
 }
 function tnEquations(t){
-  if(!t.ok) return {tan:FN()+' no está definida en x₀ = '+fmtS(t.x0),nor:'',tanT:null,norT:null};
+  if(!t.ok) return {tan:t.sing?'Punto singular: la tangente no es única.':MODE()==='surf'?'':FN()+' no está definida en x₀ = '+fmtS(t.x0),nor:'',tanT:null,norT:null};
   const x0=fmtS(t.x0), y0=fmtS(t.y0);
   if(t.vertical) return {tan:'x = '+x0, nor:'y = '+y0, tanT:'x='+texNum(t.x0), norT:'y='+texNum(t.y0), vert:true};
   const m=t.m, bT=t.y0-m*t.x0;
@@ -2765,7 +3228,9 @@ function tnEquations(t){
 }
 const showTan=()=>st.tn===1||st.tn===3, showNor=()=>st.tn===2||st.tn===3;
 function tnSay(){
-  const t=tangentInfo(); if(!t.ok) return 'En este punto la función no está definida.';
+  if(MODE()==='surf') return surfTnSay();
+  const t=tangentInfo(); if(!t.ok) return t.sing?'Es un punto singular: la curva no tiene allí una tangente única.':'En este punto la función no está definida.';
+  if(MODE()==='imp'){ const P='el punto '+sayPt(t.x0,t.y0); if(t.vertical) return 'En '+P+' la tangente es vertical, x igual a '+sayNum(t.x0)+'.'; let s2=''; if(showTan()||st.tn===0) s2+='La recta tangente en '+P+' tiene pendiente '+sayNum(t.m)+', que es menos F sub x sobre F sub ye.'; if(showNor()) s2+=Math.abs(t.m)<1e-12?' La normal es vertical.':' La normal tiene pendiente '+sayNum(-1/t.m)+'.'; return s2.trim(); }
   if(t.vertical) return (showNor()&&!showTan()?'La normal es horizontal, y igual a '+sayNum(t.y0)+'. La tangente sería vertical.':'La tangente es vertical, x igual a '+sayNum(t.x0)+'.');
   const m=t.m; let s='';
   if(showTan()||st.tn===0) s+='La recta tangente en x igual a '+sayNum(t.x0)+' tiene pendiente '+sayNum(m)+'.';
@@ -2777,6 +3242,11 @@ function shiftTeX(v,n){ if(Math.abs(v)<1e-12) return n; return n+(v<0?'+':'-')+t
 function pointSlopeTeX(t){ const m=texNum(t.m,3); return shiftTeX(t.y0,'y')+'='+(Math.abs(t.x0)<1e-12? m+' x' : m+'\\left('+shiftTeX(t.x0,'x')+'\\right)'); }
 function pointSlope(t){ const L=shiftTxt(t.y0,'y'), R=shiftTxt(t.x0,'x'); const m=fmtS(t.m,3); return L+' = '+(Math.abs(t.x0)<1e-12? m+'x' : m+'('+R+')'); }
 function stateAt(x){
+  if(MODE()==='surf') return surfState();
+  if(MODE()==='imp'){ const p=curPos(), out=[]; if(!p) return out; const q=impSlope(p.x,p.y); if(!q.ok){ out.push(['punto singular',hex(COL.infl)]); return out; }
+    if(q.vertical) out.push(['tangente vertical',hex(COL.silla)]); else if(Math.abs(q.m)<1e-9) out.push(['tangente horizontal','#e3ecec']); else out.push(q.m>0?['creciente',hex(COL.crec)]:['decreciente',hex(COL.decr)]);
+    if(isFinite(q.ypp)&&!q.vertical&&Math.abs(q.ypp)>1e-9) out.push(q.ypp>0?['cóncava hacia arriba',hex(COL.up)]:['cóncava hacia abajo',hex(COL.down)]);
+    return out; }
   const F=st.F, d1=F.f1(x), d2=F.f2(x), nm=FN();
   const out=[];
   if(isFinite(d1)){ if(Math.abs(d1)<1e-9) out.push([nm+'′ = 0','#e3ecec']); else out.push(d1>0?['creciente',hex(COL.crec)]:['decreciente',hex(COL.decr)]); }
@@ -2784,28 +3254,52 @@ function stateAt(x){
   return out;
 }
 let hudName='';
+function setHudLabels(L){ const key=L.join('|'); if(hudName===key) return; hudName=key; ['hLx','hLy','hLd1','hLd2','hL5'].forEach((id,i)=>{ const el=document.getElementById(id); if(!el) return; const t=L[i]; if(id==='hL5') document.getElementById('hR5').hidden=!t; if(t) el.innerHTML=texHTML(t[0],t[1]); }); }
 function updateHUD(){
   const F=st.F; if(!F) return;
-  const nm=FN();
-  if(hudName!==nm){ hudName=nm; [['hLy',nm+'(x)'],['hLd1',nm+"'(x)"],['hLd2',nm+"''(x)"]].forEach(([id,t])=>{ const el=document.getElementById(id); if(el) el.innerHTML=texHTML(t,t.replace("''",'″').replace("'",'′')); }); }
-  const x=curX(), y=F.f(x), d1=F.f1(x), d2=F.f2(x);
-  document.getElementById('hX').textContent=fmtS(x,3);
-  document.getElementById('hY').textContent=fmtS(y,3);
-  document.getElementById('hD1').textContent=fmtS(d1,3);
-  document.getElementById('hD2').textContent=fmtS(d2,3);
+  const nm=FN(), md=MODE();
+  const put=(id,v)=>{ document.getElementById(id).textContent=v; };
+  let eq=[], x=curX();
+  if(md==='surf'){
+    setHudLabels([['x','x'],['y','y'],['z','z'],["f_x","fx"],["f_y","fy"]]);
+    const p=probeState(); x=p.x;
+    put('hX',fmtS(p.x,3)); put('hY',fmtS(p.y,3)); put('hD1',fmtS(p.z,3)); put('hD2',fmtS(p.fx,3)); put('h5',fmtS(p.fy,3));
+    surfEqs().forEach(q=>eq.push('<span style="color:'+q[q.length-1]+'">'+richHTML(q.slice(0,-1))+'</span>'));
+    const sh=surfShow();
+    document.getElementById('tnBox').innerHTML=isFinite(p.z)?'<div class="tnv">'+texHTML('\\left(x_0,y_0\\right)='+texPt(p.x,p.y),'(x₀, y₀) = ('+fmtS(p.x)+', '+fmtS(p.y)+')')+' '+texHTML(nm+'\\left(x_0,y_0\\right)='+texNum(p.z,3),'f(x₀, y₀) = '+fmtS(p.z,3))+'</div>'+
+      '<div class="t">'+texHTML('f_x='+texNum(p.fx,3),'fx = '+fmtS(p.fx,3))+' (traza amarilla) &nbsp; </div><div class="n">'+texHTML('f_y='+texNum(p.fy,3),'fy = '+fmtS(p.fy,3))+' (traza verde)</div>'+
+      '<div class="t">Plano tangente '+texHTML(planeTeX(p.x,p.y,p.z,p.fx,p.fy),planeTxt(p.x,p.y,p.z,p.fx,p.fy))+'</div><div>'+texHTML('\\nabla f='+texPt(p.fx,p.fy)+',\\ \\left|\\nabla f\\right|='+texNum(Math.hypot(p.fx,p.fy),3),'∇f')+'</div>':'<div>La función no está definida en el explorador.</div>';
+  } else if(md==='imp'){
+    setHudLabels([['x','x'],['y','y'],['\\frac{dy}{dx}','dy/dx'],['\\frac{d^2y}{dx^2}','d²y/dx²'],null]);
+    const p=curPos()||{x:st.a,y:st.ymin}, q=impSlope(p.x,p.y); x=p.x;
+    put('hX',fmtS(p.x,3)); put('hY',fmtS(p.y,3)); put('hD1',q.ok?(q.vertical?'no existe':fmtS(q.m,3)):'singular'); put('hD2',q.ok&&!q.vertical?fmtS(q.ypp,3):'—');
+  } else {
+    setHudLabels([['x','x'],[nm+'(x)',nm+'(x)'],[nm+"'(x)",nm+'′(x)'],[nm+"''(x)",nm+'″(x)'],null]);
+    const y=F.f(x), d1=F.f1(x), d2=F.f2(x);
+    put('hX',fmtS(x,3)); put('hY',fmtS(y,3)); put('hD1',fmtS(d1,3)); put('hD2',fmtS(d2,3));
+  }
   document.getElementById('hState').innerHTML=stateAt(x).map(([t,c])=>'<span class="pill" style="color:'+c+'">'+t+'</span>').join('');
-  const t=tangentInfo(), e=tnEquations(t);
-  const eq=[]; if(showTan()&&e.tanT) eq.push('<span style="color:'+hex(COL.tan)+'">tangente '+texHTML(e.tanT,e.tan)+'</span>'); if(showNor()&&e.norT) eq.push('<span style="color:'+hex(COL.nor)+'">normal '+texHTML(e.norT,e.nor)+'</span>');
+  if(md!=='surf'){
+    const t=tangentInfo(), e=tnEquations(t);
+    if(showTan()&&e.tanT) eq.push('<span style="color:'+hex(COL.tan)+'">tangente '+texHTML(e.tanT,e.tan)+'</span>'); if(showNor()&&e.norT) eq.push('<span style="color:'+hex(COL.nor)+'">normal '+texHTML(e.norT,e.nor)+'</span>');
+    if(md==='imp'){
+      document.getElementById('tnBox').innerHTML = t.ok ?
+        '<div class="tnv">'+texHTML('\\left(x_0,y_0\\right)='+texPt(t.x0,t.y0),'(x₀, y₀)')+' '+(t.vertical?texHTML('\\frac{dy}{dx}','dy/dx')+' no existe':texHTML('\\frac{dy}{dx}=-\\frac{F_x}{F_y}='+texNum(t.m,3),'dy/dx = '+fmtS(t.m,3)))+'</div>'+
+        '<div class="t">Tangente '+texHTML(e.tanT,e.tan)+(t.vertical?' (vertical)':'')+'</div>'+(t.vertical||Math.abs(t.m)<1e-12?'':'<div class="t">Forma punto pendiente '+texHTML(pointSlopeTeX(t),pointSlope(t))+'</div>')+
+        '<div class="n">Normal '+texHTML(e.norT,e.nor)+'</div>' : '<div>'+esc(e.tan||'')+'</div>';
+    } else {
+      document.getElementById('tnBox').innerHTML = t.ok ?
+        '<div class="tnv">'+texHTML('x_0='+texNum(t.x0),'x₀ = '+fmtS(t.x0))+' '+texHTML(nm+'(x_0)='+texNum(t.y0,3),nm+'(x₀) = '+fmtS(t.y0,3))+' '+(t.vertical?texHTML(nm+"'(x_0)",nm+"′(x₀)")+' no existe':texHTML(nm+"'(x_0)="+texNum(t.m,3),nm+'′(x₀) = '+fmtS(t.m,3)))+'</div>'+
+        '<div class="t">Tangente '+texHTML(e.tanT,e.tan)+(t.vertical?' (vertical)':'')+'</div>'+(t.vertical||Math.abs(t.m)<1e-12?'':'<div class="t">Forma punto pendiente '+texHTML(pointSlopeTeX(t),pointSlope(t))+'</div>')+
+        '<div class="n">Normal '+texHTML(e.norT,e.nor)+'</div>' : '<div>'+esc(e.tan)+'</div>';
+    }
+  }
   document.getElementById('hEq').innerHTML=eq.join('<br>');
   const vs=voiceStatusShort();
   document.getElementById('hMsg').innerHTML = (st.msgTitle && st.msgTitle.length)? '<strong>'+richHTML(st.msgTitle)+'</strong>'+st.msgLines.map(richHTML).join('<br>') : '<span style="color:var(--stage-muted)">Elija una pestaña y pulse Subir y recorrer.</span>';
   document.getElementById('hVoice').textContent=vs;
-  document.getElementById('tnBox').innerHTML = t.ok ?
-    '<div class="tnv">'+texHTML('x_0='+texNum(t.x0),'x₀ = '+fmtS(t.x0))+' '+texHTML(nm+'(x_0)='+texNum(t.y0,3),nm+'(x₀) = '+fmtS(t.y0,3))+' '+(t.vertical?texHTML(nm+"'(x_0)",nm+"′(x₀)")+' no existe':texHTML(nm+"'(x_0)="+texNum(t.m,3),nm+'′(x₀) = '+fmtS(t.m,3)))+'</div>'+
-    '<div class="t">Tangente '+texHTML(e.tanT,e.tan)+(t.vertical?' (vertical)':'')+'</div>'+(t.vertical||Math.abs(t.m)<1e-12?'':'<div class="t">Forma punto pendiente '+texHTML(pointSlopeTeX(t),pointSlope(t))+'</div>')+
-    '<div class="n">Normal '+texHTML(e.norT,e.nor)+'</div>' : '<div>'+esc(e.tan)+'</div>';
   const sl=document.getElementById('xslider'); if(document.activeElement!==sl) sl.value=Math.round((x-st.a)/(st.b-st.a)*1000);
-  const lb=document.getElementById('bLupa'); if(lb) lb.textContent=st.lupa.length?'Salir de la lupa':'Lupa en el punto';
+  const lb=document.getElementById('bLupa'); if(lb) lb.textContent=st.lupa.length?'Salir de la lupa':(md==='surf'?'Lupa en el explorador':'Lupa en el punto');
 }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r); g.lineTo(x+w,y+h-r); g.quadraticCurveTo(x+w,y+h,x+w-r,y+h); g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r); g.lineTo(x,y+r); g.quadraticCurveTo(x,y,x+r,y); g.closePath(); }
@@ -2835,7 +3329,13 @@ const KB_PAGES=[
     [['y',' and '],['o',' or '],['x','x'],['(','('],[')',')'],['⌫','BS']],
     [['1','1'],['2','2'],['3','3'],['+','+'],[MINUS,'-'],['◀','LEFT']],
     [['0','0'],['.','.'],['x²','^2'],['·','*'],['÷','/'],['▶','RIGHT']],
-    [['2 tramos','x < 1 ? | : 3 - x'],['3 tramos','x < 0 ? | : (x < 2 ? x : 2)'],['salto','x < 1 ? x^2 : x + 1'],['Borrar','CLR']]]}
+    [['2 tramos','x < 1 ? | : 3 - x'],['3 tramos','x < 0 ? | : (x < 2 ? x : 2)'],['salto','x < 1 ? x^2 : x + 1'],['Borrar','CLR']]]},
+  {name:'x, y, z', rows:[
+    [['x','x'],['y','y'],['z = ','z = '],['=',' = '],['(','('],[')',')']],
+    [['x²','x^2'],['y²','y^2'],['x·y','x y'],['xⁿ','^'],['⌫','BS'],['Borrar','CLR']],
+    [['1','1'],['2','2'],['3','3'],['+',' + '],[MINUS,' - '],['◀','LEFT']],
+    [['0','0'],['4','4'],['π','π'],['·','*'],['÷','/'],['▶','RIGHT']],
+    [['círculo','x^2 + y^2 = |4'],['silla','z = x^2 - y^2|'],['campana','z = e^(-(x^2 + y^2))|'],['sen·cos','z = sen(x) cos(y)|']]]}
 ];
 function kbKey(ed,k){
   if(k==='BS'){
@@ -2870,8 +3370,9 @@ function showPreview(inp){
   const pv=document.getElementById('fnPreview'); if(!pv) return;
   const slot=+(inp.dataset.slot||0), s=inp.value.trim();
   if(!s){ pv.innerHTML=''; return; }
-  try{ const n=normalizeNode(M.parse(preprocess(s))); pv.innerHTML=texHTML('\\displaystyle '+FSLOT[slot]+'(x)='+nodeTex(n),FSLOT[slot]+'(x) = '+pretty(n)); }
-  catch(e){ pv.innerHTML='<span class="small">Expresión incompleta</span>'; }
+  const v=previewTex(s,slot);
+  pv.innerHTML=v?texHTML('\\displaystyle '+v.tex,v.alt)+(v.kind==='imp'?' <span class="small">curva implícita</span>':v.kind==='surf'?' <span class="small">superficie</span>':''):'<span class="small">Expresión incompleta</span>';
+  const lab=document.querySelector('.fnrow[data-slot="'+slot+'"] .fname'); if(lab) lab.textContent=rowLabel(s,slot);
 }
 
 /* ---- tablero VR con botones ---- */
@@ -2887,7 +3388,7 @@ function vrLayout(){
     st.funcs.forEach((f,k)=>{ if(f) slots.push({id:'slot:'+k,label:FSLOT[k],slot:k}); });
     if(slots.length<4) slots.push({id:'slot:new',label:'+ nueva'});
     for(let i=slots.length-1;i>=0;i--){ const w=slots[i].label.length>2?130:74; sx-=w; B.push(Object.assign(slots[i],{x:sx,y:18,w,h:54})); sx-=10; }
-    const tw=(PW-2*pad-2*10)/3;
+    const nP=KB_PAGES.length, tw=(PW-2*pad-(nP-1)*10)/nP;
     KB_PAGES.forEach((p,i)=>B.push({id:'kbp:'+i,label:p.name,x:pad+i*(tw+10),y:282,w:tw,h:54,kbp:i}));
     const kw=(PW-2*pad-5*10)/6, kh=62;
     KB_PAGES[st.kbPage].rows.forEach((row,r)=>{
@@ -2904,13 +3405,13 @@ function vrLayout(){
     vrUI.buttons=B; return;
   }
   const tw=(PW-2*pad-3*gap)/4, th=62;
-  const tabs=TABS.map(t=>({id:'tab:'+t.id,label:t.name,tab:t.id})).concat([{id:'actfn',label:'Recorrer: '+FN()+'(x)'}]);
+  const md=MODE(), tabs=curTabs().map(t=>({id:'tab:'+t.id,label:t.name,tab:t.id})).concat([{id:'actfn',label:(md==='surf'?'Activa: ':'Recorrer: ')+fnSig(st.act)}]);
   tabs.forEach((t,i)=>B.push(Object.assign(t,{x:pad+(i%4)*(tw+gap), y:20+Math.floor(i/4)*(th+gap), w:tw, h:th})));
   const bh=78, by=PH-bh-20, ya=by-74, yc=ya-74;
   const acts=[
     {id:'ride', label: st.playing?'Pausar':'Subir y recorrer'},
-    {id:'mode', label: st.xrKind==='ar'?'Centrar vista':(st.xrMode==='ride'?'Ver maqueta':'Montar curva')},
-    {id:'rectas', label: TN_LABEL[st.tn]},
+    {id:'mode', label: st.xrKind==='ar'?'Centrar vista':(st.xrMode==='ride'?'Ver maqueta':(md==='surf'?'Caminar':'Montar curva'))},
+    {id:'rectas', label: md==='surf'?surfTN():TN_LABEL[st.tn]},
     {id:'voz', label: 'Voz: '+(TTS.on?'sí':'no')},
     {id:'ayuda', label: 'Ayuda'}
   ];
@@ -2919,7 +3420,8 @@ function vrLayout(){
   const rowA=[['fnopen','Cambiar función',210,true],['thick','Grosor: '+THICK_NAME[st.thick],170],['zin','Tamaño +',120],['zout','Tamaño '+MINUS,120],['up','↑',64],['down','↓',64],['std','Vista estándar',180,true],['ejes','Eje x: '+({auto:'auto',pi:'π',num:'1 2 3'}[st.axis.x]),130]];
   let x=pad; rowA.forEach(r=>{ B.push({id:r[0],label:r[1],x,y:ya,w:r[2],h:62,primary:!!r[3]}); x+=r[2]+gap; });
   const small=78, big=(PW-2*pad-4*small-8*gap)/5;
-  const rowC=[['w:left','◀',small],['w:right','▶',small],['w:up','▲',small],['w:down','▼',small],['w:out','Ver más',big],['w:in','Ver menos',big],['lupa',st.lupa.length?'Salir lupa':'Lupa',big],['w:fit','Ajustar y',big],['deriv',DERIV_LABEL[st.deriv].replace(/f/g,FN()),big]];
+  const rowC=[['w:left','◀',small],['w:right','▶',small],['w:up','▲',small],['w:down','▼',small],['w:out','Ver más',big],['w:in','Ver menos',big],['lupa',st.lupa.length?'Salir lupa':'Lupa',big],['w:fit',md==='surf'?'Ajustar z':'Ajustar y',big],
+    md==='surf'?['levels','Niveles: '+(st.levels||st.tab==='nivel'?'sí':'no'),big]:md==='imp'?['tnsay','Pendiente',big]:['deriv',DERIV_LABEL[st.deriv].replace(/f/g,FN()),big]];
   x=pad; rowC.forEach(r=>{ B.push({id:r[0],label:r[1],x,y:yc,w:r[2],h:62,win:true}); x+=r[2]+gap; });
   vrUI.buttons=B; vrUI.textTop=196; vrUI.textBottom=yc-16;
 }
@@ -2934,13 +3436,13 @@ function stableMx(slot,t,a,color,px){
 let fnPrev={src:null,v:null};
 function fnPreview(){
   const src=st.fnDraft; if(fnPrev.src===src) return fnPrev.v;
-  let v=null; try{ const n=normalizeNode(M.parse(preprocess(src))); const t=nodeTex(n); if(t) v={tex:t,alt:pretty(n)}; }catch(e){ v=null; }
+  const v=previewTex(src,st.fnSlot);
   fnPrev={src,v}; return v;
 }
 const SANS='"Atkinson Hyperlegible", sans-serif';
 function drawFnPanel(g){
   const W=PW, nm=FSLOT[st.fnSlot];
-  g.fillStyle='#ffffff'; g.font='700 36px '+SANS; g.fillText('Editar '+nm+'(x)',28,56);
+  g.fillStyle='#ffffff'; g.font='700 36px '+SANS; g.fillText('Editar '+nm,28,56);
   g.fillStyle='#94a8ae'; g.font='400 26px '+SANS; g.fillText('Ventana: x de '+fmtS(st.fnA)+' a '+fmtS(st.fnB),250,56);
   g.fillStyle='#0f2229'; roundRect(g,24,84,W-48,166,16); g.fill();
   g.strokeStyle='rgba(148,168,174,0.45)'; g.lineWidth=2; roundRect(g,24,84,W-48,166,16); g.stroke();
@@ -2950,8 +3452,8 @@ function drawFnPanel(g){
   const shown=(off?'…':'')+txt.slice(0,cur-off)+'▏'+txt.slice(cur-off);
   g.fillText(shown,44,128);
   const pv=fnPreview();
-  if(pv && st.fnDraft.trim()) drawRich(g,[Mx('\\displaystyle '+nm+'(x)='+pv.tex,nm+'(x) = '+pv.alt)],44,204,{px:34,color:hex(FCOL[st.fnSlot]===0xd9e4e4?0x7fdde3:FCOL[st.fnSlot]),maxW:W-96,fixedBaseline:true});
-  else { g.fillStyle='#94a8ae'; g.font='italic 400 27px '+SANS; g.fillText(st.fnDraft.trim()?'Expresión incompleta':'Escriba '+nm+'(x) con el teclado',44,204); }
+  if(pv && st.fnDraft.trim()) drawRich(g,[Mx('\\displaystyle '+pv.tex,pv.alt),pv.kind==='imp'?'   curva implícita':pv.kind==='surf'?'   superficie':''],44,204,{px:34,color:hex(FCOL[st.fnSlot]===0xd9e4e4?0x7fdde3:FCOL[st.fnSlot]),maxW:W-96,fixedBaseline:true});
+  else { g.fillStyle='#94a8ae'; g.font='italic 400 27px '+SANS; g.fillText(st.fnDraft.trim()?'Expresión incompleta':'Escriba '+nm+'(x), una ecuación en x e y, o z = '+nm+'(x, y)',44,204); }
   if(st.fnErr){ g.fillStyle='#f2887f'; g.font='400 24px '+SANS; const l=wrap(g,st.fnErr,W-56)[0]; g.fillText(l,28,274); }
 }
 function drawVRPanel(){
@@ -2973,22 +3475,28 @@ function drawVRPanel(){
   };
   vrUI.buttons.forEach(b=>drawBtn(b, (b.tab&&b.tab===st.tab) || (b.id==='ride'&&st.playing) || (b.kbp!==undefined&&b.kbp===st.kbPage) || (b.slot!==undefined&&b.slot===st.fnSlot)));
   if(st.vrPanel==='fn'){ drawFnPanel(g); hudTex.needsUpdate=true; return; }
-  const F=st.F, nm=FN(), x=curX(), y=F.f(x), d1=F.f1(x), d2=F.f2(x);
+  const F=st.F, nm=FN(), md=MODE(), x=curX();
   // la fórmula de la función (incluso por tramos) se ajusta al espacio y empuja lo que sigue
-  const fparts=[Mx(nm+'(x)='+F.tex,nm+'(x) = '+F.txt)], top0=vrUI.textTop-22;
+  const fparts=[fnTitleMx(st.act)], top0=vrUI.textTop-22;
   let fpx=32, mm=drawRich(g,fparts,28,0,{px:fpx,maxW:W-56,fixedBaseline:true,measureOnly:true});
   while(mm.asc+mm.desc>118 && fpx>20){ fpx-=3; mm=drawRich(g,fparts,28,0,{px:fpx,maxW:W-56,fixedBaseline:true,measureOnly:true}); }
   const fb=top0+mm.asc; drawRich(g,fparts,28,fb,{px:fpx,color:'#cfe0e3',maxW:W-56,fixedBaseline:true});
   let yy=Math.max(vrUI.textTop+50, fb+mm.desc+40);
-  const labs=[Mx('x'),Mx(nm+'(x)'),Mx(nm+"'(x)"),Mx(nm+"''(x)")];
-  [fmtS(x,3),fmtS(y,3),fmtS(d1,3),fmtS(d2,3)].forEach((v,i)=>{ const cx=28+i*290; const r=drawRich(g,[labs[i]],cx,yy,{px:30,color:'#94a8ae',fixedBaseline:true}); g.font='600 32px "JetBrains Mono", monospace'; g.fillStyle='#e3ecec'; g.fillText(v,cx+r.w+14,yy); });
+  let labs, vals;
+  if(md==='surf'){ const p=probeState(); labs=[Mx('x'),Mx('y'),Mx('z'),Mx('f_x','fx'),Mx('f_y','fy')]; vals=[p.x,p.y,p.z,p.fx,p.fy].map(v=>fmtS(v,3)); }
+  else if(md==='imp'){ const p=curPos()||{x:st.a,y:0}, q=impSlope(p.x,p.y); labs=[Mx('x'),Mx('y'),Mx('\\frac{dy}{dx}','dy/dx'),Mx('\\frac{d^2y}{dx^2}','d²y/dx²')]; vals=[fmtS(p.x,3),fmtS(p.y,3),q.ok?(q.vertical?'∄':fmtS(q.m,3)):'sing.',q.ok&&!q.vertical?fmtS(q.ypp,3):'—']; }
+  else { labs=[Mx('x'),Mx(nm+'(x)'),Mx(nm+"'(x)"),Mx(nm+"''(x)")]; vals=[fmtS(x,3),fmtS(F.f(x),3),fmtS(F.f1(x),3),fmtS(F.f2(x),3)]; }
+  const colW=(W-56)/labs.length;
+  vals.forEach((v,i)=>{ const cx=28+i*colW; const r=drawRich(g,[labs[i]],cx,yy,{px:30,color:'#94a8ae',fixedBaseline:true}); let fs=32; g.font='600 '+fs+'px "JetBrains Mono", monospace'; while(g.measureText(v).width>colW-r.w-24&&fs>20){ fs-=2; g.font='600 '+fs+'px "JetBrains Mono", monospace'; } g.fillStyle='#e3ecec'; g.fillText(v,cx+r.w+12,yy); });
   yy+=24;
   let px=28;
   stateAt(x).forEach(([t,col])=>{ g.font='700 26px '+SANS; const w=g.measureText(t).width+30; if(px+w>W-28) return; g.strokeStyle=col; g.lineWidth=3; roundRect(g,px,yy,w,40,20); g.stroke(); g.fillStyle=col; g.fillText(t,px+15,yy+29); px+=w+12; });
   const vs=voiceStatusShort(); if(vs){ g.fillStyle='#f2c14e'; g.font='600 24px '+SANS; g.textAlign='right'; g.fillText(vs,W-28,yy+29); g.textAlign='left'; }
   yy+=40;
   // ecuaciones de la tangente y la normal en su propia línea, siempre completas
-  { const e=tnEquations(tangentInfo()); const eqs=[];
+  if(md==='surf'){ const E=surfEqs(); if(E.length){ yy+=36; for(let i=0;i<E.length;i+=2){ const pair=E.slice(i,i+2), cw=(W-56-(pair.length-1)*24)/pair.length; let hmax=0;
+        pair.forEach((q,k)=>{ const r=drawRich(g,q.slice(0,-1),28+k*(cw+24),yy,{px:26,color:q[q.length-1],maxW:cw,fixedBaseline:true}); hmax=Math.max(hmax,r.y-yy); }); yy+=Math.max(36,hmax); } } }
+  else { const e=tnEquations(tangentInfo()); const eqs=[];
     if(showTan()&&e.tanT) eqs.push(['tangente ',stableMx('tan',e.tanT,e.tan,hex(COL.tan),28),hex(COL.tan)]);
     if(showNor()&&e.norT) eqs.push(['normal ',stableMx('nor',e.norT,e.nor,hex(COL.nor),28),hex(COL.nor)]);
     if(eqs.length){ yy+=40; const cw=(W-56-(eqs.length-1)*24)/eqs.length;
@@ -3013,8 +3521,8 @@ function openFnPanel(slot){
   st.vrPanel='fn'; st.fnSlot=slot;
   const fn=st.funcs[slot];
   st.fnDraft=fn?fn.src:''; st.fnCur=st.fnDraft.length; st.fnA=st.a; st.fnB=st.b; st.fnErr=''; st.fnWinEdited=false;
-  setMsg('Editar '+FSLOT[slot]+'(x)',['Escriba con el teclado del tablero y pulse Graficar.']);
-  speak('Editar la función '+FSLOT[slot]+'. Use las páginas Básico, Funciones y Por tramos del teclado, las flechas para mover el cursor, y pulse Graficar.');
+  setMsg('Editar '+FSLOT[slot],['Escriba con el teclado del tablero y pulse Graficar. Una ecuación en x e y, como x² + y² = 4, da una curva implícita; z = f(x, y) da una superficie.']);
+  speak('Editar '+FSLOT[slot]+'. Use las páginas Básico, Funciones, Por tramos y x y zeta del teclado, las flechas para mover el cursor, y pulse Graficar. Una ecuación en x e ye da una curva; zeta igual a una expresión en x e ye da una superficie.');
 }
 function fnWindow(dir){
   const half=(st.fnB-st.fnA)/2;
@@ -3033,8 +3541,8 @@ function fnSubmit(){
   if(e){ st.fnErr=e; speak('No pude leer la función. '+e); return; }
   st.funcs[slot].visible=true;
   let w;
-  if(!st.fnWinEdited){ const pa=st.act; st.act=slot; st.lupa=[]; st.follow=0; const xr=standardX(), yr=standardY(xr[0],xr[1]); st.act=pa; w=applyAll({a:xr[0],b:xr[1],ymin:yr[0],ymax:yr[1],act:slot,talk:true}); }
-  else w=applyAll({a:st.fnA,b:st.fnB,act:slot,talk:true});
+  if(!st.fnWinEdited){ const pa=st.act; st.act=slot; st.lupa=[]; st.follow=0; const sw=stdWindow(); st.act=pa; w=applyAll({a:sw.a,b:sw.b,ymin:sw.c,ymax:sw.d,act:slot,talk:true}); }
+  else { const pr=PRESETS[st.fnPreset]; const usePr=pr&&pr.f===st.fnDraft.trim()&&pr.a===st.fnA&&pr.b===st.fnB; w=applyAll({a:st.fnA,b:st.fnB,ymin:usePr&&pr.c!==undefined?pr.c:null,ymax:usePr&&pr.d!==undefined?pr.d:null,act:slot,talk:true}); }
   if(w && w.startsWith('La ventana')){ st.fnErr=w; speak(w); return; }
   st.vrPanel='main'; st.fnErr='';
 }
@@ -3055,6 +3563,7 @@ function setThick(k,talk){
 function setDeriv(v,talk){
   st.deriv=v; const c1=document.getElementById('chkD1'), c2=document.getElementById('chkD2');
   if(c1) c1.checked=!!(v&1); if(c2) c2.checked=!!(v&2);
+  if(MODE()!=='fx') return;
   buildGraph(false); applyTabVisibility(); hudDirty=vrDirty=true;
   const nm=FN();
   if(talk) speak(v===0?'Sin gráficas de derivadas.':v===1?'Se muestra la gráfica de la derivada '+nm+' prima, con trazo discontinuo. Donde corta el eje x, '+nm+' tiene sus puntos críticos.':v===2?'Se muestra la gráfica de la segunda derivada, con puntos. Donde cambia de signo, '+nm+' tiene sus inflexiones.':'Se muestran las gráficas de la primera y de la segunda derivada.');
@@ -3089,7 +3598,9 @@ function vrAction(id){
     case 'w:fit': fitWin(true); break;
     case 'lupa': lupa(); break;
     case 'deriv': setDeriv((st.deriv+1)%4,true); break;
-    case 'fnprev': case 'fnnext': { const n=PRESETS.length; st.fnPreset=(st.fnPreset+(id==='fnnext'?1:-1)+n)%n; const p=PRESETS[st.fnPreset]; st.fnDraft=p.f; st.fnCur=p.f.length; st.fnA=p.a; st.fnB=p.b; st.fnErr=''; st.fnWinEdited=true; break; }
+    case 'levels': st.levels=!st.levels; applyTabVisibility(); speak(st.levels?'Curvas de nivel visibles sobre la superficie.':'Curvas de nivel solo en el piso.'); break;
+    case 'tnsay': speak(tnSay()); break;
+    case 'fnprev': case 'fnnext': { const n=PRESETS.length; st.fnPreset=(st.fnPreset+(id==='fnnext'?1:-1)+n)%n; const p=PRESETS[st.fnPreset]; st.fnDraft=p.f; st.fnCur=p.f.length; st.fnA=p.a; st.fnB=p.b; st.fnErr=''; st.fnWinEdited=true; speak(p.k==='imp'?'Curva implícita.':p.k==='surf'?'Superficie.':'Función.'); break; }
     case 'winm': fnWindow(-1); break;
     case 'winp': fnWindow(1); break;
     case 'fncancel': st.vrPanel='main'; st.fnErr=''; speak('Sin cambios.'); break;
@@ -3099,21 +3610,33 @@ function vrAction(id){
   vrDirty=true;
 }
 function toggleMode(){
-  st.xrMode = st.xrMode==='ride'?'maqueta':'ride'; placeGraph(); snapCam=true;
-  const t= st.xrMode==='ride' ? ['Modo montar','Está sentado sobre la curva. Use el stick derecho para avanzar.'] : ['Modo maqueta','La función está frente a usted a escala de mesa. Puede agarrarla y moverla.'];
+  st.xrMode = st.xrMode==='ride'?'maqueta':'ride'; st.rideS=null;
+  if(MODE()==='surf') buildGraph(true); else placeGraph(); snapCam=true;
+  const t= MODE()==='surf' ? (st.xrMode==='ride' ? ['Caminar sobre la superficie','Está de pie en el explorador. Mire hacia donde quiere ir y empuje el stick derecho; al llegar al borde, la ventana avanza con usted.'] : ['Modo maqueta','La superficie está frente a usted a escala de mesa. Puede agarrarla y moverla; el stick derecho mueve el explorador.'])
+    : st.xrMode==='ride' ? ['Modo montar','Está sentado sobre la curva. Use el stick derecho para avanzar.'] : ['Modo maqueta','La función está frente a usted a escala de mesa. Puede agarrarla y moverla.'];
   setMsg(t[0],[t[1]]); speak(t[0]+'. '+t[1]);
 }
-function syncTnRadios(){ const r=document.querySelector('input[name="tn"][value="'+st.tn+'"]'); if(r) r.checked=true; hudDirty=true; vrDirty=true; }
+function syncTnRadios(){ const r=document.querySelector('input[name="tn"][value="'+st.tn+'"]'); if(r) r.checked=true; hudDirty=true; vrDirty=true; if(G&&G.surf){ G.probeKey=''; } }
 function cycleRectas(){
   st.tn=(st.tn+1)%4; syncTnRadios();
+  if(MODE()==='surf'){ G.probeKey=''; speak(['Trazas y plano tangente ocultos.','Se muestran las trazas. ','Se muestran el plano tangente y el gradiente. ','Se muestran las trazas, el plano tangente y el gradiente. '][st.tn]+(st.tn>0?surfTnSay():'')); return; }
   speak(['Rectas ocultas.','Se muestra la recta tangente. ','Se muestra la recta normal. ','Se muestran la tangente y la normal. '][st.tn]+(st.tn>0?tnSay():''));
 }
 
 /* ================= panel lateral ================= */
 function updateLegend(){
-  const el=document.getElementById('legend');
+  const el=document.getElementById('legend'), md=MODE();
+  if(md!=='fx'){
+    const L=[];
+    if(md==='surf'){ L.push('<span><i style="width:46px;background:'+cmapCSS+'"></i>altura z, de baja a alta</span>'); const sh=surfShow();
+      if(sh.tr) L.push('<span><i style="background:'+hex(COL.tan)+'"></i>traza y = y₀ (pendiente fx)</span>','<span><i style="background:'+hex(COL.nor)+'"></i>traza x = x₀ (pendiente fy)</span>');
+      if(sh.pl) L.push('<span><i style="background:#ff8a65"></i>gradiente ∇f, en el piso</span>');
+      st.funcs.forEach((f,k)=>{ if(f&&f.F&&f.visible&&k!==st.act&&f.F.kind==='surf') L.push('<span><i style="background:'+hex(FCOL[k])+'"></i>'+FSLOT[k]+'(x, y); en blanco, la intersección</span>'); }); }
+    else { L.push('<span><i style="background:'+hex(IMPCOL)+'"></i>curva '+FN()+'</span>'); st.funcs.forEach((f,k)=>{ if(f&&f.F&&f.visible&&k!==st.act&&f.F.kind!=='surf') L.push('<span><i style="background:'+hex(FCOL[k])+'"></i>'+fnSig(k)+'</span>'); }); }
+    el.hidden=!L.length; el.innerHTML=L.join(''); return;
+  }
   const L = st.color==='mono'? [['creciente',COL.crec]  ,['decreciente',COL.decr]] : st.color==='conc'? [['cóncava hacia arriba',COL.up],['cóncava hacia abajo',COL.down]] : [];
-  st.funcs.forEach((f,k)=>{ if(f&&f.F&&f.visible&&k!==st.act) L.push([FSLOT[k]+'(x)',FCOL[k]]); });
+  st.funcs.forEach((f,k)=>{ if(f&&f.F&&f.visible&&k!==st.act&&f.F.kind!=='surf') L.push([fnSig(k),FCOL[k]]); });
   if(st.deriv&1) L.push([FN()+'′(x), trazos',0xf0f4f4]);
   if(st.deriv&2) L.push([FN()+'″(x), puntos',0x9fb6bc]);
   el.hidden=!L.length;
@@ -3121,7 +3644,7 @@ function updateLegend(){
 }
 function renderTabBar(){
   const bar=document.getElementById('tabBar');
-  bar.innerHTML=TABS.map(t=>'<button type="button" role="tab" data-tab="'+t.id+'" aria-selected="'+(t.id===st.tab)+'">'+t.name+'</button>').join('');
+  bar.innerHTML=curTabs().map(t=>'<button type="button" role="tab" data-tab="'+t.id+'" aria-selected="'+(t.id===st.tab)+'">'+t.name+'</button>').join('');
   bar.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab,{speak:true})));
 }
 function renderFnList(){
@@ -3129,20 +3652,40 @@ function renderFnList(){
   const focusedSlot=document.activeElement&&document.activeElement.classList.contains('fnin')?document.activeElement.dataset.slot:null;
   box.innerHTML=st.funcs.map((fn,k)=>{ if(!fn) return '';
     return '<div class="fnrow" data-slot="'+k+'">'+
-      '<label class="act" title="Función que recorre el vagón"><input type="radio" name="actfn" value="'+k+'"'+(k===st.act?' checked':'')+(fn.F?'':' disabled')+' aria-label="Recorrer '+FSLOT[k]+'"><span class="fname" style="--c:'+hex(FCOL[k]===0xd9e4e4?0x4cc2c9:FCOL[k])+'">'+FSLOT[k]+'(x) =</span></label>'+
+      '<label class="act" title="Función, curva o superficie que se estudia"><input type="radio" name="actfn" value="'+k+'"'+(k===st.act?' checked':'')+(fn.F?'':' disabled')+' aria-label="Estudiar '+FSLOT[k]+'"><span class="fname" style="--c:'+hex(FCOL[k]===0xd9e4e4?0x4cc2c9:FCOL[k])+'">'+esc(rowLabel(fn.src,k))+'</span></label>'+
       '<input class="fnin"'+(k===0?' id="fnInput"':'')+' data-slot="'+k+'" value="'+esc(fn.src)+'" spellcheck="false" autocomplete="off" aria-label="Expresión de '+FSLOT[k]+'(x)">'+
       (k>0?'<label class="vis" title="Mostrar u ocultar"><input type="checkbox" class="fvis"'+(fn.visible?' checked':'')+' aria-label="Mostrar '+FSLOT[k]+'"></label><button type="button" class="frm" aria-label="Quitar '+FSLOT[k]+'">×</button>':'')+
       '</div>'; }).join('');
   box.querySelectorAll('input[name="actfn"]').forEach(r=>r.addEventListener('change',()=>setActive(+r.value,true)));
   box.querySelectorAll('.fvis').forEach(c=>c.addEventListener('change',()=>{ const k=+c.closest('.fnrow').dataset.slot; st.funcs[k].visible=c.checked; computeAll(); buildGraph(false); applyTabVisibility(); buildTour(); renderTab(); updateLegend(); }));
+  box.querySelectorAll('.fnin').forEach(i=>i.addEventListener('input',()=>{ const lab=i.closest('.fnrow').querySelector('.fname'); if(lab) lab.textContent=rowLabel(i.value,+i.dataset.slot); }));
   box.querySelectorAll('.frm').forEach(b=>b.addEventListener('click',()=>removeFn(+b.closest('.fnrow').dataset.slot)));
   box.querySelectorAll('.fnin').forEach(i=>{ i.addEventListener('focus',()=>{ kbTarget=i; showPreview(i); }); i.addEventListener('input',()=>showPreview(i)); });
   const add=document.getElementById('bAddFn'); if(add) add.disabled=st.funcs.filter(Boolean).length>=4;
   if(focusedSlot!==null){ const el=box.querySelector('.fnin[data-slot="'+focusedSlot+'"]'); if(el) el.focus(); }
 }
 function renderPanel(){
-  const F=st.F, nm=FN();
-  document.getElementById('fxTitle').innerHTML=texHTML(nm+'(x)='+F.tex,nm+'(x) = '+F.txt);
+  const F=st.F, nm=FN(), md=MODE();
+  document.body.dataset.mode=md;
+  { const T=fnTitleMx(st.act); document.getElementById('fxTitle').innerHTML=texHTML(T.t,T.a); }
+  { const bf=document.getElementById('bFit'); if(bf) bf.textContent=md==='surf'?'Ajustar z':'Ajustar y'; }
+  const tnT=document.getElementById('tnTitle'); if(tnT) tnT.textContent=md==='surf'?'Trazas y plano tangente':'Tangente y normal';
+  [['tnL1','Tangente','Trazas'],['tnL2','Normal','Plano tangente'],['tnL3','Ambas','Ambos']].forEach(([id,a,b])=>{ const e=document.getElementById(id); if(e) e.textContent=md==='surf'?b:a; });
+  if(md!=='fx'){
+    const sym=F.sym&&F.nx&&F.ny;
+    if(md==='imp'){
+      document.getElementById('d1Lbl').innerHTML=texHTML('\\frac{dy}{dx}=','dy/dx =');
+      document.getElementById('d1Txt').innerHTML=sym?texHTML('-\\frac{'+nodeTex(F.nx)+'}{'+nodeTex(F.ny)+'}','−('+pretty(F.nx)+')/('+pretty(F.ny)+')'):'derivada implícita numérica';
+      document.getElementById('d2Lbl').innerHTML=texHTML('F(x,y)=','F(x, y) =');
+      document.getElementById('d2Txt').innerHTML=texHTML(nodeTex(F.node)||pretty(F.node),pretty(F.node));
+    } else {
+      document.getElementById('d1Lbl').innerHTML=texHTML('\\frac{\\partial '+nm+'}{\\partial x}=','∂'+nm+'/∂x =');
+      document.getElementById('d1Txt').innerHTML=sym?texHTML(nodeTex(F.nx)||pretty(F.nx),pretty(F.nx)):'derivada numérica';
+      document.getElementById('d2Lbl').innerHTML=texHTML('\\frac{\\partial '+nm+'}{\\partial y}=','∂'+nm+'/∂y =');
+      document.getElementById('d2Txt').innerHTML=sym?texHTML(nodeTex(F.ny)||pretty(F.ny),pretty(F.ny)):'derivada numérica';
+    }
+    updateLegend(); return;
+  }
   document.getElementById('d1Lbl').innerHTML=texHTML(nm+"'(x)=",nm+'′(x) =');
   document.getElementById('d2Lbl').innerHTML=texHTML(nm+"''(x)=",nm+'″(x) =');
   document.getElementById('d1Txt').innerHTML=F.symbolic?texHTML(F.x1.replace(/(^|[^a-zA-Z\\])f(?=\\left|'|\()/g,'$1'+nm),F.t1):esc(F.t1);
@@ -3175,6 +3718,10 @@ function renderTab(){
     : '<li class="small">No hay elementos de este tipo en la ventana.</li>';
   ol.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>jumpToTour(+b.dataset.i)));
   const ex=[];
+  if(MODE()==='surf'){ const Sf=st.Sf; if(Sf&&!Sf.empty&&Sf.crit.length&&(st.tab==='todo'||st.tab==='crit')){ const nmK={max:'máximo local',min:'mínimo local',silla:'silla',deg:'no concluye'};
+      ex.push('<div><span class="lbl">Clasificación con el hessiano</span><table class="iv"><tr><td>'+texHTML('(x,y)','(x, y)')+'</td><td>'+texHTML('z','z')+'</td><td>'+texHTML('D','D')+'</td><td>tipo</td></tr>'+Sf.crit.map(p=>'<tr><td>'+texHTML(texPt(p.x,p.y),'('+fmtS(p.x)+', '+fmtS(p.y)+')')+'</td><td>'+esc(fmtS(p.z,3))+'</td><td>'+esc(fmtS(p.D,3))+'</td><td>'+nmK[p.kind]+'</td></tr>').join('')+'</table><div class="small">'+texHTML('D=f_{xx}f_{yy}-f_{xy}^{2}','D = fxx fyy − fxy²')+'</div></div>'); }
+    document.getElementById('tabExtra').innerHTML=ex.join(''); return; }
+  if(MODE()==='imp'){ const F=st.F; ex.push('<div><span class="lbl">Derivación implícita</span><div>'+texHTML('\\frac{dy}{dx}=-\\frac{F_x}{F_y}','dy/dx = −Fx/Fy')+(F.sym&&F.nx?' &nbsp; '+texHTML('F_x='+nodeTex(F.nx)+',\\ \\ F_y='+nodeTex(F.ny),'Fx, Fy'):'')+'</div></div>'); document.getElementById('tabExtra').innerHTML=ex.join(''); return; }
   if(A.empty){ document.getElementById('tabExtra').innerHTML=''; return; }
   const absBlock=()=>'<div><span class="lbl">Extremos absolutos en la ventana</span><div>'+richHTML(extTxt(A.absMax,'máximo'))+'<br>'+richHTML(extTxt(A.absMin,'mínimo'))+'</div></div>';
   if(st.tab==='todo'){
@@ -3195,6 +3742,7 @@ function renderTab(){
 
 function numCell(v,p){ const d=dec(v,p); return d.indexOf('×')>=0 ? texHTML(texDec(v,p),d) : d; }
 function computeLimit(){
+  if(MODE()!=='fx') return null;
   const raw=document.getElementById('limC').value.trim();
   const out=document.getElementById('limOut'), nm=FN();
   let c;
@@ -3245,7 +3793,7 @@ document.getElementById('fnForm').addEventListener('submit',e=>{ e.preventDefaul
   }
   const changed=rows.some(inp=>{ const k=+inp.dataset.slot; return (inp.value.trim())!==(before[k]||''); });
   let w;
-  if(changed && !st.winEdited){ st.lupa=[]; st.follow=0; const xr=standardX(), yr=standardY(xr[0],xr[1]); w=applyAll({a:xr[0],b:xr[1],ymin:yr[0],ymax:yr[1],talk:true}); }
+  if(changed && !st.winEdited){ st.lupa=[]; st.follow=0; const sw=stdWindow(); w=applyAll({a:sw.a,b:sw.b,ymin:sw.c,ymax:sw.d,talk:true}); }
   else w=applyAll({a:a===null?-5:a,b:b===null?5:b,ymin:num('ya'),ymax:num('yb'),talk:true});
   st.winEdited=false;
   err.textContent=w; err.hidden=!w;
@@ -3260,9 +3808,10 @@ document.getElementById('bAddFn').addEventListener('click',()=>{
 });
 ['xa','xb','ya','yb'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); document.getElementById('fnForm').requestSubmit(); } }));
 const presetBox=document.getElementById('presets');
-PRESETS.forEach((p,i)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=p.f; b.addEventListener('click',()=>applyPreset(i)); presetBox.appendChild(b); });
+[['fx','Funciones y = f(x)'],['imp','Curvas implícitas'],['surf','Superficies z = f(x, y)']].forEach(([k,t])=>{ const h=document.createElement('div'); h.className='small'; h.style.cssText='flex-basis:100%;margin-top:4px'; h.textContent=t; presetBox.appendChild(h);
+  PRESETS.forEach((p,i)=>{ if((p.k||'fx')!==k) return; const b=document.createElement('button'); b.type='button'; b.textContent=p.f; b.addEventListener('click',()=>applyPreset(i)); presetBox.appendChild(b); }); });
 let presetIdx=0;
-function applyPreset(i){ presetIdx=i; const p=PRESETS[i]; loadFunction(p.f,p.a,p.b,null,null,true,st.act); }
+function applyPreset(i){ presetIdx=i; const p=PRESETS[i]; loadFunction(p.f,p.a,p.b,p.c===undefined?null:p.c,p.d===undefined?null:p.d,true,st.act); }
 document.getElementById('limForm').addEventListener('submit',e=>{ e.preventDefault(); st.limitUsed=true; const s=computeLimit(); if(s) speak(s); });
 document.querySelectorAll('input[name="tn"]').forEach(r=>r.addEventListener('change',()=>{ st.tn=+r.value; hudDirty=true; vrDirty=true; }));
 document.querySelectorAll('input[name="tnsrc"]').forEach(r=>r.addEventListener('change',()=>{ st.tnFollow=r.value==='follow'; readTnX(); hudDirty=true; }));
@@ -3283,7 +3832,7 @@ function setColor(c){ st.color=c; document.querySelectorAll('[data-color]').forE
 function updatePlayBtn(){ document.getElementById('bPlay').textContent = st.playing?'❚❚ Pausa':'▶ Recorrer'; vrDirty=true; }
 function togglePlay(){
   st.playing=!st.playing;
-  if(st.playing){ const pc=pieces[st.piece]; if(pc && st.s>=pc.L-1e-12 && st.piece===pieces.length-1){ st.piece=0; st.s=0; } st.pauseUntil=0; st.waitSpeech=false; st.follow=0; }
+  if(st.playing){ if(MODE()==='surf'){ if(curTourIdx>=st.tour.length-1) curTourIdx=-1; } else { const pc=pieces[st.piece]; if(pc && !pc.closed && st.s>=pc.L-1e-12 && st.piece===pieces.length-1){ st.piece=0; st.s=0; } } st.pauseUntil=0; st.waitSpeech=false; st.follow=0; st.travel=0; }
   else stopSpeech();
   updatePlayBtn();
 }
@@ -3297,7 +3846,8 @@ document.getElementById('btnFn').addEventListener('click',()=>{ const inp=docume
 document.querySelectorAll('[data-thick]').forEach(b=>b.addEventListener('click',()=>setThick(+b.dataset.thick,false)));
 document.getElementById('btnHelp').addEventListener('click',()=>{ setMsg('Ayuda',[HELP_2D]); speak(HELP_2D); });
 document.getElementById('speed').addEventListener('input',e=>{ st.speed=+e.target.value; });
-document.getElementById('xslider').addEventListener('input',e=>{ const x=st.a+(st.b-st.a)*(+e.target.value)/1000; st.playing=false; st.jump=null; updatePlayBtn(); moveTo(nearestReach(x),false); hudDirty=true; });
+document.getElementById('xslider').addEventListener('input',e=>{ const x=st.a+(st.b-st.a)*(+e.target.value)/1000; st.playing=false; st.jump=null; updatePlayBtn();
+  if(MODE()==='surf'){ st.glide=null; st.probe.x=x; vrDirty=true; } else if(MODE()==='imp'){ const p=curPos(); moveTo(reachXY(x,p?p.y:0),false); } else moveTo(nearestReach(x),false); hudDirty=true; });
 document.getElementById('ttsEngine').addEventListener('change',e=>setEngine(e.target.value));
 document.getElementById('ttsVoice').addEventListener('change',e=>setNeuralVoice(e.target.value));
 document.getElementById('ttsRate').addEventListener('change',e=>{ setRate(+e.target.value); speak('Velocidad de la voz ajustada.'); });
@@ -3308,6 +3858,7 @@ window.addEventListener('keydown',e=>{
   if(e.key===' '){ e.preventDefault(); togglePlay(); }
   else if(e.shiftKey && e.key.startsWith('Arrow')){ e.preventDefault(); const d={ArrowLeft:[-0.25,0],ArrowRight:[0.25,0],ArrowUp:[0,0.25],ArrowDown:[0,-0.25]}[e.key]; panWin(d[0],d[1]); }
   else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){ keys[e.key]=true; e.preventDefault(); }
+  else if((e.key==='ArrowUp'||e.key==='ArrowDown') && G.surf){ keys[e.key]=true; e.preventDefault(); }
   else if(e.key==='ArrowUp'){ e.preventDefault(); moveBy(0.08); }
   else if(e.key==='ArrowDown'){ e.preventDefault(); moveBy(-0.08); }
   else if(e.key==='+'||e.key==='='){ zoomWin(0.5); }
@@ -3350,9 +3901,9 @@ async function enterXR(kind){
     controls.enabled=false;
     savedCam={p:camera.position.clone(),q:camera.quaternion.clone()};
     camera.position.set(0,0,0); camera.quaternion.identity();
-    hudMesh.visible=st.hudVisible; st.vrPanel='main';
-    placeGraph(); snapCam=true; hudDirty=true; vrDirty=true;
-    const intro=(kind==='ar'?'Realidad mixta. ':'Realidad virtual. ')+'La función '+FN()+' de x igual a '+sayExpr(st.F.node)+' está frente a usted. A su izquierda está el tablero. Apunte con el mando y pulse el gatillo para elegir. Pulse Subir y recorrer para montarse en la curva. La fila Ventana desplaza la región visible por todo el dominio. Para escuchar todos los controles, haga clic con el stick derecho.';
+    hudMesh.visible=st.hudVisible; st.vrPanel='main'; st.rideS=null;
+    if(G.surf) buildGraph(true); else placeGraph(); snapCam=true; hudDirty=true; vrDirty=true;
+    const intro=(kind==='ar'?'Realidad mixta. ':'Realidad virtual. ')+cap(sayFn())+' está frente a usted. A su izquierda está el tablero. Apunte con el mando y pulse el gatillo para elegir. '+(MODE()==='surf'?'Con el stick derecho mueve el explorador sobre la superficie, en la dirección en que mira. El botón X alterna entre caminar sobre ella y verla como maqueta.':'Pulse Subir y recorrer para montarse en la curva. La fila Ventana desplaza la región visible por todo el dominio.')+' Para escuchar todos los controles, haga clic con el stick derecho.';
     setMsg(kind==='ar'?'Realidad mixta':'Realidad virtual',['La función está frente a usted. Apunte al tablero y pulse el gatillo para elegir una pestaña o un botón.','La fila Ventana mueve y amplía la región visible. El clic del stick derecho repite la ayuda.']);
     speak(intro);
   }catch(e){
@@ -3367,9 +3918,9 @@ function onXREnd(){
   ctrls.forEach(c=>{ c.userData.dot.visible=false; });
   if(savedCam){ camera.position.copy(savedCam.p); camera.quaternion.copy(savedCam.q); }
   controls.enabled = st.view==='orbit';
-  st.vrPanel='main';
+  st.vrPanel='main'; st.rideS=null;
   resize(); refreshLineMats();
-  placeGraph(); snapCam=true; hudDirty=true;
+  if(G.surf) buildGraph(true); else placeGraph(); snapCam=true; hudDirty=true;
 }
 btnVR.addEventListener('click',()=>enterXR('vr'));
 btnAR.addEventListener('click',()=>enterXR('ar'));
@@ -3397,7 +3948,7 @@ function grabBaseline(){
 }
 function pollXR(dt){
   const s=renderer.xr.getSession(); if(!s) return;
-  let move=0, zoomAxis=0, panAxis=0, hoverAny=null;
+  let move=0, zoomAxis=0, panAxis=0, hoverAny=null, rsx=0, rsy=0;
   rig.updateMatrixWorld(true);
   let gripChanged=false;
   ctrls.forEach((ctrl,idx)=>{
@@ -3407,7 +3958,7 @@ function pollXR(dt){
     const edge=i=>pr[i]&&!was[i];
     const ay=gp.axes.length>=4?gp.axes[3]:(gp.axes[1]||0), ax=gp.axes.length>=4?gp.axes[2]:(gp.axes[0]||0);
     if(h==='left'){ if(Math.abs(ay)>0.2 && Math.abs(ay)>Math.abs(ax)) zoomAxis+=-ay; if(Math.abs(ax)>0.6 && Math.abs(ax)>Math.abs(ay)) panAxis=ax; }
-    else { if(Math.abs(ay)>0.2) move+=-ay; }
+    else { if(Math.abs(ay)>0.2) move+=-ay; rsx=ax; rsy=ay; }
     const hit=rayHit(ctrl);
     const dot=ctrl.userData.dot, line=ctrl.userData.line;
     if(hit){ dot.visible=true; dot.position.copy(rig.worldToLocal(hit.point.clone())); line.scale.z=hit.dist; if(hit.btn) hoverAny=hit.btn; }
@@ -3445,7 +3996,676 @@ function pollXR(dt){
   if(zoomAxis!==0) zoomBy(Math.exp(zoomAxis*dt*1.2));
   const now=performance.now();
   if(panAxis!==0 && now>panNext){ panNext=now+450; panWin(panAxis>0?0.2:-0.2,0,false); }
-  if(move!==0 && !st.jump){ if(st.playing){ st.playing=false; updatePlayBtn(); } advance(dt,Math.max(-1.5,Math.min(1.5,move)),true); hudDirty=true; vrDirty=true; }
+  if(MODE()==='surf'){ const mx=Math.abs(rsx)>0.18?rsx:0, my=Math.abs(rsy)>0.18?rsy:0; if(mx||my){ stopGlide(); moveProbeXY(-my,mx,dt); } }
+  else if(move!==0 && !st.jump){ if(st.playing){ st.playing=false; updatePlayBtn(); } advance(dt,Math.max(-1.5,Math.min(1.5,move)),true); hudDirty=true; vrDirty=true; }
+}
+
+
+/* ================= modos: y = f(x), curva implícita y superficie ================= */
+const MODE=()=>(st.F&&st.F.kind)||'fx';
+const kindOf=k=>{ const fn=st.funcs[k]; return fn&&fn.F?(fn.F.kind||'fx'):'fx'; };
+function fnSig(k){ const nm=FSLOT[k], kd=kindOf(k); return kd==='surf'?nm+'(x,y)':kd==='imp'?nm:nm+'(x)'; }
+function fnTitleMx(k){
+  const fn=st.funcs[k], F=fn&&fn.F, nm=FSLOT[k]; if(!F) return Mx(nm,nm);
+  if(F.kind==='imp') return Mx(F.tex,F.txt);
+  if(F.kind==='surf') return Mx(nm+'(x,y)='+F.tex,nm+'(x, y) = '+F.txt);
+  return Mx(nm+'(x)='+F.tex,nm+'(x) = '+F.txt);
+}
+function sayFn(){
+  const F=st.F, nm=FN(); if(!F) return '';
+  if(F.kind==='imp') return 'la curva de ecuación '+sayExpr(F.L)+' igual a '+sayExpr(F.R);
+  if(F.kind==='surf') return 'la superficie zeta igual a '+sayExpr(F.node);
+  return 'la función '+nm+' de x igual a '+sayExpr(F.node);
+}
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+// vista previa de lo escrito, según su tipo
+function previewTex(src,slot){
+  const s=String(src||'').trim(); if(!s) return null; const nm=FSLOT[slot||0];
+  try{
+    const k=srcKind(s);
+    if(k.kind==='imp'){ if(!k.L||!k.R) return null; const L=normalizeNode(M.parse(prep2(k.L))), R=normalizeNode(M.parse(prep2(k.R))); return {tex:nodeTex(L)+'='+nodeTex(R),alt:pretty(L)+' = '+pretty(R),kind:'imp'}; }
+    if(k.kind==='surf'){ const n=normalizeNode(M.parse(prep2(k.expr))); return {tex:nm+'(x,y)='+nodeTex(n),alt:nm+'(x, y) = '+pretty(n),kind:'surf'}; }
+    const n=normalizeNode(M.parse(preprocess(s))); return {tex:nm+'(x)='+nodeTex(n),alt:nm+'(x) = '+pretty(n),kind:'fx'};
+  }catch(e){ return null; }
+}
+function rowLabel(src,k){ const s=String(src||''), nm=FSLOT[k]; if(splitEq(s)) return nm+':'; return RX_Y.test(s)?nm+'(x,y) =':nm+'(x) ='; }
+function axisPi2(axis){ const m=st.axis[axis]; if(m==='pi') return true; if(m==='num') return false; const T=traits2(st.F); return axis==='x'?T.piX:T.piY; }
+
+/* ---- ventana estándar de una curva implícita o de una superficie ---- */
+function stdImpWin(F){
+  const T=traits2(F), piX=st.axis.x==='pi'||(st.axis.x==='auto'&&T.piX), piY=st.axis.y==='pi'||(st.axis.y==='auto'&&T.piY);
+  const rnd2=(lo,hi,pi)=>roundOut(lo,hi,pi);
+  const per=T.x.periods.concat(T.y.periods);
+  if(per.length && T.x.ok && T.y.ok){ const h=Math.max(...per); const xr=rnd2(-h,h,piX), yr=rnd2(-0.8*h,0.8*h,piY); return {a:xr[0],b:xr[1],c:yr[0],d:yr[1]}; }
+  for(const R of [6,2.5,20,80]){
+    const A=analyzeImp(F,-R,R,-R,R);
+    if(A.empty) continue;
+    let bb=A.bbox?Object.assign({},A.bbox):null;
+    A.pts.forEach(p=>{ if(!bb) bb={x0:p.x,x1:p.x,y0:p.y,y1:p.y}; bb.x0=Math.min(bb.x0,p.x); bb.x1=Math.max(bb.x1,p.x); bb.y0=Math.min(bb.y0,p.y); bb.y1=Math.max(bb.y1,p.y); });
+    const touches=bb.x0<-0.97*R||bb.x1>0.97*R||bb.y0<-0.97*R||bb.y1>0.97*R;
+    if(!touches){
+      let w=bb.x1-bb.x0, h=bb.y1-bb.y0, cx=(bb.x0+bb.x1)/2, cy=(bb.y0+bb.y1)/2;
+      // si el origen queda cerca, se incluye: así se ven los ejes
+      if(Math.abs(cx)<0.6*Math.max(w,0.5)){ const x0=Math.min(bb.x0,0), x1=Math.max(bb.x1,0); cx=(x0+x1)/2; w=x1-x0; }
+      if(Math.abs(cy)<0.6*Math.max(h,0.5)){ const y0=Math.min(bb.y0,0), y1=Math.max(bb.y1,0); cy=(y0+y1)/2; h=y1-y0; }
+      const Wd=Math.max(w,h/0.8,0.5)*1.3, Hd=Math.max(h,w*0.8,0.4)*1.3;
+      const xr=rnd2(cx-Wd/2,cx+Wd/2,piX), yr=rnd2(cy-Hd/2,cy+Hd/2,piY); return {a:xr[0],b:xr[1],c:yr[0],d:yr[1]};
+    }
+    if(R===6||R===2.5){
+      let x0=-4,x1=4,y0=-3.2,y1=3.2;
+      A.pts.forEach(p=>{ x0=Math.min(x0,p.x-1); x1=Math.max(x1,p.x+1); y0=Math.min(y0,p.y-1); y1=Math.max(y1,p.y+1); });
+      const xr=rnd2(x0,x1,piX), yr=rnd2(y0,y1,piY); return {a:xr[0],b:xr[1],c:yr[0],d:yr[1]};
+    }
+  }
+  return {a:-5,b:5,c:-4,d:4};
+}
+function stdSurfWin(F){
+  const T=traits2(F), per=T.x.periods.concat(T.y.periods);
+  if(per.length && T.x.ok && T.y.ok){ const h=Math.max(...per)/2*(Math.max(...per)<4?2:1); const pi=st.axis.x!=='num'; const r=roundOut(-h,h,pi); return {a:r[0],b:r[1],c:r[0],d:r[1]}; }
+  const cr=critPoints2(F,-10,10,-10,10,50);
+  let R=2.5;
+  if(cr.length){ const m=Math.max(...cr.map(p=>Math.max(Math.abs(p.x),Math.abs(p.y)))); R=Math.min(10,Math.max(2,m*1.5)); }
+  const s=niceStep(2*R)/2; R=Math.ceil(R/s-1e-9)*s;
+  return {a:-R,b:R,c:-R,d:R};
+}
+function stdWindow(){
+  const fn=st.funcs[st.act], F=fn&&fn.F, m=F?F.kind||'fx':'fx';
+  if(m==='imp') return stdImpWin(F);
+  if(m==='surf') return stdSurfWin(F);
+  const xr=standardX(), yr=standardY(xr[0],xr[1]); return {a:xr[0],b:xr[1],c:yr[0],d:yr[1]};
+}
+
+/* ================= curva implícita ================= */
+const IMPCOL=0x7fdde3;
+const TABS_IMP=[{id:'todo',name:'Todo',color:'none'},{id:'cortes',name:'Cortes con ejes',color:'none'},{id:'htan',name:'Tang. horizontal',color:'none'},{id:'vtan',name:'Tang. vertical',color:'none'},{id:'sing',name:'Singulares',color:'none'},{id:'inter',name:'Intersecciones',color:'none'}];
+const TABS_SURF=[{id:'todo',name:'Todo',color:'none'},{id:'crit',name:'Puntos críticos',color:'none'},{id:'nivel',name:'Curvas de nivel',color:'none'},{id:'trazas',name:'Trazas',color:'none'},{id:'plano',name:'Plano tangente',color:'none'}];
+function curTabs(){ const m=MODE(); return m==='imp'?TABS_IMP:m==='surf'?TABS_SURF:TABS; }
+function impInTab(p,tab){ const k=p.kinds; switch(tab){ case 'todo': return true; case 'cortes': return k.includes('xcut')||k.includes('ycut'); case 'htan': return k.includes('htan'); case 'vtan': return k.includes('vtan'); case 'sing': return k.includes('sing'); } return false; }
+function sayPt(x,y){ return 'equis igual a '+sayNum(x)+', ye igual a '+sayNum(y); }
+function impPtInfo(p){
+  const k=p.kinds, pt='('+fmtS(p.x)+', '+fmtS(p.y)+')', ptTeX=texPt(p.x,p.y), names=[], lines=[], say=[], P=sayPt(p.x,p.y);
+  let kind='cero';
+  if(k.includes('xcut')){ names.push('Corte con el eje x'); say.push('La curva corta el eje x en x igual a '+sayNum(p.x)+'.'); }
+  if(k.includes('ycut')){ names.push('Corte con el eje y'); say.push('La curva corta el eje ye en ye igual a '+sayNum(p.y)+'.'); }
+  if(k.includes('vtan')){ const t=p.info.vtan; kind='silla'; names.push('Tangente vertical');
+    lines.push(['Tangente vertical ',Mx('x='+texNum(p.x),'x = '+fmtS(p.x)),', porque ',Mx('F_y=0','Fy = 0'),'.']);
+    say.push('Tangente vertical en el punto '+P+'. Allí la derivada parcial de F respecto de ye se anula'+(t==='max'?', y la curva alcanza su punto más a la derecha en esa zona.':t==='min'?', y la curva alcanza su punto más a la izquierda en esa zona.':'.')); }
+  if(k.includes('htan')){ const t=p.info.htan; kind=t==='min'?'min':'max'; names.push(t==='max'?'Tangente horizontal, máximo de y':t==='min'?'Tangente horizontal, mínimo de y':'Tangente horizontal');
+    lines.push([Mx('\\frac{dy}{dx}=0','dy/dx = 0'),', porque ',Mx('F_x=0','Fx = 0'),'. Tangente ',Mx('y='+texNum(p.y),'y = '+fmtS(p.y)),'.']);
+    say.push('Tangente horizontal en el punto '+P+'. La derivada parcial de F respecto de x se anula'+(t==='max'?', y la curva alcanza allí un máximo local de ye.':t==='min'?', y la curva alcanza allí un mínimo local de ye.':'.')); }
+  if(k.includes('sing')){ const t=p.info.sing; kind='infl'; names.unshift(t==='doble'?'Punto doble':t==='aislado'?'Punto aislado':'Punto singular');
+    lines.unshift(['Allí ',Mx('F=F_x=F_y=0','F = Fx = Fy = 0'),': la curva no tiene una recta tangente única.']);
+    say.unshift(t==='doble'?'Punto doble en '+P+'. Dos ramas de la curva se cruzan y el gradiente de F se anula.':t==='aislado'?'Punto aislado en '+P+'. La ecuación se cumple en ese punto, pero no en los puntos vecinos.':'Punto singular en '+P+'. El gradiente de F se anula; la curva puede formar una cúspide.'); }
+  if(!lines.length) lines.push(['El punto ',Mx(ptTeX,pt),' satisface la ecuación.']);
+  return {title:[...new Set(names)].join(' · '),pt,ptTeX,lines,say:say.join(' '),kind};
+}
+function reachXY(x,y,maxD){
+  let best=null, bd=Infinity;
+  pieces.forEach((pc,k)=>{ for(let i=1;i<pc.X.length;i++){ const ax=pc.X[i-1], ay=pc.Y[i-1], dx=pc.X[i]-ax, dy=pc.Y[i]-ay, L2=dx*dx+dy*dy; let t=L2>0?((x-ax)*dx+(y-ay)*dy)/L2:0; t=Math.max(0,Math.min(1,t)); const d=Math.hypot(ax+dx*t-x,ay+dy*t-y); if(d<bd){ bd=d; best={piece:k,s:pc.S[i-1]+t*(pc.S[i]-pc.S[i-1])}; } } });
+  if(maxD!==undefined && bd>maxD) return null; return best;
+}
+function drawImpOverlay(fn,k,col,lw,u,lu){
+  const a=st.a,b=st.b,y0=st.ymin,y1=st.ymax, nn=gridN(b-a,y1-y0,fn.F.fast,fn.F.fast?200:110);
+  const P=contourGrid(gridVals(fn.F.f,a,b,y0,y1,nn[0],nn[1]),0,fn.F.f);
+  let lab=null;
+  P.forEach(pc=>{ const pos=[]; pc.X.forEach((x,i)=>{ pos.push(x,pc.Y[i],-u*0.02); if(!lab||x>lab[0]) lab=[x,pc.Y[i]]; }); G.others.add(line2(pos,{color:col,w:lw*0.85})); });
+  if(lab){ const l=makeRichLabel([Mx(FSLOT[k])],hex(col),lu*2.8,{bg:true,center:[0,0],onResize:relayout}); l.position.set(lab[0],lab[1]+u*0.8,u); G.others.add(l); G.labels.push({sp:l,prio:4,px:lab[0],py:lab[1],g:u*0.8+lu*0.4,pref:'up',nomark:true}); }
+}
+function buildImpContent(lw,u,lu,ks){
+  const I=st.I; G.curves=[];
+  pieces=I?I.polys:[];
+  pieces.forEach(pc=>{ const pos=[]; pc.X.forEach((x,i)=>pos.push(x,pc.Y[i],0)); const l=line2(pos,{color:IMPCOL,w:lw}); graph.add(l); G.curves.push(l); });
+  G.markers=[]; G.markerGroups=[];
+  (I?I.pts:[]).forEach(p=>{
+    const d=impPtInfo(p), col=COL[d.kind]||COL.cero, grp=new THREE.Group(); graph.add(grp);
+    const mk=new THREE.Mesh(new THREE.SphereGeometry(u*0.95*ks*G.mk,20,14),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.4,roughness:0.35}));
+    mk.position.set(p.x,p.y,0); grp.add(mk);
+    const short={xcut:'corte',ycut:'corte',htan:'tg. horizontal',vtan:'tg. vertical',sing:p.info.sing==='doble'?'punto doble':p.info.sing==='aislado'?'punto aislado':'singular'};
+    const names=[...new Set(p.kinds.map(k=>short[k]))].join(' · ');
+    const above=d.kind!=='min', gp2=u*1.2*ks*G.mk+lu*0.6;
+    const l=makeRichLabel([names+'  ',Mx(d.ptTeX,d.pt)],hex(col),lu*2.4,{center:[0.5,above?0:1],onResize:relayout});
+    l.position.set(p.x,p.y+(above?gp2:-gp2),u*1.5); grp.add(l);
+    G.labels.push({sp:l,prio:1,px:p.x,py:p.y,g:gp2,pref:above?'up':'down'});
+    G.markers.push(mk); G.markerGroups.push(grp);
+  });
+}
+function buildTourImp(){
+  const I=st.I, tab=st.tab, items=[], span=Math.max(st.b-st.a,st.ymax-st.ymin);
+  if(I) I.pts.forEach((p,i)=>{ if(!impInTab(p,tab)) return; const d=impPtInfo(p); items.push({x:p.x,y:p.y,kind:d.kind,title:d.title,pt:d.pt,ptTeX:d.ptTeX,lines:d.lines,say:d.say,mi:i,reach:reachXY(p.x,p.y,0.01*span)}); });
+  if(tab==='todo'||tab==='inter') (st.inter||[]).forEach(p=>{
+    const pt='('+fmtS(p.x)+', '+fmtS(p.y)+')', ot=kindOf(p.slot)==='imp'?'la curva '+FSLOT[p.slot]:'la función '+FSLOT[p.slot];
+    items.push({x:p.x,y:p.y,kind:'inter',title:'Intersección con '+fnSig(p.slot),pt,ptTeX:texPt(p.x,p.y),lines:[['El punto ',Mx(texPt(p.x,p.y),pt),' satisface las dos ecuaciones.']],say:'Intersección con '+ot+', en el punto '+sayPt(p.x,p.y)+'.',reach:reachXY(p.x,p.y,0.01*span),inter:p});
+  });
+  items.sort((p,q)=>{ const a=p.reach,b=q.reach; if(!a&&!b) return p.x-q.x; if(!a) return 1; if(!b) return -1; return a.piece-b.piece||a.s-b.s; });
+  st.tour=items; setTimeout(prefetchTour,300);
+}
+function impSlope(x,y){
+  const F=st.F, gx=F.fx(x,y), gy=F.fy(x,y);
+  if(!isFinite(gx)||!isFinite(gy)||Math.hypot(gx,gy)<1e-12*(1+Math.abs(gx)+Math.abs(gy))) return {ok:false,sing:true};
+  const vertical=Math.abs(gy)<1e-9*Math.abs(gx), m=vertical?Infinity:-gx/gy;
+  let ypp=NaN; if(!vertical){ const A=F.fxx(x,y), B=F.fxy(x,y), C=F.fyy(x,y); ypp=-(A*gy*gy-2*B*gx*gy+C*gx*gx)/(gy*gy*gy); }
+  return {ok:true,m,vertical,ypp,gx,gy};
+}
+function computeIntersectionsImp(){
+  st.inter=[]; const I=st.I; if(!I||!I.polys.length) return;
+  const F=st.F, span=Math.max(st.b-st.a,st.ymax-st.ymin);
+  st.funcs.forEach((fn,k)=>{
+    if(k===st.act||!fn||!fn.F||!fn.visible) return;
+    const K=fn.F.kind||'fx'; if(K==='surf') return;
+    let G2,Gx,Gy;
+    if(K==='fx'){ const g=fn.F.f, g1=fn.F.f1; G2=(x,y)=>y-g(x); Gx=x=>-g1(x); Gy=()=>1; }
+    else { G2=fn.F.f; Gx=fn.F.fx; Gy=fn.F.fy; }
+    const gs=[]; I.polys.forEach(pc=>{ for(let i=0;i<pc.X.length;i+=4){ const v=G2(pc.X[i],pc.Y[i]); if(isFinite(v)) gs.push(Math.abs(v)); } }); gs.sort((p,q)=>p-q);
+    const gsc=gs.length?Math.max(gs[Math.floor(gs.length/2)],1e-12):1;
+    I.polys.forEach(pc=>{
+      let pv=G2(pc.X[0],pc.Y[0]);
+      for(let i=1;i<pc.X.length;i++){
+        const v=G2(pc.X[i],pc.Y[i]);
+        if(isFinite(pv)&&isFinite(v)&&pv*v<=0&&!(pv===0&&v===0)){
+          let x=(pc.X[i]+pc.X[i-1])/2, y=(pc.Y[i]+pc.Y[i-1])/2;
+          for(let it=0;it<40;it++){ const f=F.f(x,y), g=G2(x,y); if(!isFinite(f)||!isFinite(g)) break; const a11=F.fx(x,y), a12=F.fy(x,y), a21=Gx(x,y), a22=Gy(x,y), det=a11*a22-a12*a21; if(!isFinite(det)||Math.abs(det)<1e-300) break; let dx=-(a22*f-a12*g)/det, dy=-(a11*g-a21*f)/det; const L=Math.hypot(dx,dy), lim=0.02*span; if(L>lim){ dx*=lim/L; dy*=lim/L; } x+=dx; y+=dy; if(L<1e-15*(1+Math.abs(x)+Math.abs(y))) break; }
+          const f=F.f(x,y), g=G2(x,y);
+          if(isFinite(f)&&isFinite(g)&&Math.abs(f)<1e-7*I.sc&&Math.abs(g)<1e-7*gsc&&Math.hypot(x-pc.X[i],y-pc.Y[i])<0.03*span&&x>=st.a&&x<=st.b&&y>=st.ymin&&y<=st.ymax){
+            const xs=snap(x,span), ys=snap(y,span);
+            if(!st.inter.some(q=>Math.hypot(q.x-xs,q.y-ys)<1e-5*span)) st.inter.push({x:xs,y:ys,slot:k});
+          }
+        }
+        pv=v;
+      }
+    });
+  });
+  st.inter.sort((p,q)=>p.x-q.x);
+}
+// el recorrido sobre la curva implícita: rama por rama; las cerradas se recorren una vuelta completa
+function advanceImp(dt,dir,manual){
+  const pc=pieces[st.piece]; if(!pc) return;
+  st.lastDir=dir>0?1:-1;
+  const prevS=st.s; let ns=st.s+dir*speedUnits()*dt;
+  const lo=Math.min(prevS,ns), hi=Math.max(prevS,ns);
+  for(const it of st.tour){ const r=it.reach; if(!r||r.piece!==st.piece) continue;
+    const hit=(r.s>lo+1e-12&&r.s<=hi) || (pc.closed && (r.s+pc.L>lo+1e-12&&r.s+pc.L<=hi || r.s-pc.L>lo+1e-12&&r.s-pc.L<=hi));
+    if(hit){ if(!manual){ st.s=r.s; st.travel=(st.travel||0)+Math.abs(r.s-prevS); announce(it); holdFor(1800); return; } announce(it); } }
+  if(!manual){ st.travel=(st.travel||0)+Math.abs(ns-prevS); if(pc.closed && st.travel>=pc.L-1e-9){ st.s=((ns%pc.L)+pc.L)%pc.L; nextPieceAuto(); return; } }
+  if(pc.closed){ st.s=((ns%pc.L)+pc.L)%pc.L; return; }
+  if(ns>pc.L||ns<0){
+    st.s=ns>pc.L?pc.L:0;
+    if(manual){
+      const p=posAt(pc,st.s), W=st.b-st.a, H=st.ymax-st.ymin, e=0.012;
+      const ex=p.x>=st.b-e*W?1:p.x<=st.a+e*W?-1:0, ey=p.y>=st.ymax-e*H?1:p.y<=st.ymin+e*H?-1:0;
+      if((ex||ey) && performance.now()-(st.lastShift||0)>500){
+        st.lastShift=performance.now();
+        const q=posAt(pc,Math.max(0,Math.min(pc.L,st.s-st.lastDir*W*0.01))), mv={x:p.x-q.x,y:p.y-q.y};
+        setWindow(rx(st.a+ex*W/2),rx(st.b+ex*W/2),ry(st.ymin+ey*H/2),ry(st.ymax+ey*H/2),{p,mdir:mv,keepPlay:true});
+        setMsg('La ventana avanza',[['Ahora se ve ',MxWin(),' por ',MxWinY(),'.']]);
+      }
+    } else nextPieceAuto();
+    return;
+  }
+  st.s=ns;
+}
+function nextPieceAuto(){
+  st.travel=0;
+  const np=st.piece+1;
+  if(np<pieces.length){ pendingJump={piece:np,s:0}; setMsg('Otra rama de la curva',['El recorrido sigue por la siguiente rama visible.']); holdFor(900); return; }
+  st.playing=false; updatePlayBtn();
+  setMsg('Fin del recorrido',['El vagón recorrió todas las ramas visibles de la curva. Con el stick o las flechas puede seguir moviéndose; al llegar al borde, la ventana lo acompaña.']);
+  speak('Fin del recorrido de '+tabName(st.tab)+'.',false);
+}
+// tras mover la ventana, el vagón conserva el sentido en que avanzaba
+function orientPiece(mv){
+  const pc=pieces[st.piece]; if(!pc||!mv) return;
+  const p1=posAt(pc,Math.max(0,st.s-1e-3*pc.L)), p2=posAt(pc,Math.min(pc.L,st.s+1e-3*pc.L));
+  const dot=((p2.x-p1.x)*mv.x+(p2.y-p1.y)*mv.y)*(st.lastDir||1);
+  if(dot<0){ pc.X.reverse(); pc.Y.reverse(); withArc(pc); st.s=pc.L-st.s; }
+}
+function tabInfoImp(tab){
+  const I=st.I, F=st.F, P=I?I.pts:[], ni=(st.inter||[]).length;
+  const eq=Mx(F.tex,F.txt);
+  if(!I||I.empty) return {title:'Sin curva en la ventana',lines:['La curva no tiene puntos en esta ventana. Desplace o amplíe la ventana, o use Vista estándar.'],say:'La curva no tiene puntos en esta ventana. Desplace o amplíe la ventana.'};
+  const of=k=>P.filter(p=>p.kinds.includes(k));
+  switch(tab){
+    case 'todo': {
+      const lines=[['Curva ',eq,'.'],[P.length+(P.length===1?' punto característico':' puntos característicos')+' en la ventana ',MxWin(),' por ',MxWinY(),'.'],['Pendiente en cada punto ',Mx('\\frac{dy}{dx}=-\\frac{F_x}{F_y}','dy/dx = −Fx/Fy'),', con ',Mx('F(x,y)='+(nodeTex(F.node)||F.txt),'F(x, y) = '+pretty(F.node)),'.']];
+      if(ni) lines.push([ni+(ni===1?' intersección':' intersecciones')+' con otras curvas.']);
+      return {title:'Vista general',lines,say:cap(sayFn())+'. No es necesariamente la gráfica de una función: para un mismo x puede haber varios valores de ye. En la ventana hay '+P.length+(P.length===1?' punto característico':' puntos característicos')+(ni?' y '+ni+(ni===1?' intersección':' intersecciones'):'')+'. La pendiente se obtiene derivando implícitamente: de ye de x es igual a menos F sub x sobre F sub ye.'};
+    }
+    case 'cortes': {
+      const xs=of('xcut'), ys=of('ycut'), lines=[];
+      lines.push(xs.length?['Corta el eje x en ',MxX(xs.map(p=>p.x)),'.']:'No corta el eje x en la ventana.');
+      lines.push(ys.length?['Corta el eje y en ',Mx('y='+ys.map(p=>texNum(p.y)).join(',\\ '),'y = '+ys.map(p=>fmtS(p.y)).join(', ')),'.']:'No corta el eje y en la ventana.');
+      lines.push(['Se obtienen resolviendo ',Mx('F(x,0)=0','F(x, 0) = 0'),' y ',Mx('F(0,y)=0','F(0, y) = 0'),'.']);
+      return {title:'Cortes con los ejes',lines,say:'Cortes con los ejes. '+(xs.length?'La curva corta el eje x en x igual a '+sayList(xs.map(p=>sayNum(p.x)))+'. ':'No corta el eje x en la ventana. ')+(ys.length?'Corta el eje ye en ye igual a '+sayList(ys.map(p=>sayNum(p.y)))+'.':'No corta el eje ye en la ventana.')};
+    }
+    case 'htan': { const h=of('htan');
+      return {title:'Tangentes horizontales',lines:h.length?[['Donde ',Mx('F_x=0','Fx = 0'),' y ',Mx('F_y\\neq 0','Fy ≠ 0'),', la tangente es horizontal: en ',Mx(h.map(p=>texPt(p.x,p.y)).join(',\\ '),h.map(p=>'('+fmtS(p.x)+', '+fmtS(p.y)+')').join(', ')),'.'],'Allí la curva alcanza máximos o mínimos locales de y.']:['No hay tangentes horizontales en la ventana.'],
+        say:h.length?'Tangentes horizontales. Donde la derivada parcial de F respecto de x se anula, la tangente es horizontal. Hay '+(h.length===1?'una':h.length)+', en '+sayList(h.map(p=>'el punto '+sayPt(p.x,p.y)))+'.':'No hay tangentes horizontales en la ventana.'}; }
+    case 'vtan': { const v=of('vtan');
+      return {title:'Tangentes verticales',lines:v.length?[['Donde ',Mx('F_y=0','Fy = 0'),' y ',Mx('F_x\\neq 0','Fx ≠ 0'),', la tangente es vertical: en ',Mx(v.map(p=>texPt(p.x,p.y)).join(',\\ '),v.map(p=>'('+fmtS(p.x)+', '+fmtS(p.y)+')').join(', ')),'.'],'Allí la pendiente dy/dx no existe y la curva da la vuelta en la dirección horizontal.']:['No hay tangentes verticales en la ventana.'],
+        say:v.length?'Tangentes verticales. Donde la derivada parcial de F respecto de ye se anula, la pendiente no existe y la tangente es vertical. Hay '+(v.length===1?'una':v.length)+', en '+sayList(v.map(p=>'el punto '+sayPt(p.x,p.y)))+'.':'No hay tangentes verticales en la ventana.'}; }
+    case 'sing': { const s=of('sing');
+      return {title:'Puntos singulares',lines:s.length?[['Donde ',Mx('F=F_x=F_y=0','F = Fx = Fy = 0'),': ',Mx(s.map(p=>texPt(p.x,p.y)).join(',\\ '),s.map(p=>'('+fmtS(p.x)+', '+fmtS(p.y)+')').join(', ')),'.'],'Un punto doble es un cruce de dos ramas; un punto aislado cumple la ecuación sin tener vecinos en la curva.']:['La curva no tiene puntos singulares en la ventana: en cada punto hay una única recta tangente.'],
+        say:s.length?'Puntos singulares, donde el gradiente de F se anula. Hay '+(s.length===1?'uno':s.length)+', en '+sayList(s.map(p=>'el punto '+sayPt(p.x,p.y)))+'.':'La curva no tiene puntos singulares en la ventana.'}; }
+    case 'inter': {
+      const others=st.funcs.filter((f,k)=>f&&f.F&&k!==st.act&&f.visible&&(f.F.kind||'fx')!=='surf');
+      if(!others.length) return {title:'Intersecciones',lines:['Agregue otra función o curva, por ejemplo g(x) = x o la ecuación x + y = 1, para estudiar dónde se cortan.'],say:'Intersecciones. Agregue otra función o curva para estudiar dónde se cortan.'};
+      const I2=st.inter||[];
+      return {title:'Intersecciones',lines:I2.length?I2.map(p=>['Con ',Mx(FSLOT[p.slot]),' en ',Mx(texPt(p.x,p.y),'('+fmtS(p.x)+', '+fmtS(p.y)+')'),'.']):['Las curvas no se cortan en la ventana.'],
+        say:I2.length?'Intersecciones. Las curvas se cortan en '+(I2.length===1?'un punto':I2.length+' puntos')+': '+sayList(I2.map(p=>'con '+FSLOT[p.slot]+' en el punto '+sayPt(p.x,p.y)))+'.':'Las curvas no se cortan en esta ventana.'};
+    }
+  }
+  return {title:'',lines:[],say:''};
+}
+
+/* ================= superficie z = f(x,y) ================= */
+// escala de color de alturas: azul profundo, verde azulado, verde amarillo, ámbar y coral
+const CMAP=[[0,0x2c3e9e],[0.27,0x1f8fb0],[0.5,0x3fb58a],[0.72,0xc9d256],[0.86,0xf2b444],[1,0xe8644a]];
+const CLUT=(()=>{ const out=new Float32Array(256*3), c0=new THREE.Color(), c1=new THREE.Color(); for(let i=0;i<256;i++){ const t=i/255; let k=0; while(k<CMAP.length-2&&t>CMAP[k+1][0]) k++; const u=(t-CMAP[k][0])/(CMAP[k+1][0]-CMAP[k][0]); c0.setHex(CMAP[k][1]); c1.setHex(CMAP[k+1][1]); c0.lerp(c1,Math.max(0,Math.min(1,u))); out[i*3]=c0.r; out[i*3+1]=c0.g; out[i*3+2]=c0.b; } return out; })();
+const cmapCSS='linear-gradient(90deg,'+CMAP.map(c=>hex(c[1])+' '+Math.round(c[0]*100)+'%').join(',')+')';
+function cmapHex(t){ t=Math.max(0,Math.min(1,t)); let k=0; while(k<CMAP.length-2&&t>CMAP[k+1][0]) k++; const u=(t-CMAP[k][0])/(CMAP[k+1][0]-CMAP[k][0]); return new THREE.Color().setHex(CMAP[k][1]).lerp(new THREE.Color().setHex(CMAP[k+1][1]),u).getHex(); }
+function segs2(pos,o){
+  o=o||{};
+  const g=new THREE.LineSegmentsGeometry(); g.setPositions(pos);
+  const m=new THREE.LineMaterial({color:o.color===undefined?0xffffff:o.color,linewidth:1,transparent:(o.opacity||1)<1,opacity:o.opacity||1,worldUnits:false,depthTest:o.depthTest!==false});
+  m.userData.w=o.w||1; m.linewidth=m.userData.w*(renderer.xr.isPresenting?1.7:1); m.resolution.copy(RES); lineMats.add(m);
+  const l=new THREE.LineSegments2(g,m); l.computeLineDistances(); return l;
+}
+function setSegs2(l,pos){ l.geometry.dispose(); const g=new THREE.LineSegmentsGeometry(); g.setPositions(pos.length?pos:[0,0,0,0,0,0]); l.geometry=g; l.computeLineDistances(); l.visible=pos.length>0; }
+// coordenadas locales de la caja (x, y, z escalada); el grupo raíz las lleva a la escena con z hacia arriba
+function LP(x,y,z){ return new THREE.Vector3(x-G.xc,y-G.yc,(z-G.zc)*G.zs); }
+function lpArr(out,x,y,z){ out.push(x-G.xc,y-G.yc,(z-G.zc)*G.zs); }
+function surfMeshGeo(GV,f,z0,z1,lut){
+  // triángulos de la grilla recortados contra los planos z = z0 y z = z1 (bordes del corte limpios)
+  const n=GV.nx, N1=n+1, V=GV.V, a=GV.a, c=GV.c, hx=GV.hx, hy=GV.hy, Hz=z1-z0;
+  const P=[], C=[], Nn=[];
+  const vtx=(i,j)=>{ const k=j*N1+i; return {x:a+i*hx,y:c+j*hy,z:V[k]}; };
+  const fx=GV.fx, fy=GV.fy;
+  const push=(p)=>{ lpArr(P,p.x,p.y,p.z); const t=Math.round(Math.max(0,Math.min(1,(p.z-z0)/Hz))*255)*3; C.push(lut[t],lut[t+1],lut[t+2]); const gx=p.gx*G.zs, gy=p.gy*G.zs, L=Math.hypot(gx,gy,1); Nn.push(-gx/L,-gy/L,1/L); };
+  const lerp=(p,q,t)=>({x:p.x+(q.x-p.x)*t,y:p.y+(q.y-p.y)*t,z:p.z+(q.z-p.z)*t,gx:p.gx+(q.gx-p.gx)*t,gy:p.gy+(q.gy-p.gy)*t});
+  const clipPoly=(poly,keep,cut)=>{ const out=[]; for(let i=0;i<poly.length;i++){ const p=poly[i], q=poly[(i+1)%poly.length], ip=keep(p), iq=keep(q); if(ip) out.push(p); if(ip!==iq){ const t=(cut-p.z)/(q.z-p.z); out.push(lerp(p,q,t)); } } return out; };
+  const G2=new Float64Array(N1*N1*2);
+  for(let j=0;j<=n;j++) for(let i=0;i<=n;i++){ const k=j*N1+i; let gx=fx(a+i*hx,c+j*hy), gy=fy(a+i*hx,c+j*hy); if(!isFinite(gx)) gx=0; if(!isFinite(gy)) gy=0; G2[k*2]=gx; G2[k*2+1]=gy; }
+  const node=(i,j)=>{ const k=j*N1+i; return {x:a+i*hx,y:c+j*hy,z:V[k],gx:G2[k*2],gy:G2[k*2+1]}; };
+  // borde del dominio: entre un nodo definido y otro no definido, se busca por bisección el último punto definido
+  const edgeDom=(p,q)=>{ let lo=0, hi=1; for(let it=0;it<22;it++){ const m=(lo+hi)/2, v=f(p.x+(q.x-p.x)*m,p.y+(q.y-p.y)*m); if(isFinite(v)) lo=m; else hi=m; }
+    const x=p.x+(q.x-p.x)*lo, y=p.y+(q.y-p.y)*lo; return {x,y,z:f(x,y),gx:p.gx,gy:p.gy}; };
+  const clipDom=poly=>{ const out=[]; for(let i=0;i<poly.length;i++){ const p=poly[i], q=poly[(i+1)%poly.length], ip=isFinite(p.z), iq=isFinite(q.z); if(ip) out.push(p); if(ip!==iq){ const e=ip?edgeDom(p,q):edgeDom(q,p); if(isFinite(e.z)) out.push(e); } } return out; };
+  const tri=(p,q,r)=>{
+    if(!(isFinite(p.z)&&isFinite(q.z)&&isFinite(r.z))){
+      if(!(isFinite(p.z)||isFinite(q.z)||isFinite(r.z))) return;
+      const poly=clipDom([p,q,r]); if(poly.length<3) return;
+      for(let i=1;i<poly.length-1;i++) tri2(poly[0],poly[i],poly[i+1]);
+      return;
+    }
+    tri2(p,q,r);
+  };
+  const tri2=(p,q,r)=>{
+    const inAll=[p,q,r].every(v=>v.z>=z0&&v.z<=z1);
+    if(inAll){ push(p); push(q); push(r); return; }
+    if((p.z>z1&&q.z>z1&&r.z>z1)||(p.z<z0&&q.z<z0&&r.z<z0)) return;
+    let poly=clipPoly([p,q,r],v=>v.z<=z1,z1); if(poly.length<3) return;
+    poly=clipPoly(poly,v=>v.z>=z0,z0); if(poly.length<3) return;
+    for(let i=1;i<poly.length-1;i++){ push(poly[0]); push(poly[i]); push(poly[i+1]); }
+  };
+  for(let j=0;j<n;j++) for(let i=0;i<n;i++){
+    const p00=node(i,j), p10=node(i+1,j), p11=node(i+1,j+1), p01=node(i,j+1);
+    // la diagonal más corta en altura da una malla más fiel
+    if(Math.abs(p00.z-p11.z)<=Math.abs(p10.z-p01.z)){ tri(p00,p10,p11); tri(p00,p11,p01); } else { tri(p00,p10,p01); tri(p10,p11,p01); }
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(P,3));
+  geo.setAttribute('normal',new THREE.Float32BufferAttribute(Nn,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(C,3));
+  return geo;
+}
+function surfTicks(lo,hi,pi){ let s=niceStep((hi-lo)*2); if((hi-lo)/s<3.5) s=niceStep(hi-lo); if(pi){ const T=axisTicks(lo,hi,true,s); if(T.length>7){ const out=T.filter((t,i)=>Math.abs(Math.round(t.v/(T.step*2))*(T.step*2)-t.v)<1e-9); out.step=T.step*2; return out; } return T; } return axisTicks(lo,hi,false,s); }
+function buildSurfGraph(resetCam){
+  disposeTree(graph); while(graph.children.length) graph.remove(graph.children[0]);
+  lineMats.clear(); G={surf:true}; pieces=[];
+  const F=st.F, Sf=st.Sf, a=st.a, b=st.b, c=st.ymin, d=st.ymax, W=b-a, D=d-c, span=Math.max(W,D);
+  const z0=Sf?Sf.zmin:-1, z1=Sf?Sf.zmax:1, Hz=z1-z0;
+  const Ht=Math.min(Math.max(Hz,0.35*span),0.8*span);
+  let zs=Hz>0?Ht/Hz:1, xc=(a+b)/2, yc=(c+d)/2, zc=(z0+z1)/2;
+  if(isRide()){ if(st.rideS && Math.abs(st.rideS.span-span)<1e-9*span){ xc=st.rideS.xc; yc=st.rideS.yc; zc=st.rideS.zc; zs=st.rideS.zs; } else st.rideS={span,xc,yc,zc,zs}; }
+  else st.rideS=null;
+  const u=span/100, tk=TK(), ks=0.45+0.55*tk, lw=LW()/(renderer.xr.isPresenting?1.7:1);
+  // rótulos legibles: en pantalla, unos 15 px de alto; en el visor, algo mayores que en la maqueta plana
+  let lk=renderer.xr.isPresenting?1.35:1;
+  if(!renderer.xr.isPresenting && st.view!=='board'){ const cr=renderer.domElement.getBoundingClientRect(), Wc=Math.max(1,cr.width), Hc=Math.max(1,cr.height), fr=freeRect(1.45,1.1,true), k=Math.min(fr.w/Wc*1.15,fr.h/Hc*1.05,1);
+    const Sx=SURF_FIT/(span*(1+0.45*Hz*zs/span))*Math.max(0.5,k)*st.zoom, ppu=Hc/(2*SURF_R*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)));
+    lk=Math.min(3,Math.max(1,15/(u*3*Sx*ppu))); }
+  const lu=u*lk;
+  Object.assign(G,{xc,yc,zc,zs,u,span,ks,lu,mk:1,labels:[],markers:[],markerGroups:[],z0,z1,Ht:Hz*zs});
+  const root=new THREE.Group(); root.rotation.x=-Math.PI/2; graph.add(root); G.root=root;
+  const piX=axisPi2('x'), piY=axisPi2('y'); G.piX=piX; G.piY=piY;
+  const TX=surfTicks(a,b,piX), TY=surfTicks(c,d,piY), TZ=surfTicks(z0,z1,false);
+  G.TZ=TZ;
+  // caja: piso cuadriculado, paredes del fondo y regla vertical
+  const gp=[], wall=[];
+  TX.forEach(t=>{ lpArr(gp,t.v,c,z0); lpArr(gp,t.v,d,z0); lpArr(wall,t.v,d,z0); lpArr(wall,t.v,d,z1); });
+  TY.forEach(t=>{ lpArr(gp,a,t.v,z0); lpArr(gp,b,t.v,z0); lpArr(wall,a,t.v,z0); lpArr(wall,a,t.v,z1); });
+  TZ.forEach(t=>{ lpArr(wall,a,c,t.v); lpArr(wall,a,d,t.v); lpArr(wall,a,d,t.v); lpArr(wall,b,d,t.v); });
+  const lineSeg=(arr,col,op)=>{ const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(arr,3)); return new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:op})); };
+  root.add(lineSeg(gp,0x2a4852,0.9)); root.add(lineSeg(wall,0x23404a,0.55));
+  const edges=[]; [[a,c],[b,c],[b,d],[a,d],[a,c]].forEach((p,i,A)=>{ if(i){ lpArr(edges,A[i-1][0],A[i-1][1],z0); lpArr(edges,p[0],p[1],z0); } });
+  [[a,c],[a,d],[b,d]].forEach(p=>{ lpArr(edges,p[0],p[1],z0); lpArr(edges,p[0],p[1],z1); });
+  root.add(segs2(edges,{color:0x6f8f97,w:1.2,opacity:0.9}));
+  // ejes coordenados reales, si el origen está en la caja
+  const axCol=0x9fb6bc, ax=[];
+  if(c<=0&&d>=0&&z0<=0&&z1>=0){ lpArr(ax,a,0,0); lpArr(ax,b,0,0); }
+  if(a<=0&&b>=0&&z0<=0&&z1>=0){ lpArr(ax,0,c,0); lpArr(ax,0,d,0); }
+  if(a<=0&&b>=0&&c<=0&&d>=0){ lpArr(ax,0,0,z0); lpArr(ax,0,0,z1); }
+  if(ax.length) root.add(segs2(ax,{color:axCol,w:1.4,opacity:0.8}));
+  // rótulos de las marcas
+  const tickH=lu*3.0;
+  const tl=(t,center,p)=>{ const l=t.tex!==null?makeRichLabel([Mx(t.tex,t.txt)],'#b4c8cc',tickH*(t.tex.includes('frac')?1.45:1.1),{bg:false,bold:false,center}):makeLabel(t.txt,'#9fb6bc',tickH,{bg:false,bold:false,center}); l.position.copy(p); root.add(l); };
+  TX.forEach(t=>tl(t,[0.5,1],LP(t.v,c-u*2.5,z0)));
+  G.lk=lk;
+  TY.forEach(t=>tl(t,[0,0.5],LP(b+u*2.5,t.v,z0)));
+  TZ.forEach(t=>tl(t,[1,0.5],LP(a-u*2.5,c,t.v)));
+  const nameL=(txt,center,p)=>{ const l=makeRichLabel([Mx(txt)],'#cfe0e3',lu*4.2,{bg:false,center}); l.position.copy(p); root.add(l); };
+  nameL('x',[0.5,1],LP((a+b)/2,c-u*2.5-lu*5,z0)); nameL('y',[0,0.5],LP(b+u*2.5+lu*6,(c+d)/2,z0)); nameL('z',[0.5,0],LP(a,c,z1+lu*2/zs));
+  if(!Sf||Sf.empty){ G.probe=null; placeSurf(resetCam!==false); return; }
+  // superficie
+  Sf.GV.fx=F.fx; Sf.GV.fy=F.fy;
+  const geo=surfMeshGeo(Sf.GV,F.f,z0,z1,CLUT);
+  const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:0.55,metalness:0.05,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}));
+  root.add(mesh); G.mesh=mesh;
+  // malla de líneas sobre la superficie
+  { const n=Sf.GV.nx, N1=n+1, V=Sf.GV.V, k=Math.max(1,Math.round(n/18)), arr=[];
+    const ok=v=>isFinite(v)&&v>=z0&&v<=z1;
+    for(let j=0;j<=n;j+=k) for(let i=0;i<n;i++){ const v0=V[j*N1+i], v1=V[j*N1+i+1]; if(ok(v0)&&ok(v1)){ lpArr(arr,a+i*Sf.GV.hx,c+j*Sf.GV.hy,v0); lpArr(arr,a+(i+1)*Sf.GV.hx,c+j*Sf.GV.hy,v1); } }
+    for(let i=0;i<=n;i+=k) for(let j=0;j<n;j++){ const v0=V[j*N1+i], v1=V[(j+1)*N1+i]; if(ok(v0)&&ok(v1)){ lpArr(arr,a+i*Sf.GV.hx,c+j*Sf.GV.hy,v0); lpArr(arr,a+i*Sf.GV.hx,c+(j+1)*Sf.GV.hy,v1); } }
+    const wire=lineSeg(arr,0x0b171c,0.32); root.add(wire); G.wire=wire; }
+  // curvas de nivel sobre la superficie y proyectadas en el piso
+  G.levels=new THREE.Group(); root.add(G.levels); G.levelFloor=new THREE.Group(); root.add(G.levelFloor);
+  G.levelVals=[];
+  const LS=(()=>{ let s2=niceStep(Hz); if(Hz/s2>12) s2*=2; const o=[]; for(let k=Math.ceil(z0/s2+1e-9);k*s2<z1-1e-9*Hz;k++){ const v=k*s2; o.push({v:Math.abs(v)<s2*1e-9?0:v}); } return o; })();
+  LS.filter(t=>t.v>z0+1e-9*Hz&&t.v<z1-1e-9*Hz).forEach(t=>{
+    const P=contourGrid(Sf.GV,t.v,F.f); if(!P.length) return;
+    G.levelVals.push(t.v);
+    const col=cmapHex((t.v-z0)/Hz), up=[], fl=[];
+    P.forEach(pc=>{ for(let i=1;i<pc.X.length;i++){ lpArr(up,pc.X[i-1],pc.Y[i-1],t.v); lpArr(up,pc.X[i],pc.Y[i],t.v); lpArr(fl,pc.X[i-1],pc.Y[i-1],z0); lpArr(fl,pc.X[i],pc.Y[i],z0); } });
+    G.levels.add(segs2(up,{color:0xf4f8f8,w:lw*0.55,opacity:0.95}));
+    G.levelFloor.add(segs2(fl,{color:col,w:lw*0.7}));
+  });
+  // otras superficies visibles y su intersección con la activa
+  G.others=new THREE.Group(); root.add(G.others);
+  st.funcs.forEach((fn,k)=>{
+    if(k===st.act||!fn||!fn.F||!fn.visible||(fn.F.kind||'fx')!=='surf') return;
+    const GV2=gridVals(fn.F.f,a,b,c,d,Sf.GV.nx,Sf.GV.ny); GV2.fx=fn.F.fx; GV2.fy=fn.F.fy;
+    const lut=new Float32Array(256*3), cc=new THREE.Color().setHex(FCOL[k]===0xd9e4e4?0xcfd8dc:FCOL[k]); for(let i=0;i<256;i++){ lut[i*3]=cc.r; lut[i*3+1]=cc.g; lut[i*3+2]=cc.b; }
+    const m2=new THREE.Mesh(surfMeshGeo(GV2,fn.F.f,z0,z1,lut),new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:0.6,transparent:true,opacity:0.55,depthWrite:false}));
+    G.others.add(m2);
+    const DV={V:new Float64Array(Sf.GV.V.length),a,b,c,d,nx:Sf.GV.nx,ny:Sf.GV.ny,hx:Sf.GV.hx,hy:Sf.GV.hy};
+    for(let i=0;i<DV.V.length;i++) DV.V[i]=Sf.GV.V[i]-GV2.V[i];
+    const P=contourGrid(DV,0,(x,y)=>F.f(x,y)-fn.F.f(x,y)), arr=[];
+    P.forEach(pc=>{ for(let i=1;i<pc.X.length;i++){ const za=F.f(pc.X[i-1],pc.Y[i-1]), zb=F.f(pc.X[i],pc.Y[i]); if(za>=z0&&za<=z1&&zb>=z0&&zb<=z1){ lpArr(arr,pc.X[i-1],pc.Y[i-1],za); lpArr(arr,pc.X[i],pc.Y[i],zb); } } });
+    if(arr.length) G.others.add(segs2(arr,{color:0xffffff,w:lw*1.1}));
+  });
+  // puntos críticos
+  G.critLabels=[];
+  Sf.crit.forEach((p,i)=>{
+    if(!(p.z>=z0&&p.z<=z1)){ G.markers.push(null); G.markerGroups.push(null); return; }
+    const d2=surfCritInfo(p), col=COL[d2.kind]||COL.cero, grp=new THREE.Group(); root.add(grp);
+    const mk=new THREE.Mesh(new THREE.SphereGeometry(u*1.3*ks,20,14),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.45,roughness:0.35}));
+    mk.position.copy(LP(p.x,p.y,p.z)); grp.add(mk);
+    const l=makeRichLabel([d2.short+'  ',Mx(d2.ptTeX,d2.pt)],hex(col),lu*(st.view==='board'&&!renderer.xr.isPresenting?1.7:3.3),{center:[0.5,0]}); l.material.depthTest=false; l.renderOrder=20;
+    l.position.copy(LP(p.x,p.y,p.z)).add(new THREE.Vector3(0,0,u*2.2+lu*0.6)); grp.add(l); G.critLabels.push(l);
+    G.markers.push(mk); G.markerGroups.push(grp);
+  });
+  // explorador: punto sobre la superficie, su sombra en el piso, trazas, plano tangente y gradiente
+  const pr=new THREE.Group(); root.add(pr); G.probe=pr;
+  const body=new THREE.Mesh(new THREE.SphereGeometry(u*1.5*ks,24,16),new THREE.MeshStandardMaterial({color:COL.rider,emissive:COL.rider,emissiveIntensity:0.5,roughness:0.3}));
+  pr.add(body); G.probeBody=body;
+  G.probeDrop=segs2([0,0,0,0,0,1],{color:0xe3ecec,w:1.1,opacity:0.7}); root.add(G.probeDrop);
+  G.probeFoot=new THREE.Mesh(new THREE.CircleGeometry(u*1.1,24),new THREE.MeshBasicMaterial({color:0xe3ecec,side:THREE.DoubleSide,transparent:true,opacity:0.85})); root.add(G.probeFoot);
+  G.traceX=segs2([0,0,0,0,0,0],{color:COL.tan,w:lw*0.9}); root.add(G.traceX);
+  G.traceY=segs2([0,0,0,0,0,0],{color:COL.nor,w:lw*0.9}); root.add(G.traceY);
+  G.tanX=segs2([0,0,0,0,0,0],{color:COL.tan,w:lw*0.7,opacity:0.95}); root.add(G.tanX);
+  G.tanY=segs2([0,0,0,0,0,0],{color:COL.nor,w:lw*0.7,opacity:0.95}); root.add(G.tanY);
+  { const pg=new THREE.BufferGeometry(); pg.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(12),3)); pg.setIndex([0,1,2,0,2,3]);
+    G.plane=new THREE.Mesh(pg,new THREE.MeshBasicMaterial({color:0xf2c14e,transparent:true,opacity:0.3,side:THREE.DoubleSide,depthWrite:false})); root.add(G.plane);
+    G.planeEdge=segs2([0,0,0,0,0,0],{color:0xf2c14e,w:1.2,opacity:0.9}); root.add(G.planeEdge); }
+  G.grad=segs2([0,0,0,0,0,0],{color:0xff8a65,w:lw*1.1}); root.add(G.grad);
+  G.gradHead=new THREE.Mesh(new THREE.ConeGeometry(u*1.2,u*3.2,14),new THREE.MeshBasicMaterial({color:0xff8a65})); root.add(G.gradHead);
+  G.gradLab=makeRichLabel([Mx('\\nabla f','∇f')],'#ffb59e',lu*3.2,{bg:false,center:[0,0.5]}); G.gradLab.material.depthTest=false; root.add(G.gradLab);
+  G.probeKey='';
+  if(!(st.probe.x>=a&&st.probe.x<=b&&st.probe.y>=c&&st.probe.y<=d)){ st.probe.x=snap((a+b)/2,span); st.probe.y=snap((c+d)/2,span); }
+  applyTabVisibility();
+  placeSurf(resetCam!==false);
+  updateProbeVisual(true);
+}
+const SURF_FIT=1.08, SURF_R=1.62;
+const SURF_SHORT={max:'máx',min:'mín',silla:'silla',deg:'crítico'};
+function surfCritInfo(p){
+  const pt='('+fmtS(p.x)+', '+fmtS(p.y)+', '+fmtS(p.z)+')', ptTeX='\\left('+texNum(p.x)+',\\ '+texNum(p.y)+',\\ '+texNum(p.z)+'\\right)';
+  const nm={max:'Máximo local',min:'Mínimo local',silla:'Punto silla',deg:'Punto crítico degenerado'}[p.kind];
+  const Dt=Mx('D='+texNum(p.D,3),'D = '+fmtS(p.D,3)), fxx=Mx('f_{xx}='+texNum(p.A,3),'fxx = '+fmtS(p.A,3));
+  const lines=[[Mx('\\nabla f=\\vec 0','∇f = 0'),' en ',Mx(ptTeX,pt),'.'],
+    p.kind==='silla'?[Dt,' < 0: la superficie sube en una dirección y baja en otra.']:p.kind==='deg'?[Dt,': el criterio de la segunda derivada no decide.']:[Dt,' > 0 y ',fxx,(p.kind==='max'?' < 0: la superficie es cóncava hacia abajo en todas las direcciones.':' > 0: la superficie es cóncava hacia arriba en todas las direcciones.')]];
+  const P='equis igual a '+sayNum(p.x)+', ye igual a '+sayNum(p.y);
+  const say=nm+' en el punto '+P+', a altura '+sayNum(p.z)+'. El gradiente se anula. '+(p.kind==='silla'?'El determinante hessiano es negativo, '+sayNum(p.D)+': en una dirección la superficie sube y en otra baja, como una silla de montar.':p.kind==='deg'?'El determinante hessiano es cero, y el criterio de la segunda derivada no permite decidir.':'El determinante hessiano es positivo, '+sayNum(p.D)+', y la segunda derivada respecto de x es '+(p.kind==='max'?'negativa: es un máximo local.':'positiva: es un mínimo local.'));
+  return {title:nm,short:SURF_SHORT[p.kind],pt,ptTeX,lines,say,kind:p.kind==='deg'?'cero':p.kind};
+}
+function placeSurf(resetCam){
+  if(resetCam===undefined) resetCam=true;
+  const inXR=renderer.xr.isPresenting, span=G.span||1;
+  let S, cpos;
+  if(isRide()){ S=14/span*st.zoomRide; cpos=new THREE.Vector3(0,0,-2); floor.visible=false; }
+  else if(inXR){ S=0.62/span*st.zoom; cpos=CAM_C.clone().add(st.offset); floor.visible=st.xrKind!=='ar'; }
+  else {
+    const cr=renderer.domElement.getBoundingClientRect(), Wc=Math.max(1,cr.width), Hc=Math.max(1,cr.height);
+    const fr=freeRect(1.45,1.1,true);
+    camera.setViewOffset(Wc,Hc,Wc/2-(fr.x+fr.w/2),Hc/2-(fr.y+fr.h/2),Wc,Hc);
+    const k=Math.min(fr.w/Wc*1.15,fr.h/Hc*1.05,1);
+    S=SURF_FIT/(span*(1+0.45*(G.Ht||0)/span))*Math.max(0.5,k)*st.zoom; cpos=CAM_C.clone().add(st.offset); floor.visible=false;
+  }
+  graph.scale.setScalar(S); graph.position.copy(cpos); G.S=S;
+  graph.updateMatrixWorld(true);
+  if(!inXR && resetCam){
+    controls.target.copy(CAM_C);
+    if(st.view==='orbit'){ const r=SURF_R, az=0.62, el=0.5; camera.position.set(CAM_C.x+r*Math.sin(az)*Math.cos(el),CAM_C.y+r*Math.sin(el),CAM_C.z+r*Math.cos(az)*Math.cos(el)); controls.update(); }
+  }
+}
+function surfShow(){ const tn=st.tn; return {tr:tn===1||tn===3, pl:tn===2||tn===3, lev:st.tab==='nivel'||st.levels}; }
+function updateProbeVisual(force){
+  if(!G.surf||!G.probe) return;
+  const F=st.F, x=st.probe.x, y=st.probe.y, z=F.f(x,y), fx=F.fx(x,y), fy=F.fy(x,y);
+  const z0=G.z0, z1=G.z1, a=st.a, b=st.b, c=st.ymin, d=st.ymax, span=G.span, u=G.u, sh=surfShow();
+  const inZ=isFinite(z)&&z>=z0&&z<=z1, zz=isFinite(z)?Math.max(z0,Math.min(z1,z)):z0;
+  G.probe.position.copy(LP(x,y,zz)); G.probe.visible=isFinite(z);
+  G.probeBody.material.opacity=inZ?1:0.5; G.probeBody.material.transparent=!inZ;
+  const key=[x,y,st.tn,st.tab,st.levels].join('|');
+  if(key===G.probeKey && !force) return; G.probeKey=key;
+  setSegs2(G.probeDrop,isFinite(z)?[x-G.xc,y-G.yc,(z0-G.zc)*G.zs,x-G.xc,y-G.yc,(zz-G.zc)*G.zs]:[]);
+  G.probeFoot.position.copy(LP(x,y,z0)).add(new THREE.Vector3(0,0,u*0.05));
+  // trazas: cortes con los planos y = y0 (pendiente fx) y x = x0 (pendiente fy)
+  const tr=(fixed,isX)=>{ const arr=[], n=160; let prev=null;
+    for(let i=0;i<=n;i++){ const t=isX?a+(b-a)*i/n:c+(d-c)*i/n, px=isX?t:fixed, py=isX?fixed:t, v=F.f(px,py), ok=isFinite(v)&&v>=z0&&v<=z1;
+      if(ok&&prev){ lpArr(arr,prev[0],prev[1],prev[2]); lpArr(arr,px,py,v); } prev=ok?[px,py,v]:null; }
+    return arr; };
+  setSegs2(G.traceX,sh.tr&&isFinite(z)?tr(y,true):[]); setSegs2(G.traceY,sh.tr&&isFinite(z)?tr(x,false):[]);
+  const r=0.16*span;
+  const tl=(dx,dy,m)=>{ const p=[], k=Math.hypot(dx,dy); for(const s of [-1,1]){ const xx=x+s*r*dx/k, yy=y+s*r*dy/k, v=z+s*r*m; p.push([xx,yy,v]); } const arr=[]; lpArr(arr,p[0][0],p[0][1],p[0][2]); lpArr(arr,p[1][0],p[1][1],p[1][2]); return arr; };
+  setSegs2(G.tanX,sh.tr&&inZ&&isFinite(fx)?tl(1,0,fx):[]); setSegs2(G.tanY,sh.tr&&inZ&&isFinite(fy)?tl(0,1,fy):[]);
+  // plano tangente
+  const okP=sh.pl&&inZ&&isFinite(fx)&&isFinite(fy);
+  G.plane.visible=okP; G.planeEdge.visible=okP;
+  if(okP){ const q=r*0.85, C=[[-q,-q],[q,-q],[q,q],[-q,q]], pa=G.plane.geometry.attributes.position, ed=[];
+    C.forEach((o,i)=>{ const v=LP(x+o[0],y+o[1],z+fx*o[0]+fy*o[1]); pa.setXYZ(i,v.x,v.y,v.z); });
+    pa.needsUpdate=true; G.plane.geometry.computeBoundingSphere();
+    for(let i=0;i<4;i++){ const p=C[i], q2=C[(i+1)%4]; lpArr(ed,x+p[0],y+p[1],z+fx*p[0]+fy*p[1]); lpArr(ed,x+q2[0],y+q2[1],z+fx*q2[0]+fy*q2[1]); }
+    setSegs2(G.planeEdge,ed); }
+  // gradiente en el piso
+  const g=Math.hypot(fx,fy), okG=sh.pl&&isFinite(g)&&g>1e-9;
+  G.grad.visible=okG; G.gradHead.visible=okG; G.gradLab.visible=okG;
+  if(okG){ const L=0.14*span, ex=x+fx/g*L, ey=y+fy/g*L, arr=[]; lpArr(arr,x,y,z0); lpArr(arr,ex,ey,z0); setSegs2(G.grad,arr);
+    G.gradHead.position.copy(LP(ex,ey,z0)); const dir=new THREE.Vector3(fx/g,fy/g,0); G.gradHead.quaternion.setFromUnitVectors(UP,dir);
+    G.gradLab.position.copy(LP(ex+fx/g*u*3,ey+fy/g*u*3,z0)); }
+}
+function applyTabVisSurf(){
+  if(!G.surf) return; const sh=surfShow(), tab=st.tab;
+  if(G.levels) G.levels.visible=sh.lev; if(G.levelFloor) G.levelFloor.visible=true;
+  if(G.levelFloor) G.levelFloor.children.forEach(l=>{ l.material.opacity=sh.lev?1:0.45; l.material.transparent=!sh.lev; });
+  (G.critLabels||[]).forEach(l=>{ l.visible=(tab==='todo'||tab==='crit'); });
+  if(G.wire) G.wire.material.opacity=sh.lev?0.18:0.32;
+  G.probeKey=''; updateProbeVisual(true);
+}
+function surfTN(){ return ['Trazas y plano: no','Trazas','Plano tangente','Trazas y plano'][st.tn]; }
+function planeTeX(x0,y0,z0,fx,fy){
+  const term=(m,v,v0)=>{ if(Math.abs(m)<1e-12) return ''; const mag=texNum(Math.abs(m),3), fac=Math.abs(v0)<1e-12?v:'\\left('+shiftTeX(v0,v)+'\\right)'; return (m<0?'-':'+')+(mag==='1'?'':mag+' ')+fac; };
+  let s='z='+texNum(z0,3)+term(fx,'x',x0)+term(fy,'y',y0); return s.replace('z=0+','z=').replace('z=0-','z=-');
+}
+function planeTxt(x0,y0,z0,fx,fy){
+  const term=(m,v,v0)=>{ if(Math.abs(m)<1e-12) return ''; const mag=fmtS(Math.abs(m),3), fac=Math.abs(v0)<1e-12?v:'('+shiftTxt(v0,v)+')'; return (m<0?' − ':' + ')+(mag==='1'?'':mag)+fac; };
+  return 'z = '+fmtS(z0,3)+term(fx,'x',x0)+term(fy,'y',y0);
+}
+function probeState(){ const F=st.F, x=st.probe.x, y=st.probe.y; return {x,y,z:F.f(x,y),fx:F.fx(x,y),fy:F.fy(x,y)}; }
+function surfEqs(){
+  const p=probeState(), sh=surfShow(), out=[];
+  if(!isFinite(p.z)) return out;
+  if(sh.tr){ out.push(['traza ',Mx('y='+texNum(p.y,3),'y = '+fmtS(p.y,3)),', pendiente ',Mx('f_x='+texNum(p.fx,3),'fx = '+fmtS(p.fx,3)),hex(COL.tan)]); out.push(['traza ',Mx('x='+texNum(p.x,3),'x = '+fmtS(p.x,3)),', pendiente ',Mx('f_y='+texNum(p.fy,3),'fy = '+fmtS(p.fy,3)),hex(COL.nor)]); }
+  if(sh.pl&&isFinite(p.fx)&&isFinite(p.fy)){ out.push(['plano tangente ',Mx(planeTeX(p.x,p.y,p.z,p.fx,p.fy),planeTxt(p.x,p.y,p.z,p.fx,p.fy)),'#f2c14e']); out.push(['gradiente ',Mx('\\nabla f='+texPt(p.fx,p.fy),'∇f = ('+fmtS(p.fx,3)+', '+fmtS(p.fy,3)+')'),', ',Mx('\\left|\\nabla f\\right|='+texNum(Math.hypot(p.fx,p.fy),3),'|∇f| = '+fmtS(Math.hypot(p.fx,p.fy),3)),'#ffb59e']); }
+  return out;
+}
+function surfTnSay(){
+  const p=probeState(); if(!isFinite(p.z)) return 'En este punto la función no está definida.';
+  const g=Math.hypot(p.fx,p.fy);
+  return 'En el punto equis igual a '+sayNum(p.x)+', ye igual a '+sayNum(p.y)+', la superficie está a altura '+sayNum(p.z)+'. La derivada parcial respecto de x vale '+sayNum(p.fx)+': es la pendiente de la traza amarilla. Respecto de ye vale '+sayNum(p.fy)+': es la pendiente de la traza verde. '+(g>1e-9?'El gradiente mide '+sayNum(g)+' y apunta hacia donde la superficie sube más rápido.':'El gradiente es cero: es un punto crítico.');
+}
+function surfState(){
+  const p=probeState(), out=[]; if(!isFinite(p.z)) return out;
+  const Sf=st.Sf, span=G.span||1, near=Sf?Sf.crit.find(q=>Math.hypot(q.x-p.x,q.y-p.y)<0.01*span):null;
+  if(near) out.push([{max:'máximo local',min:'mínimo local',silla:'punto silla',deg:'punto crítico'}[near.kind],hex(COL[near.kind==='deg'?'cero':near.kind])]);
+  const g=Math.hypot(p.fx,p.fy); if(isFinite(g)) out.push(['|∇f| = '+fmtS(g,2),'#ffb59e']);
+  if(!(p.z>=G.z0&&p.z<=G.z1)) out.push(['fuera de la caja','#94a8ae']);
+  return out;
+}
+function buildTourSurf(){
+  const Sf=st.Sf, tab=st.tab, items=[];
+  if(Sf&&!Sf.empty){
+    if(tab==='todo'||tab==='crit'||tab==='trazas'||tab==='plano') Sf.crit.forEach((p,i)=>{ const d=surfCritInfo(p); items.push({x:p.x,y:p.y,z:p.z,kind:d.kind,title:d.title,pt:d.pt,ptTeX:d.ptTeX,lines:d.lines,say:d.say,mi:i}); });
+    if(tab==='todo'||tab==='crit'){
+      const ab=(o,w)=>{ if(!o||!isFinite(o.z)||o.exact) return; const pt='('+fmtS(o.x)+', '+fmtS(o.y)+', '+fmtS(o.z)+')', out=o.z>G.z1||o.z<G.z0;
+        items.push({x:o.x,y:o.y,z:o.z,kind:w==='máximo'?'max':'min',title:(w==='máximo'?'Valor más alto':'Valor más bajo')+' en la ventana',pt,ptTeX:'\\left('+texNum(o.x)+',\\ '+texNum(o.y)+',\\ '+texNum(o.z)+'\\right)',
+          lines:[[o.border?'Se alcanza en el borde del rectángulo, no en un punto crítico.':'Valor aproximado según la grilla.'],out?['La superficie sale de la caja: allí sus valores superan el rango visible de z.']:''].filter(Boolean),
+          say:'El '+w+' de la función en la ventana es aproximadamente '+sayNum(o.z)+', en el punto equis igual a '+sayNum(o.x)+', ye igual a '+sayNum(o.y)+'. '+(o.border?'Está en el borde del rectángulo, no en un punto crítico.':'')}); };
+      ab(Sf.absMax,'máximo'); ab(Sf.absMin,'mínimo');
+    }
+    if(tab==='nivel'){
+      const cx=(st.a+st.b)/2, cy=(st.ymin+st.ymax)/2, lv=G.levelVals||[], pick=lv.length>6?lv.filter((v,i)=>i%Math.ceil(lv.length/6)===0):lv;
+      pick.forEach(v=>{ const P=contourGrid(st.Sf.GV,v,st.F.f); let best=null,bd=Infinity; P.forEach(pc=>pc.X.forEach((x,i)=>{ const dd=Math.hypot(x-cx,pc.Y[i]-cy); if(dd<bd){ bd=dd; best=[x,pc.Y[i]]; } })); if(!best) return;
+        items.push({x:best[0],y:best[1],z:v,kind:'cero',title:'Curva de nivel',pt:'z = '+fmtS(v),ptTeX:'f(x,y)='+texNum(v),lines:[['Todos los puntos de esta curva están a la misma altura, ',Mx('z='+texNum(v),'z = '+fmtS(v)),'. En el piso se ve su proyección.']],say:'Curva de nivel a altura '+sayNum(v)+'. Todos sus puntos están a la misma altura. Donde las curvas de nivel se juntan, la superficie es más empinada.'}); });
+    }
+    if(tab==='trazas'||tab==='plano'){
+      const W=st.b-st.a, D=st.ymax-st.ymin;
+      [[0.3,0.35],[0.7,0.6]].forEach(([u,v])=>{ const x=snap(st.a+u*W,W), y=snap(st.ymin+v*D,D); items.push({x,y,kind:'cero',title:'Punto de muestra',pt:'('+fmtS(x)+', '+fmtS(y)+')',ptTeX:texPt(x,y),lines:[],say:'',dyn:true}); });
+    }
+  }
+  items.sort((p,q)=>p.x-q.x||p.y-q.y);
+  st.tour=items; setTimeout(prefetchTour,300);
+}
+function tabInfoSurf(tab){
+  const Sf=st.Sf, F=st.F, nm=FN();
+  const dom=Mx('\\left['+texW(st.a,G.piX)+',\\ '+texW(st.b,G.piX)+'\\right]\\times\\left['+texW(st.ymin,G.piY)+',\\ '+texW(st.ymax,G.piY)+'\\right]','['+txtW(st.a)+', '+txtW(st.b)+'] × ['+txtW(st.ymin)+', '+txtW(st.ymax)+']');
+  if(!Sf||Sf.empty) return {title:'Sin superficie en la ventana',lines:['La función no toma valores reales en esta ventana. Desplácela o use Vista estándar.'],say:'La función no toma valores reales en esta ventana.'};
+  const C=Sf.crit, cnt=k=>C.filter(p=>p.kind===k).length;
+  const scaleNote=Math.abs((G.zs||1)-1)>0.02?['La altura se dibuja con escala ',Mx('\\times '+texDec(G.zs,2),'× '+dec(G.zs,2)),' para que la caja sea proporcionada.']:null;
+  switch(tab){
+    case 'todo': {
+      const lines=[['Superficie ',Mx('z='+F.tex,'z = '+F.txt),' sobre ',dom,'.'],[C.length+(C.length===1?' punto crítico':' puntos críticos')+(C.length?': '+[cnt('max')&&cnt('max')+' máx.',cnt('min')&&cnt('min')+' mín.',cnt('silla')&&cnt('silla')+' silla',cnt('deg')&&cnt('deg')+' degenerado'].filter(Boolean).join(', '):'')+'.'],['Caja de alturas ',Mx('z\\in\\left['+texNum(G.z0)+',\\ '+texNum(G.z1)+'\\right]','z ∈ ['+fmtS(G.z0)+', '+fmtS(G.z1)+']'),'; el color va del azul (bajo) al coral (alto).']];
+      if(scaleNote) lines.push(scaleNote);
+      if(Sf.degCurve) lines.push('Hay curvas completas de puntos críticos (anillos), que no se marcan uno por uno.');
+      return {title:'Vista general',lines,say:cap(sayFn())+', sobre el rectángulo de x entre '+sayNum(st.a)+' y '+sayNum(st.b)+', y de ye entre '+sayNum(st.ymin)+' y '+sayNum(st.ymax)+'. Tiene '+C.length+(C.length===1?' punto crítico':' puntos críticos')+' en la ventana. El color indica la altura: azul en lo más bajo y coral en lo más alto. Con las flechas o el stick derecho mueve el explorador sobre la superficie.'};
+    }
+    case 'crit': {
+      const lines=C.length?C.map(p=>{ const d=surfCritInfo(p); return [d.title+' en ',Mx(d.ptTeX,d.pt),'.']; }):['No hay puntos críticos en la ventana.'];
+      lines.push(['Criterio: con ',Mx('D=f_{xx}f_{yy}-f_{xy}^2','D = fxx·fyy − fxy²'),', si ',Mx('D>0'),' y ',Mx('f_{xx}<0'),' hay máximo; si ',Mx('D>0'),' y ',Mx('f_{xx}>0'),', mínimo; si ',Mx('D<0'),', silla.']);
+      return {title:'Puntos críticos',lines,say:C.length?'Puntos críticos, donde el gradiente se anula. '+C.map(p=>surfCritInfo(p).title+' en el punto equis igual a '+sayNum(p.x)+', ye igual a '+sayNum(p.y)).join('. ')+'. Para clasificarlos se usa el determinante hessiano.':'No hay puntos críticos en la ventana.'};
+    }
+    case 'nivel': {
+      const lv=G.levelVals||[];
+      return {title:'Curvas de nivel',lines:[['Curvas ',Mx('f(x,y)=k','f(x, y) = k'),lv.length?[' para ',Mx('k='+lv.map(v=>texNum(v)).join(',\\ '),'k = '+lv.map(v=>fmtS(v)).join(', '))]:'','.'].flat(),'Se dibujan en blanco sobre la superficie y con su color de altura en el piso.','Donde se juntan, la superficie es más empinada. El gradiente es perpendicular a ellas.'],
+        say:'Curvas de nivel. Cada curva une los puntos de la superficie que están a la misma altura. Se dibujan sobre la superficie y proyectadas en el piso, como en un mapa topográfico. Donde se juntan, la superficie es más empinada, y el gradiente es perpendicular a ellas.'};
+    }
+    case 'trazas': return {title:'Trazas y derivadas parciales',lines:[['La traza amarilla es el corte con el plano ',Mx('y=y_0'),'; su pendiente es ',Mx('f_x\\left(x_0,y_0\\right)','fx(x₀, y₀)'),'.'],['La traza verde es el corte con ',Mx('x=x_0'),'; su pendiente es ',Mx('f_y\\left(x_0,y_0\\right)','fy(x₀, y₀)'),'.'],'Mueva el explorador para ver cómo cambian.'],
+      say:'Trazas. La curva amarilla es el corte de la superficie con un plano de ye constante; su pendiente es la derivada parcial respecto de x. La curva verde es el corte con un plano de x constante; su pendiente es la derivada parcial respecto de ye. '+surfTnSay()};
+    case 'plano': return {title:'Plano tangente y gradiente',lines:[['Plano tangente ',Mx('z=f\\left(x_0,y_0\\right)+f_x\\left(x-x_0\\right)+f_y\\left(y-y_0\\right)','z = f(x₀, y₀) + fx(x − x₀) + fy(y − y₀)'),'.'],['El vector ',Mx('\\nabla f=\\left(f_x,\\ f_y\\right)','∇f = (fx, fy)'),', dibujado en el piso, apunta hacia donde la superficie sube más rápido; su largo es esa pendiente máxima.']],
+      say:'Plano tangente y gradiente. Cerca del explorador, la superficie se confunde con su plano tangente. El gradiente, dibujado en el piso, apunta hacia donde la superficie sube más rápido. '+surfTnSay()};
+  }
+  return {title:'',lines:[],say:''};
+}
+// mover el explorador: por la ventana, con la vista o en la dirección de la mirada
+function probeTo(x,y){
+  const a=st.a,b=st.b,c=st.ymin,d=st.ymax, W=b-a, D=d-c;
+  if(x<a||x>b||y<c||y>d){
+    if((isRide()||st.view==='board') && performance.now()-(st.lastShift||0)>400){
+      st.lastShift=performance.now();
+      const ex=x>b?1:x<a?-1:0, ey=y>d?1:y<c?-1:0;
+      st.probe.x=x; st.probe.y=y;
+      setWindow(rx(a+ex*W/2),rx(b+ex*W/2),ry(c+ey*D/2),ry(d+ey*D/2),{keepPlay:true});
+      return;
+    }
+    x=Math.max(a,Math.min(b,x)); y=Math.max(c,Math.min(d,y));
+  }
+  st.probe.x=x; st.probe.y=y; hudDirty=true; vrDirty=true;
+}
+function stopGlide(){ if(st.glide){ st.glide=null; } if(st.playing){ st.playing=false; updatePlayBtn(); } }
+function viewHeading(){
+  // dirección horizontal de la mirada, en coordenadas (x, y) de la superficie
+  const v=new THREE.Vector3(); camera.getWorldDirection(v);
+  const L=Math.hypot(v.x,v.z); if(L<1e-6) return [Math.cos(st.heading),Math.sin(st.heading)];
+  return [v.x/L,-v.z/L];
+}
+function moveProbeXY(fwd,side,dt){
+  const sp=(G.span||1)/5*st.speed*dt, h=viewHeading(), r=[h[1],-h[0]];
+  if(Math.abs(fwd)>0.01||Math.abs(side)>0.01) st.heading=Math.atan2(h[1],h[0]);
+  probeTo(st.probe.x+(h[0]*fwd+r[0]*side)*sp, st.probe.y+(h[1]*fwd+r[1]*side)*sp);
+}
+function glideTo(x,y,dur,onEnd){ st.glide={x0:st.probe.x,y0:st.probe.y,x1:x,y1:y,t:0,dur,onEnd}; }
+function surfTourNext(){
+  const i=curTourIdx+1, it=st.tour[i];
+  if(!it){ st.playing=false; updatePlayBtn(); setMsg('Fin del recorrido',['El explorador visitó todos los elementos de esta pestaña. Puede seguir moviéndolo con las flechas o el stick derecho.']); speak('Fin del recorrido de '+tabName(st.tab)+'.',false); return; }
+  const dist=Math.hypot(it.x-st.probe.x,it.y-st.probe.y)/(G.span||1);
+  curTourIdx=i;
+  glideTo(it.x,it.y,Math.max(1.0,Math.min(4,dist*6)),()=>{ announce(it); holdFor(1800); });
+}
+function surfFrame(dt,now){
+  if(!renderer.xr.isPresenting){
+    const kx=(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0), ky=(keys.ArrowUp?1:0)-(keys.ArrowDown?1:0);
+    if(kx||ky){ stopGlide();
+      if(st.view==='board'){ st.heading-=kx*dt*1.4; const sp=(G.span||1)/5*st.speed*dt*ky; probeTo(st.probe.x+Math.cos(st.heading)*sp,st.probe.y+Math.sin(st.heading)*sp); }
+      else { const sp=(G.span||1)/5*st.speed*dt; probeTo(st.probe.x+kx*sp,st.probe.y+ky*sp); }
+    }
+  }
+  if(st.glide){ const g=st.glide; g.t+=dt; const k=Math.min(1,g.t/g.dur), e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    st.probe.x=g.x0+(g.x1-g.x0)*e; st.probe.y=g.y0+(g.y1-g.y0)*e;
+    if(Math.hypot(g.x1-g.x0,g.y1-g.y0)>1e-9) st.heading=Math.atan2(g.y1-g.y0,g.x1-g.x0);
+    hudDirty=true; vrDirty=true;
+    if(k>=1){ st.glide=null; if(g.onEnd) g.onEnd(); } }
+  else if(st.playing){ const waiting=now<st.pauseUntil||(st.waitSpeech&&isSpeaking()&&now-(TTS.last||0)<30000); if(!waiting){ st.waitSpeech=false; surfTourNext(); } }
+  updateProbeVisual();
+  if(!G.probe) return;
+  const pw=G.probe.getWorldPosition(new THREE.Vector3());
+  if(renderer.xr.isPresenting){
+    if(isRide()){ rig.rotation.set(0,0,0); const cl=camera.position; const target=new THREE.Vector3(pw.x-cl.x,pw.y+st.seat,pw.z-cl.z);
+      if(snapCam) rig.position.copy(target); else rig.position.lerp(target,Math.min(1,dt*8)); }
+    else { rig.position.set(0,0,0); rig.rotation.set(0,0,0); }
+  } else if(st.view==='board'){
+    const S=G.S, sp=(G.span||1)*S, hw=new THREE.Vector3(Math.cos(st.heading),0,-Math.sin(st.heading));
+    const desired=pw.clone().addScaledVector(hw,-0.34*sp).add(new THREE.Vector3(0,0.17*sp,0)), look=pw.clone().addScaledVector(hw,0.25*sp);
+    if(snapCam) camera.position.copy(desired); else camera.position.lerp(desired,Math.min(1,dt*5));
+    camera.lookAt(look);
+  }
+  snapCam=false;
+  if(G.markers){ G.markers.forEach((m,i)=>{ if(m){ const k=i===curStopIdx?1.35+0.15*Math.sin(now/180):1; m.scale.setScalar(k); } }); }
+}
+function surfLupa(){
+  if(st.lupa.length){ const w=st.lupa.pop(); setWindow(w[0],w[1],w[2],w[3]); speak(st.lupa.length?'Se aleja un nivel.':'Fin de la lupa. Vuelve la ventana anterior.'); return; }
+  st.lupa.push([st.a,st.b,st.ymin,st.ymax]); if(st.tn<2){ st.tn=2; syncTnRadios(); }
+  const W=(st.b-st.a)/5, D=(st.ymax-st.ymin)/5, x=st.probe.x, y=st.probe.y;
+  setWindow(x-W/2,x+W/2,y-D/2,y+D/2);
+  speak('Lupa sobre el explorador. Al acercarse, la superficie se confunde cada vez más con su plano tangente.');
 }
 
 /* ================= bucle ================= */
@@ -3457,12 +4677,20 @@ function loop(){
   if(!st.A){ renderer.render(scene,camera); return; }
   if(renderer.xr.isPresenting) pollXR(dt);
   else {
-    const kd=(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0);
+    const kd=G.surf?0:(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0);
     if(kd && !st.jump){ st.playing=false; updatePlayBtn(); advance(dt,kd,true); hudDirty=true; }
   }
   if(fadeAnim){ fadeAnim.t+=dt; const h=fadeAnim.dur/2; if(fadeAnim.t>=h && !fadeAnim.done){ fadeAnim.mid(); fadeAnim.done=true; }
     fade.material.opacity = fadeAnim.t<h ? fadeAnim.t/h : Math.max(0,1-(fadeAnim.t-h)/h);
     if(fadeAnim.t>=fadeAnim.dur){ fadeAnim=null; fade.material.opacity=0; } }
+  if(G.surf){
+    surfFrame(dt,now);
+    if(!renderer.xr.isPresenting && st.view==='orbit') controls.update();
+    hudT+=dt; vrT+=dt;
+    if((hudDirty||st.playing||st.glide) && hudT>0.1 && !renderer.xr.isPresenting){ hudT=0; hudDirty=false; updateHUD(); }
+    if(renderer.xr.isPresenting && hudMesh.visible && (vrDirty||st.playing||st.glide) && vrT>0.1){ vrT=0; vrDirty=false; drawVRPanel(); }
+    renderer.render(scene,camera); return;
+  }
   // animación del salto
   if(st.jump){
     const j=st.jump; j.t+=dt;
@@ -3548,4 +4776,3 @@ fontsReady.then(start);
 window.__fab={analyze,setEngine,engStart,spokenES,prefetch,stdView,standardX,standardY,axisTicks,setAxisMode,layoutLabels,traitsOf,st,drawVRPanel,vrAction,hudCanvas,TTS,speak,MJ,setWindow,panWin,zoomWin,lupa,advance,loadFunction,setFnSrc,applyAll,setDeriv,cycleRectas,pieces:()=>pieces,G:()=>G};
 })();
 </script>
-</html>
