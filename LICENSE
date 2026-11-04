@@ -19,14 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-Third-party components
-
-This license covers the code in this repository only. The page loads the
-following components from their own servers at run time. They are not part of
-this repository and keep their own licenses:
-
-three.js (MIT), math.js (Apache-2.0), MathJax (Apache-2.0),
-ONNX Runtime Web (MIT), piper-wasm (MIT), vits-web (MIT), meSpeak (GPL),
-Piper voices (see the model card of each voice),
-Supertonic 3 voice model (OpenRAIL).
